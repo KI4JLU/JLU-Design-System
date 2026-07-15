@@ -69,6 +69,11 @@ npm run lint             # inkl. dogfooded design-system-Regeln
 npm run build            # dist/: ESM + d.ts + tokens.css
 ```
 
+> **Hinweis (npm-Bug):** `@emnapi/*` steht absichtlich in den devDependencies.
+> npm auf macOS wirft diese Linux/WASI-only Optional-Deps sonst bei jedem
+> inkrementellen `npm install` aus dem Lockfile, woraufhin `npm ci` in der CI
+> fehlschlägt (npm/cli#4828). Nicht entfernen.
+
 ## Release
 
 Version in `package.json` erhöhen (semver), Changelog in
