@@ -1,0 +1,43 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Theming" />
+
+# Theming (hell / dunkel / system)
+
+- Das aktive Theme liegt auf `<html data-theme="light|dark">`.
+- Der `ThemeProvider` löst die Nutzerwahl (hell / dunkel / system) auf,
+  persistiert sie in `localStorage` („theme“) und folgt bei „system“ live dem
+  OS. Umschalten per `<ThemeToggle />` oder `useTheme().setTheme(...)`.
+- Da die Tokens das Theme tragen, brauchen Komponenten **keine Theme-Logik** —
+  mit Tokens stylen, und beide Themes funktionieren. Neue Screens in **beiden**
+  Themes prüfen.
+
+## No-Flash-Skript
+
+Damit die Seite nicht hell aufblitzt, bevor React lädt, gehört dieses Skript in
+den `<head>` der `index.html` (identisch zur Logik des ThemeProviders — beide
+synchron halten):
+
+```html
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("theme") || "system";
+      var dark =
+        t === "dark" ||
+        (t === "system" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {
+      document.documentElement.dataset.theme = "light";
+    }
+  })();
+</script>
+```
+
+## Anforderungen an jedes Theme
+
+Jedes Theme definiert Werte für: Default, **hover, active, focus, disabled**,
+Ränder, erhöhte Flächen und Schatten. Hintergrund + Text allein reicht nicht —
+fehlende Zustände sind die häufigste Quelle visueller Bugs. Beide Themes
+brauchen vor dem Merge einen **visuellen QA-Durchgang**, nicht nur Code-Review.

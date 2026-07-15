@@ -1,0 +1,4 @@
+/* Storybook-only stylesheet: compiles Tailwind over the library source and
+ * loads the design tokens, exactly like a consuming app would (see README). */
+@import "tailwindcss";
+@import "../src/tokens.css";

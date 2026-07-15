@@ -1,0 +1,45 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Tokens" />
+
+# Design-Tokens
+
+Zwei Ebenen, definiert in `tokens.css`:
+
+1. **Primitive** (`--p-blue-600`, `--p-gray-100`, …) — Rohwerte ohne Bedeutung,
+   **niemals direkt verwenden**.
+2. **Semantische Tokens** (`--color-primary`, `--color-surface`, …) — beschreiben
+   Absicht, referenzieren Primitive und erzeugen die Tailwind-Utilities
+   (`bg-primary`, `text-on-surface`, `shadow-card`, …). **Nur diese verwenden.**
+
+Der Dark-Mode überschreibt ausschließlich die semantische Ebene
+(`[data-theme="dark"]`) — Komponenten brauchen keine `dark:`-Varianten.
+
+## Farben → Token-Spickzettel
+
+| Bedarf | Token-Utility |
+|--------|---------------|
+| Seiten-/App-Hintergrund | `bg-surface` (Text: `text-on-surface`) |
+| Karte / erhöhte Fläche | `bg-surface-container-lowest` + `border-outline-variant` (nutze `<Card>`) |
+| Gedämpfter Text | `text-on-surface-variant` |
+| Primäraktion | `bg-primary text-on-primary` (nutze `<Button>`) |
+| Sekundäraktion | `bg-secondary-container text-on-secondary-container` |
+| Ränder / Trenner | `border-outline-variant` (stärker: `border-outline`) |
+| Fokusring | `ring-focus-ring` (in den Komponenten bereits enthalten) |
+| Erfolg / online | `bg-success` / `text-success`; Badge: `bg-success-container text-on-success-container` |
+| Info / ausstehend | `text-info` / `bg-info-container text-on-info-container` |
+| Warnung | `text-warning` / `bg-warning-container text-on-warning-container` |
+| Fehler / destruktiv | `text-error`; Button: `<Button variant="destructive">` |
+| Elevation | `shadow-card`, `hover:shadow-card-hover`, `shadow-overlay` |
+
+Fehlt ein Token: **keinen Hex-Wert erfinden**, sondern ein neues Token über den
+Prozess in `docs/DESIGN_SYSTEM.md` §6 vorschlagen.
+
+## Weitere Skalen
+
+- **Typografie**: `text-display-lg`, `text-headline-md`, `text-label-sm`,
+  `text-stat-lg`, `text-body-base` (+ zugehörige `font-*`-Familien).
+- **Spacing**: `gutter`, `stack-sm/md/lg`, `margin-page`, `container-max`.
+- **Radius**: `rounded`, `rounded-lg`, `rounded-xl`, `rounded-full`.
+- **Interaktionszustände**: `primary-hover`, `primary-active`, `focus-ring`,
+  `disabled`, `on-disabled`.

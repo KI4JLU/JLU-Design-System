@@ -1,0 +1,80 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Einführung" />
+
+# JLU Design System
+
+Gemeinsame Design-Tokens, Theming und React-UI-Komponenten für JLU-Projekte —
+**ein** Look & Feel, als Dependency konsumiert statt pro Projekt kopiert.
+
+- **Tokens**: zweischichtig (Primitive `--p-*` → semantische Tokens wie
+  `--color-primary`, `--color-surface-container-*`), hell + dunkel.
+- **Komponenten**: shadcn/ui-basiert (Radix + Tailwind 4), ausschließlich über
+  semantische Tokens gestylt — Theming funktioniert automatisch.
+- **Enforcement**: ESLint-Plugin (`no-hardcoded-colors`, `no-raw-ui-elements`)
+  wird mitgeliefert.
+
+## Installation
+
+Das Paket liegt in der GitHub Packages Registry (privat). Einmalig im Projekt
+eine `.npmrc` anlegen:
+
+```ini
+@ki4jlu:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+```
+
+Token mit `read:packages`-Scope bereitstellen (lokal z. B. über
+`gh auth refresh -s read:packages` und `export NODE_AUTH_TOKEN=$(gh auth token)`),
+dann:
+
+```bash
+npm install @ki4jlu/design-system
+```
+
+## Einbindung (Tailwind 4 App)
+
+Im zentralen CSS des Projekts:
+
+```css
+@import "tailwindcss";
+@import "@ki4jlu/design-system/tokens.css";
+@source "../node_modules/@ki4jlu/design-system";
+```
+
+Der `@source`-Eintrag lässt Tailwind die Klassen der Bibliothek mitkompilieren
+(Pfad relativ zur CSS-Datei). Die Fonts **Inter, Manrope, JetBrains Mono** lädt
+die App selbst (wie bisher, z. B. über `index.html`).
+
+In der App-Wurzel den ThemeProvider mounten und das No-Flash-Skript in die
+`index.html` übernehmen (siehe Seite „Theming“):
+
+```tsx
+import { ThemeProvider, Button } from "@ki4jlu/design-system";
+
+<ThemeProvider>
+  <Button>Los geht’s</Button>
+</ThemeProvider>
+```
+
+## ESLint-Enforcement (empfohlen)
+
+```js
+// eslint.config.js
+import designSystem from "@ki4jlu/design-system/eslint-plugin";
+
+{
+  files: ["src/**/*.{ts,tsx}"],
+  plugins: { "design-system": designSystem },
+  rules: {
+    "design-system/no-hardcoded-colors": "error",
+    "design-system/no-raw-ui-elements": "warn",
+  },
+}
+```
+
+## Governance
+
+Änderungen an Tokens, Komponenten-APIs und Varianten reviewt der
+Design-System-Owner (CODEOWNERS). Prozess und Regeln: siehe
+`docs/DESIGN_SYSTEM.md` im Repository.
