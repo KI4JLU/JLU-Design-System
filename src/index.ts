@@ -38,6 +38,8 @@ export {
 } from "./components/form";
 export { Input } from "./components/input";
 export { Label } from "./components/label";
+export { Switch } from "./components/switch";
+export { Textarea } from "./components/textarea";
 export { ThemeToggle } from "./components/theme-toggle";
 export {
   ThemeProvider,

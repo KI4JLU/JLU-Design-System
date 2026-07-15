@@ -49,6 +49,9 @@ Component  ─uses→  Semantic (--color-primary)  ─references→  Primitive (
 - **Interaction states** — `primary-hover`, `primary-active`, `focus-ring`,
   `disabled`, `on-disabled`.
 - **Elevation** — `shadow-card`, `shadow-card-hover`, `shadow-overlay`.
+- **Chart series** — `chart-1..4` + `chart-track` for SVG charts
+  (`fill-chart-1`, `stroke-chart-2`, `bg-chart-3` for legend dots); lighten in
+  dark mode so series stay readable on dark surfaces.
 - **Typography / spacing / radius** — display/headline/label/stat/body scales,
   `spacing-gutter`/`stack-*`/`margin-page`, `radius-*`.
 
@@ -112,6 +115,8 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Label` | `label.tsx` | Radix Label |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
+| `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
+| `Textarea` | `textarea.tsx` | mirrors `Input` (tokens, focus ring, `aria-invalid`) |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
 
 ### Tooling & enforcement
@@ -167,6 +172,10 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.2.0** — Added `Switch` (Radix) and `Textarea` components (+ stories,
+  tests). New chart-series tokens `--color-chart-1..4` + `--color-chart-track`
+  (light + dark; new primitive `--p-blue-300`) so SVG charts in consumers can
+  drop hardcoded hex and become theme-aware.
 - **0.1.0** — Extraction (Phase 5): moved tokens, the 7 components, theme
   runtime, and the ESLint plugin out of CampusAgents into this package.
   Replaced Ladle with Storybook (autodocs, a11y addon, MDX docs, theme

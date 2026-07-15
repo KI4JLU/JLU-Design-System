@@ -21,6 +21,7 @@
   /* Blau (Marke / primary) */
   --p-blue-100: #d1e4ff;
   --p-blue-200: #adc6ff;
+  --p-blue-300: #7cb3ff;
   --p-blue-600: #0052ff;
   --p-blue-900: #001a4d;
   --p-blue-950: #001433;
@@ -249,6 +250,18 @@
   --color-on-disabled: var(--color-outline);
 
   /* --------------------------------------------------------------------------
+   * CHART-SERIEN — für SVG-Diagramme (fill-chart-1, stroke-chart-2, bg-chart-3
+   * für Legenden-Punkte, fill-chart-track für Donut-/Balken-Hintergründe).
+   * Serienfarben sind Absicht („1. Serie"), keine Markenfarben — im Dark-Mode
+   * hellen sie auf, damit sie auf dunklen Flächen lesbar bleiben.
+   * ------------------------------------------------------------------------ */
+  --color-chart-1: var(--p-blue-600);
+  --color-chart-2: var(--p-blue-300);
+  --color-chart-3: var(--p-gray-300);
+  --color-chart-4: var(--p-gray-175);
+  --color-chart-track: var(--p-gray-75);
+
+  /* --------------------------------------------------------------------------
    * ELEVATION / SCHATTEN (eigene Namen, um Tailwind-Defaults nicht zu clobbern)
    * Nutzung: shadow-card, hover:shadow-card-hover, shadow-overlay
    * ------------------------------------------------------------------------ */
@@ -324,6 +337,13 @@
     --color-primary-hover: var(--p-blue-200);
     --color-primary-active: var(--p-blue-100);
     --color-focus-ring: var(--p-blue-200);
+
+    /* Chart-Serien: hellere Akzente, gedämpfte Neutrale, dunkler Track. */
+    --color-chart-1: var(--p-blue-200);
+    --color-chart-2: var(--p-blue-600);
+    --color-chart-3: var(--p-gray-450);
+    --color-chart-4: var(--p-gray-820);
+    --color-chart-track: var(--p-gray-880);
 }
 
 body {
