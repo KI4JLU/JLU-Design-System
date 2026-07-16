@@ -38,6 +38,30 @@ export const Filled: Story = {
   ),
 };
 
+/**
+ * Status-Punkt (`dot`): Live-/Online-Pills (Widget-Status, Kanal-Chips).
+ * Der Punkt läuft in der Textfarbe des Tons mit — dekorativ, die Bedeutung
+ * trägt der Text.
+ */
+export const WithDot: Story = {
+  render: () => (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge dot tone="success">
+        Online
+      </Badge>
+      <Badge dot tone="neutral">
+        Offline
+      </Badge>
+      <Badge dot tone="info">
+        Web-Widget
+      </Badge>
+      <Badge dot appearance="text" tone="success">
+        Aktiv
+      </Badge>
+    </div>
+  ),
+};
+
 /** Text-Chips: Health-Checks und Meta-Zeilen (Icon + Text in Tonfarbe). */
 export const TextAppearance: Story = {
   render: () => (

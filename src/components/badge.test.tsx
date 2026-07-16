@@ -24,4 +24,19 @@ describe("Badge", () => {
     render(<Badge>Entwurf</Badge>);
     expect(screen.getByText("Entwurf")).toHaveClass("bg-surface-container-high");
   });
+
+  it("renders a decorative status dot when dot is set", () => {
+    render(
+      <Badge dot tone="success">
+        Online
+      </Badge>,
+    );
+    const dot = screen.getByText("Online").querySelector("[aria-hidden='true']");
+    expect(dot).toHaveClass("bg-current", "rounded-full");
+  });
+
+  it("renders no dot by default", () => {
+    render(<Badge>Entwurf</Badge>);
+    expect(screen.getByText("Entwurf").querySelector("[aria-hidden='true']")).toBeNull();
+  });
 });
