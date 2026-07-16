@@ -1,6 +1,6 @@
 ---
 name: storybook-vitest-addon
-description: Install, configure, or troubleshoot @storybook/addon-vitest (runs stories as Vitest browser tests). Use when adding the addon to a Storybook+Vite project, when story tests fail with "does not provide an export named" errors, or when the vitest projects config in vite.config.ts needs adjusting.
+description: Install, configure, or troubleshoot @storybook/addon-vitest (runs stories as Vitest browser tests). Use when adding the addon to a Storybook+Vite project, when story tests fail with "does not provide an export named" errors, when sidebar test statuses look wrong/stuck, when a11y warnings need to be inspected, or when the vitest projects config in vite.config.ts needs adjusting.
 ---
 
 # Storybook Vitest Addon (install & troubleshoot)
@@ -63,3 +63,40 @@ and append it (plus the package that imports it) to the same list.
 - Story tests only: `npx vitest --project=storybook`
 - Interactively: start Storybook (`npm run storybook`) and use the test
   widget at the bottom of the sidebar; each story shows pass/fail.
+
+## Sidebar statuses are snapshots, not live
+
+The pass/fail/warning markers in the sidebar reflect the LAST widget test
+run — they do not update on file changes. Before believing a red/amber
+marker (or its absence), trigger a fresh run from the test widget. A story
+edited mid-development often shows failures that a re-run clears.
+
+## Stuck "Running…" state
+
+If story files are edited while a widget run is in flight, the embedded
+vitest child can crash and the widget wedges permanently in "Running…"
+(the run button stays disabled; there is NO cancel UI). Only fix: restart
+the Storybook dev server (`kill $(lsof -t -iTCP:6006 -sTCP:LISTEN)`, then
+`npm run storybook`). Browsers reconnect automatically.
+
+Related flake: the first widget/CLI run after adding new dependencies may
+fail all stories in a file with "Re-optimizing dependencies" noise — just
+re-run before diagnosing.
+
+## a11y warnings are invisible in the CLI
+
+With `parameters.a11y.test: 'todo'` (this repo's setting in
+`.storybook/preview.tsx`), axe violations surface ONLY as amber markers in
+the Storybook UI — CLI runs stay green and even `--reporter=verbose` shows
+nothing. To get the concrete violations, either:
+- temporarily set `a11y: { test: 'error' }` and run the storybook project, or
+- run axe directly against the story iframes with Playwright: load
+  `node_modules/axe-core/axe.min.js` into
+  `http://localhost:6006/iframe.html?id=<story-id>&viewMode=story` and call
+  `axe.run(document.getElementById('storybook-root'))` (story ids come from
+  `http://localhost:6006/index.json`).
+
+Recurring real findings this caught: `aria-label` on a plain `<span>`
+(prohibited — needs `role="img"`), insufficient text color contrast
+(status-tone text on surface), and an unlabeled Radix Select trigger
+(`FormControl` must wrap `SelectTrigger`, not the DOM-less `Select` root).
