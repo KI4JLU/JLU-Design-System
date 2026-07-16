@@ -1,0 +1,44 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as TableLayoutStories from "./table-layout.stories";
+
+<Meta of={TableLayoutStories} />
+
+# TableLayout
+
+Tabellen-/Admin-Seiten: `PageHeader` mit Aktionen, eine `Card` mit optionaler
+Toolbar (Suche/Filter), der Tabelle als `children` in einer horizontal
+scrollbaren Zone und optionalem Footer (Pagination). Sortier-, Filter- und
+Paginierungs-Logik bleibt in der App.
+
+<Canvas of={TableLayoutStories.Admin} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `title` | `ReactNode` | ✅ | Seitentitel (`<h1>`). |
+| `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
+| `actions` | `ReactNode` | — | Rechte Header-Aktionen (z. B. „Neu anlegen"). |
+| `toolbar` | `ReactNode` | — | Such-/Filterzeile in der Karte, über der Tabelle. |
+| `children` | `ReactNode` | ✅ | Die Tabelle (`<table>` mit Token-Klassen oder eine künftige Table-Komponente). |
+| `footer` | `ReactNode` | — | Zeile unter der Tabelle: Trefferzahl links, Pagination rechts. |
+
+<Controls />
+
+## Responsives Verhalten
+
+- Voller `Container` mit Token-Seitenrändern; Header stapelt auf Mobil.
+- Breite Tabellen scrollen **innerhalb der Karte** horizontal
+  (`overflow-x-auto`) — die Seite selbst bricht nie horizontal aus.
+- Toolbar und Footer sind `flex-wrap`: Filter brechen auf schmalen Screens um.
+
+## Do's & Don'ts
+
+- ✅ Status-Spalten mit `Badge tone=…` füllen; Zeilenaktionen als
+  `DropdownMenu`.
+- ✅ Tabellenfarben nur über Token (`border-outline-variant`,
+  `text-on-surface-variant`).
+- ❌ Tabellenspalten nicht per Schrift-Verkleinerung „passend machen" — breite
+  Tabellen scrollen horizontal.
+- ❌ Keine Filter-/Sortierlogik ins Template; die Toolbar ist ein Slot, keine
+  Feature-Komponente.

@@ -1,6 +1,6 @@
 {
   "name": "@ki4jlu/design-system",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "description": "JLU design system: design tokens, light/dark theming, and shared React UI components for JLU projects — consumed as a dependency for a unified look and feel.",
   "type": "module",
   "license": "UNLICENSED",
@@ -37,7 +37,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "storybook": "LAUNCH_EDITOR=code storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "chromatic": "chromatic"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -76,6 +77,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/browser-playwright": "4.1.10",
     "@vitest/coverage-v8": "4.1.10",
+    "chromatic": "^18.0.1",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",

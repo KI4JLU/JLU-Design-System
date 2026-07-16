@@ -1,0 +1,41 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as AppShellLayoutStories from "./app-shell-layout.stories";
+
+<Meta of={AppShellLayoutStories} />
+
+# AppShellLayout
+
+Das komplette App-Gerüst: gebrandete Sidebar (Logo, Navigation, gepinnter
+Footer) plus responsiver Hauptbereich. Apps importieren dieses Template und
+befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
+
+<Canvas of={AppShellLayoutStories.WithDashboard} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `logo` | `ReactNode` | ✅ | Markenblock — erscheint im Sidebar-Header **und** in der mobilen Top-Bar. |
+| `nav` | `ReactNode` | ✅ | Navigations-Einträge, typischerweise `<NavItem>`s (mit `asChild` für Router-Links). |
+| `sidebarFooter` | `ReactNode` | — | Gepinnter Sidebar-Fuß: Nutzermenü, `<ThemeToggle>`. |
+| `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
+| `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
+
+<Controls />
+
+## Responsives Verhalten
+
+- **ab `lg`**: feste, sticky Sidebar (volle Höhe, rechter Rand), Inhalt daneben.
+- **unter `lg`**: Sidebar wird zum linken **Drawer** (Radix Dialog: Fokusfalle,
+  Escape schließt, Scroll-Lock), geöffnet über den Menü-Button der sticky
+  Top-Bar. Ein Klick auf einen Link im Drawer schließt ihn automatisch.
+
+## Do's & Don'ts
+
+- ✅ Aktiven Zustand über `NavItem active` setzen (setzt `aria-current="page"`).
+- ✅ Seiteninhalt als Template (`DashboardLayout` etc.) einhängen — Templates
+  komponieren ineinander.
+- ❌ Keine eigene Sidebar/Top-Bar in der App bauen oder das Template per
+  `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
+- ❌ Keine Business-Logik hinein reichen: Routing und Active-State leben in den
+  injizierten `NavItem`s, nicht im Template.

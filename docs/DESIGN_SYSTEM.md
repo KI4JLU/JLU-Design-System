@@ -128,6 +128,38 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
 
+*(Inventory above predates v0.9.0; Avatar, Badge dot, ChatBubble, Checkbox,
+DropdownMenu, Popover, Select, Spinner are documented in Storybook and the
+Changelog cards on the board.)*
+
+### Layout primitives (`src/components/`)
+Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
+`margin-page`, `container-max`, radius, colors) — no raw pixel values.
+
+| Component | File | Notes |
+|-----------|------|-------|
+| `Stack` (+ `stackVariants`) | `stack.tsx` / `stack-variants.ts` | 1-D flex: `direction` column/row, `gap` = spacing tokens, align/justify/wrap; `asChild` for semantic elements |
+| `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
+| `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`, max `container-max`; `size="narrow"` for forms |
+| `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
+| `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
+| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer |
+
+### Page templates (`src/templates/`)
+One template per page category of the migration order — real importable
+components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
+`ChatLayout`, `TableLayout`). Rules:
+
+- Templates are **layout composition only**: slots (`ReactNode` props) for
+  injected content, no business logic, no data fetching.
+- Responsive behavior lives **inside** the template (sidebar collapse, grid
+  breaks, mobile action stacking) — consuming apps write no breakpoint ladders.
+- Apps **import** templates; they never rebuild a page skeleton. If a template
+  doesn't fit, extend it here (owner review), don't fork it in the app.
+- Each template has a story under `Templates/` (content composed from existing
+  component stories via portable stories) and an MDX page documenting slots,
+  responsive behavior, and do's/don'ts.
+
 ### Tooling & enforcement
 - **Lint gate** — the shipped ESLint plugin
   ([`eslint-plugin/index.js`](../eslint-plugin/index.js), exported as
@@ -149,6 +181,14 @@ consuming repo** — new exceptions get the same scrutiny there.
   props tables, a11y addon, MDX pages (Einführung / Tokens / Theming), theme
   toolbar switching light/dark/system live via the real ThemeProvider.
 - **Review gate** — [`.github/CODEOWNERS`](../.github/CODEOWNERS).
+- **Visual regression** — Chromatic
+  ([`.github/workflows/chromatic.yml`](../.github/workflows/chromatic.yml)):
+  snapshots every story on each PR; template stories additionally in a mode
+  matrix (light/dark × desktop/mobile, `src/templates/chromatic-modes.ts`), so
+  layout regressions are caught at the **composition** level, not only per
+  component. Changed snapshots fail the check until the owner accepts them in
+  the Chromatic UI. One-time setup: add the repo secret
+  `CHROMATIC_PROJECT_TOKEN` (job skips while it's missing).
 
 ---
 
@@ -177,6 +217,20 @@ Minimum bar for every shared component:
 3. Add a `*.stories.tsx` next to the component (Storybook is the documentation).
 4. New variants need explicit owner review.
 
+**Adding a template (`src/templates/`)**
+1. Compose **only** layout primitives + existing shared components; layout
+   values only via tokens. Single responsibility: slots in, skeleton out — no
+   business logic.
+2. Responsive behavior (breakpoints, collapse) belongs inside the template.
+3. Add a story under `Templates/` — reuse existing component stories via
+   portable stories (`composeStories`) instead of re-mocking content — plus an
+   MDX page (slots/props, responsive behavior, do's/don'ts). Set
+   `chromatic: { modes: templateChromaticModes }` so the template is
+   snapshotted in both themes and at mobile width.
+4. **No template is used in an app before its PR is reviewed** (CODEOWNERS
+   requests the owner) **and its Chromatic snapshots are accepted.** Both-theme
+   visual QA (§3) applies.
+
 ---
 
 ## 7. Versioning & Changelog
@@ -186,6 +240,17 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.19.0** — Layout layer: primitives `Stack`, `Grid`, `Container`,
+  `PageHeader`, `Sidebar`, `AppShell` (token-only layout values, responsive
+  behavior built in — sidebar collapses into a Radix-Dialog drawer below lg)
+  and page templates `AppShellLayout`, `AuthLayout`, `DashboardLayout`,
+  `FormLayout`, `ChatLayout`, `TableLayout` under `src/templates/` (slot-based,
+  layout-composition only). Storybook group `Templates/` with portable-story
+  content + MDX docs per template; Chromatic workflow with a per-template mode
+  matrix (light/dark × desktop/mobile); template contribution process in §6.
+  `cn()` classGroups extended with the named spacing tokens (`gap-stack-md` vs
+  `gap-gutter` now merge correctly). *(Entries 0.9.0–0.18.1 were tracked on
+  the board and in Storybook; this file's changelog resumes here.)*
 - **0.8.1** — `layout-only-classname` refinement: single-side paddings
   (`pl-9` icon insets) count as layout and are no longer flagged; only
   symmetric `p-/px-/py-` shrinking is skin.

@@ -9,6 +9,11 @@ import { extendTailwindMerge } from "tailwind-merge"
  * currentColor SVG icons un-inverted. Same ambiguity for `shadow-card` vs
  * shadow colors. Keep these lists in sync with the scales in tokens.css.
  */
+/** Named spacing tokens (tokens.css `--spacing-*`) used by gap/padding/margin
+ * utilities — without these, tailwind-merge can't resolve e.g.
+ * cn("gap-stack-md", "gap-gutter") and keeps both classes. */
+const spacingTokens = ["gutter", "stack-sm", "stack-md", "stack-lg", "margin-page"]
+
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
@@ -26,6 +31,23 @@ const twMerge = extendTailwindMerge({
       ],
       shadow: [{ shadow: ["card", "card-hover", "overlay"] }],
       rounded: [{ rounded: ["action", "field"] }],
+      gap: [{ gap: spacingTokens }],
+      "gap-x": [{ "gap-x": spacingTokens }],
+      "gap-y": [{ "gap-y": spacingTokens }],
+      p: [{ p: spacingTokens }],
+      px: [{ px: spacingTokens }],
+      py: [{ py: spacingTokens }],
+      pt: [{ pt: spacingTokens }],
+      pr: [{ pr: spacingTokens }],
+      pb: [{ pb: spacingTokens }],
+      pl: [{ pl: spacingTokens }],
+      m: [{ m: spacingTokens }],
+      mx: [{ mx: spacingTokens }],
+      my: [{ my: spacingTokens }],
+      mt: [{ mt: spacingTokens }],
+      mr: [{ mr: spacingTokens }],
+      mb: [{ mb: spacingTokens }],
+      ml: [{ ml: spacingTokens }],
     },
   },
 })
