@@ -116,9 +116,11 @@ const DS_CONTROLS = [
   "CodeBlock",
 ];
 
-// Positive paddings (p-2, px-1.5, p-[3px] — not p-0), font sizes (text-xs,
+// Positive SYMMETRIC paddings (p-2, px-1.5, p-[3px] — not p-0): the
+// shrink-to-fit hack. Single-side paddings (pl-9, pr-10) are layout insets
+// for overlaid icons/affordances and stay allowed. Font sizes (text-xs,
 // text-[10px]), font families, line-height/tracking, wrapping/clipping.
-const paddingRe = /^(?:p|px|py|pt|pb|pl|pr)-(?!0$)(?:\d|\[)/;
+const paddingRe = /^(?:p|px|py)-(?!0$)(?:\d|\[)/;
 const skinRe =
   /^(?:text-(?:xs|sm|base|lg|xl|\dxl)$|text-\[[\d.]+(?:px|rem|em)\]$|font-(?:mono|sans|serif)$|leading-|tracking-|whitespace-|break-(?:words|all)$|truncate$)/;
 

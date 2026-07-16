@@ -186,6 +186,9 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.8.1** — `layout-only-classname` refinement: single-side paddings
+  (`pl-9` icon insets) count as layout and are no longer flagged; only
+  symmetric `p-/px-/py-` shrinking is skin.
 - **0.8.0** — New lint rule `design-system/layout-only-classname` (warn):
   skin classes on design-system controls (paddings, font sizes/families,
   line-height, wrap/truncate) are flagged — className is layout-only, and
