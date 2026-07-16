@@ -30,4 +30,21 @@ describe("Button", () => {
     render(<Button disabled>Aus</Button>);
     expect(screen.getByRole("button")).toBeDisabled();
   });
+
+  it("styles the pressed state of outline toggles via aria-pressed", () => {
+    render(
+      <Button variant="outline" aria-pressed>
+        Filter
+      </Button>,
+    );
+    const button = screen.getByRole("button", { pressed: true });
+    expect(button.className).toContain("aria-[pressed=true]:text-primary");
+  });
+
+  it("renders the semantic outline and ghost-destructive variants", () => {
+    const { rerender } = render(<Button variant="primary-outline">Aktivieren</Button>);
+    expect(screen.getByRole("button")).toHaveClass("border-primary", "text-primary");
+    rerender(<Button variant="ghost-destructive">Löschen</Button>);
+    expect(screen.getByRole("button")).toHaveClass("text-error");
+  });
 });
