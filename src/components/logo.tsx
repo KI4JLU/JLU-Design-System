@@ -4,12 +4,13 @@ import { cn } from "../lib/utils";
 import { logoVariants } from "./logo-variants";
 
 /**
- * Platform wordmark: prefix ("JLU") + product name in a primary badge —
+ * Platform wordmark: prefix ("JLU") + product name in a brand badge —
  * „JLU [CampusAgents]", „JLU [API]", „JLU [RAG]". Formalizes the brand
- * template as a component: colors come from tokens (`text-on-surface`,
- * `bg-primary`/`text-on-primary`), so the logo switches with the theme
- * instead of carrying hardcoded brand hex values. Renders real text —
- * screen readers read „JLU CampusAgents" naturally, no aria needed.
+ * template as a component on the dedicated brand tokens: the badge
+ * (`bg-brand`/`text-on-brand`) stays brand-constant in both themes, the
+ * wordmark (`text-brand-wordmark`) inverts in dark mode for legibility.
+ * Renders real text — screen readers read „JLU CampusAgents" naturally,
+ * no aria needed.
  */
 export interface LogoProps
   extends React.HTMLAttributes<HTMLSpanElement>,
@@ -24,7 +25,7 @@ const Logo = React.forwardRef<HTMLSpanElement, LogoProps>(
   ({ className, size, product, prefix = "JLU", ...props }, ref) => (
     <span ref={ref} className={cn(logoVariants({ size, className }))} {...props}>
       {prefix}
-      <span className="rounded-[0.25em] bg-primary px-[0.4em] py-[0.18em] text-on-primary">
+      <span className="rounded-[0.25em] bg-brand px-[0.4em] py-[0.18em] text-on-brand">
         {product}
       </span>
     </span>

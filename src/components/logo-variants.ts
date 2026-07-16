@@ -6,7 +6,7 @@ import { cva } from "class-variance-authority";
  * proportions of the brand template (badge radius ≈ ¼ of its height).
  */
 export const logoVariants = cva(
-  "inline-flex items-center gap-[0.3em] whitespace-nowrap font-headline-md font-bold leading-none text-on-surface",
+  "inline-flex items-center gap-[0.3em] whitespace-nowrap font-headline-md font-bold leading-none text-brand-wordmark",
   {
     variants: {
       size: {

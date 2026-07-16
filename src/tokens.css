@@ -23,6 +23,8 @@
   --p-blue-200: #adc6ff;
   --p-blue-300: #7cb3ff;
   --p-blue-600: #0052ff;
+  --p-blue-700: #0056b3;
+  --p-blue-800: #003366;
   --p-blue-900: #001a4d;
   --p-blue-950: #001433;
 
@@ -253,6 +255,17 @@
   --color-on-info-container: var(--p-teal-900);
 
   /* --------------------------------------------------------------------------
+   * BRAND — Plattform-Wortmarke (Logo: „JLU [CampusAgents]").
+   * Werte aus der Brand-Vorlage: Badge #0056b3, Prefix-Navy #003366.
+   * `brand`/`on-brand` (Badge) bleiben BEWUSST in beiden Themes gleich —
+   * Markenfarbe ist Identität (wie code-surface). Nur die Wortmarke
+   * (`brand-wordmark`) invertiert im Dark-Mode zur Lesbarkeit.
+   * ------------------------------------------------------------------------ */
+  --color-brand: var(--p-blue-700);
+  --color-on-brand: var(--p-white);
+  --color-brand-wordmark: var(--p-blue-800);
+
+  /* --------------------------------------------------------------------------
    * CODE-SURFACE — Editor-Optik für Code-/Terminal-Viewer (CodeBlock).
    * Diese Tokens schalten BEWUSST NICHT im Dark-Mode um (kein Override im
    * [data-theme="dark"]-Block): ein Code-Viewer bleibt in hell UND dunkel
@@ -355,6 +368,10 @@
     --color-on-info: var(--p-teal-900);
     --color-info-container: var(--p-teal-900);
     --color-on-info-container: var(--p-teal-200);
+
+    /* Brand: Badge bleibt markenkonstant (kein Override); nur die Wortmarke
+       wird hell, damit sie auf dunklem Grund lesbar ist. */
+    --color-brand-wordmark: var(--p-gray-125);
 
     /* Interaktions-Zustände: im Dunkeln hellt der Hover auf statt abzudunkeln. */
     --color-primary-hover: var(--p-blue-200);

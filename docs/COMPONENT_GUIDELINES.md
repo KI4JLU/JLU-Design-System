@@ -41,6 +41,7 @@ governance.
 | Info / pending | `text-info` / `bg-info-container text-on-info-container` |
 | Warning | `text-warning` / `bg-warning-container text-on-warning-container` |
 | Error / destructive | `text-error`; button: `<Button variant="destructive">` |
+| Brand wordmark (use `<Logo>`) | `text-brand-wordmark` (prefix) + `bg-brand text-on-brand` (badge); badge is theme-invariant |
 | Elevation | `shadow-card`, `hover:shadow-card-hover`, `shadow-overlay` |
 
 If you need a color with no matching token, **don't invent a hex** — propose a new
