@@ -22,6 +22,11 @@ describe("cn", () => {
     expect(cn("text-label-sm", "text-body-base")).toBe("text-body-base");
   });
 
+  it("resolves the semantic action radius against explicit radii", () => {
+    expect(cn("rounded-action", "rounded-none")).toBe("rounded-none");
+    expect(cn("rounded-lg", "rounded-action")).toBe("rounded-action");
+  });
+
   it("keeps elevation shadows distinct from shadow colors", () => {
     expect(cn("shadow-card", "shadow-black/20")).toBe(
       "shadow-card shadow-black/20",

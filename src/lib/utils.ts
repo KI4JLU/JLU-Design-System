@@ -25,6 +25,7 @@ const twMerge = extendTailwindMerge({
         },
       ],
       shadow: [{ shadow: ["card", "card-hover", "overlay"] }],
+      rounded: [{ rounded: ["action", "field"] }],
     },
   },
 })

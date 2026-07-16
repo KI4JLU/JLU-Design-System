@@ -12,7 +12,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       type={type}
       ref={ref}
       className={cn(
-        "w-full rounded-lg border border-outline-variant bg-surface px-4 py-3 text-on-surface outline-none transition-all",
+        "w-full rounded-field border border-outline-variant bg-surface px-4 py-3 text-on-surface outline-none transition-all",
         "placeholder:text-on-surface-variant",
         "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus-ring",
         "disabled:cursor-not-allowed disabled:opacity-60",

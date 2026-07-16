@@ -7,7 +7,7 @@ import { cva } from "class-variance-authority";
  * All colors reference semantic tokens — see docs/DESIGN_SYSTEM.md.
  */
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg font-label-sm text-label-sm whitespace-nowrap transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 rounded-action font-label-sm text-label-sm whitespace-nowrap transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
   {
     variants: {
       variant: {

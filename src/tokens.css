@@ -178,6 +178,12 @@
   --radius-xl: 0.75rem;
   --radius-full: 9999px;
 
+  /* Interaktions-Radien — EIN Regler pro Kontrollart. `rounded-action` steuert
+   * Buttons UND Navigations-Items gemeinsam (Pill-Look, Material-3-artig),
+   * `rounded-field` die Formularfelder. Hier ändern = überall geändert. */
+  --radius-action: var(--radius-full);
+  --radius-field: var(--radius-lg);
+
   /* Spacing tokens */
   --spacing-gutter: 24px;
   --spacing-stack-sm: 8px;

@@ -8,7 +8,7 @@ import { cva } from "class-variance-authority";
  * (font-label-sm) — that is the app's established look, kept 1:1.
  */
 export const navItemVariants = cva(
-  "flex w-full items-center rounded-full transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
+  "flex w-full items-center rounded-action transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
   {
     variants: {
       level: {

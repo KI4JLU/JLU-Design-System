@@ -54,6 +54,10 @@ Component  ─uses→  Semantic (--color-primary)  ─references→  Primitive (
   dark mode so series stay readable on dark surfaces.
 - **Typography / spacing / radius** — display/headline/label/stat/body scales,
   `spacing-gutter`/`stack-*`/`margin-page`, `radius-*`.
+- **Control radii** — `radius-action` (Buttons **and** NavItems, one dial:
+  default pill/`full`) and `radius-field` (Input/Textarea, default `lg`).
+  Change the token, every control follows — never hardcode a radius on a
+  control at a call site.
 
 Every semantic color token (light **and** dark) references a primitive via
 `var(--p-*)` — no literal hex in the `@theme` block or the dark block.
@@ -174,6 +178,11 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.5.0** — Semantic control radii: new tokens `--radius-action`
+  (Button + NavItem, default `full`) and `--radius-field` (Input/Textarea,
+  default `lg`). One token edit now changes the radius of all action controls
+  together. Visual delta: stock buttons are pill-shaped (previously
+  `rounded-lg`), matching the sidebar and the app's dominant pattern.
 - **0.4.0** — Added `MenuItem`: the standard row for dropdown menus,
   comboboxes, and popover menus (`selected`, keyboard `highlighted`,
   `destructive`, `asChild`). Replaces four almost-identical hand-rolled row
