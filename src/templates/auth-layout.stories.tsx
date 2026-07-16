@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
-import { Brain } from "lucide-react";
+import { Brain, KeyRound } from "lucide-react";
 import { AuthLayout } from "./auth-layout";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
@@ -23,6 +23,45 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const brand = (
+  <div className="flex items-center gap-stack-sm">
+    <Brain width="1.5em" height="1.5em" aria-hidden className="text-primary" />
+    <span className="font-headline-md text-headline-md-mobile">CampusAgents</span>
+  </div>
+);
+
+/**
+ * Der Standardfall: Single Sign-on über OIDC/Keycloak — ein einziger
+ * primärer Button, der zum Identity Provider weiterleitet. Keine lokalen
+ * Felder; der Redirect (`window.location`/Router) gehört in die App.
+ */
+export const SSO: Story = {
+  args: {
+    title: "Anmelden",
+    description: "Mit Ihrem JLU-Account über Single Sign-on.",
+  },
+  render: (args) => (
+    <AuthLayout
+      {...args}
+      logo={brand}
+      footer={
+        <span>
+          Probleme bei der Anmeldung?{" "}
+          <a href="#hilfe" className="underline underline-offset-4 hover:text-on-surface">
+            Hilfe zum JLU-Login
+          </a>
+        </span>
+      }
+    >
+      <Button className="w-full">
+        <KeyRound width="1em" height="1em" aria-hidden />
+        Mit JLU-Account anmelden
+      </Button>
+    </AuthLayout>
+  ),
+};
+
+/** Fallback-Variante für lokale Konten (ohne SSO) — Felder aus den Form-Primitives. */
 export const Login: Story = {
   args: {
     title: "Anmelden",
@@ -31,12 +70,7 @@ export const Login: Story = {
   render: (args) => (
     <AuthLayout
       {...args}
-      logo={
-        <div className="flex items-center gap-stack-sm">
-          <Brain width="1.5em" height="1.5em" aria-hidden className="text-primary" />
-          <span className="font-headline-md text-headline-md-mobile">CampusAgents</span>
-        </div>
-      }
+      logo={brand}
       footer={
         <a href="#passwort" className="underline underline-offset-4 hover:text-on-surface">
           Passwort vergessen?
