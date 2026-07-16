@@ -95,6 +95,7 @@
   --p-amber-200: #fde68a;
   --p-amber-400: #fbbf24;
   --p-amber-500: #d97706;
+  --p-amber-700: #b45309;
   --p-amber-900: #78350f;
 
   /* Ink / Emerald — Code-/Terminal-Viewer (Editor-Optik) */
@@ -240,7 +241,8 @@
   --color-success-container: var(--p-green-100);
   --color-on-success-container: var(--p-green-900);
 
-  --color-warning: var(--p-amber-500);
+  /* amber-700 statt -500: 4.5:1-Kontrast als Textfarbe auf Surface (WCAG AA) */
+  --color-warning: var(--p-amber-700);
   --color-on-warning: var(--p-white);
   --color-warning-container: var(--p-amber-100);
   --color-on-warning-container: var(--p-amber-900);

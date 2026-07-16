@@ -6,9 +6,10 @@ import { cn } from "../lib/utils";
  * `rounded-full bg-primary-container flex items-center justify-center`
  * circles (sidebar user, top app bar, conversation lists). The initials are
  * decorative on their own — give the avatar an accessible name via
- * `aria-label` (or `title`) when it is not accompanied by the user's name
- * as text. `online` renders a success dot with an sr-only "online" for
- * screen readers.
+ * `aria-label` when it is not accompanied by the user's name as text — the
+ * avatar then renders as `role="img"` (a plain span may not carry a label).
+ * Include the status in the label when using `online` (e.g. "Jane Doe,
+ * online"); without a label, `online` renders an sr-only "online" instead.
  */
 const avatarSizes = {
   sm: "h-8 w-8 text-xs",
@@ -32,7 +33,12 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
   ({ className, initials, size = "default", online = false, ...props }, ref) => (
-    <span ref={ref} className={cn("relative inline-flex shrink-0", className)} {...props}>
+    <span
+      ref={ref}
+      role={props["aria-label"] || props["aria-labelledby"] ? "img" : undefined}
+      className={cn("relative inline-flex shrink-0", className)}
+      {...props}
+    >
       <span
         aria-hidden="true"
         className={cn(

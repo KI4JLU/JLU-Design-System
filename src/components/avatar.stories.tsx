@@ -10,41 +10,41 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {
-  args: { initials: "SK", "aria-label": "Steffen Karcher" },
+  args: { initials: "JL", "aria-label": "Justus Liebig" },
 };
 
 export const Sizes: Story = {
-  args: { initials: "SK" },
+  args: { initials: "JL" },
   render: () => (
     <div className="flex items-center gap-4">
-      <Avatar initials="SK" size="sm" aria-label="Steffen Karcher" />
-      <Avatar initials="SK" aria-label="Steffen Karcher" />
-      <Avatar initials="SK" size="lg" aria-label="Steffen Karcher" />
+      <Avatar initials="JL" size="sm" aria-label="Justus Liebig" />
+      <Avatar initials="JL" aria-label="Justus Liebig" />
+      <Avatar initials="JL" size="lg" aria-label="Justus Liebig" />
     </div>
   ),
 };
 
-/** Präsenz-Punkt (`online`) — mit sr-only „online" für Screenreader. */
+/** Präsenz-Punkt (`online`) — Status gehört mit ins Label. */
 export const Online: Story = {
-  args: { initials: "SK" },
+  args: { initials: "JL" },
   render: () => (
     <div className="flex items-center gap-4">
-      <Avatar initials="KD" size="sm" online aria-label="Kateryna Dzhukh, online" />
-      <Avatar initials="KD" online aria-label="Kateryna Dzhukh, online" />
-      <Avatar initials="KD" size="lg" online aria-label="Kateryna Dzhukh, online" />
+      <Avatar initials="JL" size="sm" online aria-label="Justus Liebig, online" />
+      <Avatar initials="JL" online aria-label="Justus Liebig, online" />
+      <Avatar initials="JL" size="lg" online aria-label="Justus Liebig, online" />
     </div>
   ),
 };
 
 /** Typischer Einsatz: Avatar + Name/Meta in einer Zeile (Sidebar, Gesprächsliste). */
 export const WithText: Story = {
-  args: { initials: "SK" },
+  args: { initials: "JL" },
   render: () => (
     <div className="flex items-center gap-3">
-      <Avatar initials="NB" online />
+      <Avatar initials="JL" online />
       <div className="flex flex-col">
-        <span className="text-sm font-semibold text-on-surface">Niklas Bender</span>
-        <span className="text-xs text-on-surface-variant">niklas.bender@hrz.uni-giessen.de</span>
+        <span className="text-sm font-semibold text-on-surface">Justus Liebig</span>
+        <span className="text-xs text-on-surface-variant">justus.liebig@uni-giessen.de</span>
       </div>
     </div>
   ),
