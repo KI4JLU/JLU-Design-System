@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Search } from "lucide-react";
 import { Input } from "./input";
 
 const meta = {
@@ -20,6 +21,19 @@ export const Playground: Story = {};
 
 export const Disabled: Story = {
   args: { disabled: true, value: "Nicht editierbar" },
+};
+
+/**
+ * Suchfeld-Muster: dekoratives Icon im Feld (`leadingIcon`). Der zugängliche
+ * Name kommt weiterhin vom Label bzw. `aria-label`.
+ */
+export const LeadingIcon: Story = {
+  args: {
+    leadingIcon: <Search />,
+    type: "search",
+    "aria-label": "Konversationen durchsuchen",
+    placeholder: "Suchen…",
+  },
 };
 
 /** `aria-invalid` steuert die Fehler-Optik (rot + roter Fokusring). */
