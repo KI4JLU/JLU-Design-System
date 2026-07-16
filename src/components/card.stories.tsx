@@ -36,6 +36,45 @@ export const Basic: Story = {
   ),
 };
 
+/**
+ * Klickbare Karte im Grid: `interactive` hebt die Karte beim Hover an
+ * (Schatten + Translate). Für Tastatur-Nutzer gehört ein fokussierbares
+ * Element (Link/Button) in die Karte.
+ */
+export const Interactive: Story = {
+  render: () => (
+    <div className="grid max-w-2xl grid-cols-2 gap-4">
+      {["Prüfungsamt-Bot", "Bibliotheks-Bot"].map((name) => (
+        <Card key={name} interactive>
+          <CardHeader>
+            <CardTitle className="text-body-base">{name}</CardTitle>
+            <CardDescription>Zuletzt aktiv vor 2 Std.</CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button variant="outline" size="sm">
+              Öffnen
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  ),
+};
+
+/** Schritt-/Callout-Karte mit linkem Akzentrand (`accent`). */
+export const Accent: Story = {
+  render: () => (
+    <Card accent className="max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-body-base">Schritt 1: Skript einbinden</CardTitle>
+        <CardDescription>
+          Fügen Sie das Snippet vor dem schließenden <code>&lt;/body&gt;</code> ein.
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  ),
+};
+
 /** Card hat kein Default-Padding — ohne Sub-Parts Padding selbst setzen. */
 export const PaddedContainer: Story = {
   render: () => (

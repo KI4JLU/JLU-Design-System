@@ -14,6 +14,7 @@ export { Button, type ButtonProps } from "./components/button";
 export { buttonVariants } from "./components/button-variants";
 export {
   Card,
+  type CardProps,
   CardHeader,
   CardTitle,
   CardDescription,
