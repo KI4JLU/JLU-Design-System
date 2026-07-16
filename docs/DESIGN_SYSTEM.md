@@ -256,7 +256,14 @@ change here.
   template's exact values: primitives `--p-blue-700` (#0056b3) /
   `--p-blue-800` (#003366); semantic `--color-brand` + `--color-on-brand`
   (badge, deliberately theme-invariant like `code-surface`) and
-  `--color-brand-wordmark` (#003366 light / `--p-gray-125` dark). AuthLayout's primary documented pattern is SSO
+  `--color-brand-wordmark` (#003366 light / `--p-gray-125` dark). The brand
+  blue is also the new **primary base**: every semantic token that referenced
+  `--p-blue-600` (#0052ff) — `primary`, `primary-container`, `surface-tint`,
+  `focus-ring`, `chart-1`, dark `chart-2` — now points at `--p-blue-700`
+  (#0056b3), so brand and primary action share one color. Visual delta:
+  primary buttons/active nav shift from vivid blue to the deeper brand blue
+  (white-on-primary contrast improves). `--p-blue-600` stays in the palette,
+  currently unreferenced. AuthLayout's primary documented pattern is SSO
   (OIDC/Keycloak, single sign-in button); email/password is the local-account
   fallback. *(Entries 0.9.0–0.18.1 were tracked on the board and in
   Storybook; this file's changelog resumes here.)*
