@@ -36,7 +36,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "LAUNCH_EDITOR=code storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "peerDependencies": {
@@ -60,6 +60,7 @@
     "@eslint/js": "^10.0.1",
     "@storybook/addon-a11y": "^10.5.0",
     "@storybook/addon-docs": "^10.5.0",
+    "@storybook/addon-vitest": "^10.5.0",
     "@storybook/react-vite": "^10.5.0",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
@@ -83,6 +84,9 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vite-plugin-dts": "^5.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@vitest/browser-playwright": "4.1.10",
+    "@vitest/coverage-v8": "4.1.10",
+    "playwright": "^1.61.1"
   }
 }
