@@ -40,17 +40,17 @@ export const SelectMenu: Story = {
 export const PopoverMenu: Story = {
   render: () => (
     <div className="w-64 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-overlay">
-      <MenuItem asChild className="border-b border-outline-variant px-4 py-3">
+      <MenuItem asChild className="border-b border-outline-variant">
         <a href="#portal" target="_blank" rel="noopener noreferrer">
           <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
           Mock-Widget-Portal
         </a>
       </MenuItem>
-      <MenuItem type="button" className="px-4 py-3">
+      <MenuItem type="button">
         <Bot className="text-[18px]" width="1em" height="1em" aria-hidden />
         Modell wechseln
       </MenuItem>
-      <MenuItem type="button" variant="destructive" className="px-4 py-3">
+      <MenuItem type="button" variant="destructive">
         <LogOut className="text-[18px]" width="1em" height="1em" aria-hidden />
         Abmelden
       </MenuItem>

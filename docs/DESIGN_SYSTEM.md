@@ -140,6 +140,11 @@ consuming repo** — new exceptions get the same scrutiny there.
     `<button>`/`<input>` that should be `Button`/`Input`. Warn, not error,
     because some low-level controls (dropdown internals, range/color inputs,
     textareas) legitimately stay raw.
+  - `design-system/layout-only-classname` (**warn**) — flags skin classes
+    (positive paddings, font sizes/families, line-height, wrap/truncate) in
+    `className` on design-system controls. Encodes guideline rules 4 and 5:
+    looks belong in variants; controls are never shrunk to fit. `p-0` and
+    padding on `variant="inline"` fields are allowed.
 - **Component workbench & docs** — Storybook (`npm run storybook`): autodocs
   props tables, a11y addon, MDX pages (Einführung / Tokens / Theming), theme
   toolbar switching light/dark/system live via the real ThemeProvider.
@@ -181,6 +186,11 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.8.0** — New lint rule `design-system/layout-only-classname` (warn):
+  skin classes on design-system controls (paddings, font sizes/families,
+  line-height, wrap/truncate) are flagged — className is layout-only, and
+  controls are never shrunk to fit (guidelines rules 4+5, prompted by the
+  squeezed three-button footer on the connector cards).
 - **0.7.0** — Transferred former call-site exceptions into the system:
   Button `destructive-outline`, Input/Textarea `inline` variant (shared
   `fieldVariants` cva), `CodeBlock` (token-backed fixed-dark code viewer with

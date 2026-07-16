@@ -18,7 +18,13 @@ governance.
    placement, `ml-auto`). Never re-skin a component at the call site (colors,
    padding, typography) — that makes the app diverge from Storybook. If a
    component doesn't look right, add/change a variant in the design system;
-   Storybook and every app then stay 1:1.
+   Storybook and every app then stay 1:1. Enforced by
+   `design-system/layout-only-classname` (warn).
+5. **Controls are never shrunk to fit.** A button's label must fit at its
+   stock size — no `leading-tight`, `break-words`, `truncate`, or crushed
+   paddings to squeeze it in. If the space can't hold the actions, reduce the
+   number of actions or switch to icon buttons with `aria-label`. (Origin:
+   three squeezed footer buttons on the connector cards.)
 
 ## Colors → tokens cheat sheet
 

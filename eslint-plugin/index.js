@@ -88,9 +88,109 @@ const noRawUiElements = {
   },
 };
 
+/**
+ * design-system/layout-only-classname (warn)
+ *
+ * className on design-system controls is layout-only (COMPONENT_GUIDELINES
+ * rule 4). Flags "skin" classes that re-style a control at the call site —
+ * positive paddings, font sizes, font families, line-height/tracking, and
+ * text wrapping/clipping utilities. These are exactly the hacks that shrink
+ * a button until its label no longer fits (the WidgetCard footer bug): if a
+ * control doesn't fit, reduce the number of actions or use an icon button
+ * with aria-label — never shrink the control.
+ *
+ * Allowed: zero paddings (p-0 — the sanctioned flush/inline pattern) and any
+ * padding on fields with variant="inline" (the surrounding frame owns the
+ * spacing there). Genuine exceptions get an eslint-disable with a reason.
+ */
+const DS_CONTROLS = [
+  "Button",
+  "Input",
+  "Textarea",
+  "Badge",
+  "MenuItem",
+  "NavItem",
+  "Switch",
+  "SegmentedControl",
+  "ThemeToggle",
+  "CodeBlock",
+];
+
+// Positive paddings (p-2, px-1.5, p-[3px] — not p-0), font sizes (text-xs,
+// text-[10px]), font families, line-height/tracking, wrapping/clipping.
+const paddingRe = /^(?:p|px|py|pt|pb|pl|pr)-(?!0$)(?:\d|\[)/;
+const skinRe =
+  /^(?:text-(?:xs|sm|base|lg|xl|\dxl)$|text-\[[\d.]+(?:px|rem|em)\]$|font-(?:mono|sans|serif)$|leading-|tracking-|whitespace-|break-(?:words|all)$|truncate$)/;
+
+const layoutOnlyClassname = {
+  meta: {
+    type: "suggestion",
+    docs: {
+      description:
+        "className on design-system controls is layout-only; move looks into variants.",
+    },
+    messages: {
+      skin:
+        "Skin class '{{cls}}' on <{{component}}> — className on design-system controls is layout-only (COMPONENT_GUIDELINES rule 4). Move the look into a variant/size, or add an eslint-disable with a reason.",
+    },
+    schema: [],
+  },
+  create(context) {
+    const check = (text, component, node, allowPadding) => {
+      if (typeof text !== "string") return;
+      for (const raw of text.split(/\s+/)) {
+        if (!raw) continue;
+        const cls = raw.split(":").pop();
+        const isSkin = skinRe.test(cls) || (!allowPadding && paddingRe.test(cls));
+        if (isSkin) context.report({ node, messageId: "skin", data: { cls: raw, component } });
+      }
+    };
+    const visit = (v, component, node, allowPadding) => {
+      if (!v) return;
+      switch (v.type) {
+        case "Literal":
+          check(v.value, component, node, allowPadding);
+          break;
+        case "TemplateLiteral":
+          v.quasis.forEach((q) => check(q.value && q.value.cooked, component, node, allowPadding));
+          v.expressions.forEach((e) => visit(e, component, node, allowPadding));
+          break;
+        case "ConditionalExpression":
+          visit(v.consequent, component, node, allowPadding);
+          visit(v.alternate, component, node, allowPadding);
+          break;
+        case "LogicalExpression":
+          visit(v.right, component, node, allowPadding);
+          break;
+        case "JSXExpressionContainer":
+          visit(v.expression, component, node, allowPadding);
+          break;
+      }
+    };
+    return {
+      JSXOpeningElement(node) {
+        if (node.name.type !== "JSXIdentifier" || !DS_CONTROLS.includes(node.name.name)) return;
+        const attrs = node.attributes.filter((a) => a.type === "JSXAttribute");
+        const classNameAttr = attrs.find((a) => a.name.name === "className");
+        if (!classNameAttr || !classNameAttr.value) return;
+        // Inline fields removed their own padding; the call site provides the
+        // spacing inside the surrounding frame — padding is layout there.
+        const variantAttr = attrs.find((a) => a.name.name === "variant");
+        const allowPadding =
+          !!variantAttr &&
+          !!variantAttr.value &&
+          variantAttr.value.type === "Literal" &&
+          variantAttr.value.value === "inline";
+        visit(classNameAttr.value, node.name.name, classNameAttr, allowPadding);
+      },
+    };
+  },
+};
+
 export default {
   rules: {
     "no-hardcoded-colors": noHardcodedColors,
     "no-raw-ui-elements": noRawUiElements,
+    "layout-only-classname": layoutOnlyClassname,
   },
 };

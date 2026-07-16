@@ -29,6 +29,8 @@ export default defineConfig([globalIgnores(["dist", "storybook-static"]), {
     // The library defines the primitives, so raw <button>/<input> are the
     // point here — the raw-elements rule targets consumers, not this repo.
     "design-system/no-raw-ui-elements": "off",
+    // Stories are consumer examples — they must obey the layout-only rule.
+    "design-system/layout-only-classname": "warn",
   },
 }, {
   // Stories and Storybook config aren't part of the shipped library —
