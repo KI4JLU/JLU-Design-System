@@ -19,6 +19,7 @@ export {
   CardContent,
   CardFooter,
 } from "./components/card";
+export { Checkbox } from "./components/checkbox";
 export { CodeBlock, type CodeBlockProps } from "./components/code-block";
 export {
   Dialog,
