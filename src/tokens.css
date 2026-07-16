@@ -97,6 +97,11 @@
   --p-amber-500: #d97706;
   --p-amber-900: #78350f;
 
+  /* Ink / Emerald — Code-/Terminal-Viewer (Editor-Optik) */
+  --p-ink-900: #1e1e2e;
+  --p-ink-100: #f1f5f9;
+  --p-emerald-300: #6ee7b7;
+
   /* Teal (info) */
   --p-teal-100: #ccfbf1;
   --p-teal-200: #99f6e4;
@@ -244,6 +249,16 @@
   --color-on-info: var(--p-white);
   --color-info-container: var(--p-teal-100);
   --color-on-info-container: var(--p-teal-900);
+
+  /* --------------------------------------------------------------------------
+   * CODE-SURFACE — Editor-Optik für Code-/Terminal-Viewer (CodeBlock).
+   * Diese Tokens schalten BEWUSST NICHT im Dark-Mode um (kein Override im
+   * [data-theme="dark"]-Block): ein Code-Viewer bleibt in hell UND dunkel
+   * identisch dunkel, wie ein Editor-Fenster.
+   * ------------------------------------------------------------------------ */
+  --color-code-surface: var(--p-ink-900);
+  --color-on-code-surface: var(--p-ink-100);
+  --color-code-accent: var(--p-emerald-300);
 
   /* --------------------------------------------------------------------------
    * INTERAKTIONS-ZUSTÄNDE (hover/active/focus/disabled)

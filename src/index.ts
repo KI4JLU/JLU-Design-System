@@ -19,6 +19,7 @@ export {
   CardContent,
   CardFooter,
 } from "./components/card";
+export { CodeBlock, type CodeBlockProps } from "./components/code-block";
 export {
   Dialog,
   DialogPortal,
@@ -31,6 +32,7 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./components/dialog";
+export { fieldVariants } from "./components/field-variants";
 export {
   FormItem,
   FormLabel,
@@ -38,14 +40,19 @@ export {
   FormDescription,
   FormMessage,
 } from "./components/form";
-export { Input } from "./components/input";
+export { Input, type InputProps } from "./components/input";
 export { Label } from "./components/label";
 export { MenuItem, type MenuItemProps } from "./components/menu-item";
 export { menuItemVariants } from "./components/menu-item-variants";
 export { NavItem, type NavItemProps } from "./components/nav-item";
 export { navItemVariants } from "./components/nav-item-variants";
+export {
+  SegmentedControl,
+  type SegmentedControlOption,
+  type SegmentedControlProps,
+} from "./components/segmented-control";
 export { Switch } from "./components/switch";
-export { Textarea } from "./components/textarea";
+export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle } from "./components/theme-toggle";
 export {
   ThemeProvider,

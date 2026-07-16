@@ -1,27 +1,32 @@
 import * as React from "react";
+import { type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
+import { fieldVariants } from "./field-variants";
 
 /**
  * Shared multiline text field. Mirrors <Input> styling (tokens, focus ring,
- * `aria-invalid` validation optics) for raw <textarea> call sites.
+ * `aria-invalid` validation optics) via the shared fieldVariants.
+ * `variant="inline"` is the borderless in-flow field for composers inside
+ * Cards; min-height and the resize handle only make sense on the framed
+ * default variant, so they are applied conditionally.
  */
-const Textarea = React.forwardRef<
-  HTMLTextAreaElement,
-  React.ComponentProps<"textarea">
->(({ className, ...props }, ref) => (
-  <textarea
-    ref={ref}
-    className={cn(
-      "min-h-24 w-full rounded-field border border-outline-variant bg-surface px-4 py-3 text-on-surface outline-none transition-all",
-      "placeholder:text-on-surface-variant",
-      "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus-ring",
-      "disabled:cursor-not-allowed disabled:opacity-60",
-      "aria-[invalid=true]:border-error aria-[invalid=true]:focus-visible:ring-error",
-      className,
-    )}
-    {...props}
-  />
-));
+export interface TextareaProps
+  extends React.ComponentProps<"textarea">,
+    VariantProps<typeof fieldVariants> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, variant, ...props }, ref) => (
+    <textarea
+      ref={ref}
+      className={cn(
+        fieldVariants({ variant }),
+        (variant ?? "default") === "default" && "min-h-24 resize-y",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
 Textarea.displayName = "Textarea";
 
 export { Textarea };

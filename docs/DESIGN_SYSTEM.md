@@ -114,16 +114,18 @@ consuming repo** — new exceptions get the same scrutiny there.
 | Component | File | Notes |
 |-----------|------|-------|
 | `Badge` (+ `badgeVariants`) | `badge.tsx` / `badge-variants.ts` | status chip: `tone` = neutral/primary/secondary/success/warning/error/info; `appearance` = filled pill or inline text |
-| `Button` (+ `buttonVariants`) | `button.tsx` / `button-variants.ts` | variants: default/secondary/outline/ghost/destructive/link; sizes: default/sm/lg/icon; `asChild` via Radix Slot |
+| `Button` (+ `buttonVariants`) | `button.tsx` / `button-variants.ts` | variants: default/secondary/outline/ghost/destructive/destructive-outline/link; sizes: default/sm/lg/icon; `asChild` via Radix Slot |
 | `Card` (+ Header/Title/Description/Content/Footer) | `card.tsx` | surface + border + `shadow-card` |
-| `Input` | `input.tsx` | honors `aria-invalid` styling |
+| `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
+| `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links |
+| `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
-| `Textarea` | `textarea.tsx` | mirrors `Input` (tokens, focus ring, `aria-invalid`) |
+| `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
 
 ### Tooling & enforcement
@@ -179,6 +181,11 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.7.0** — Transferred former call-site exceptions into the system:
+  Button `destructive-outline`, Input/Textarea `inline` variant (shared
+  `fieldVariants` cva), `CodeBlock` (token-backed fixed-dark code viewer with
+  copy), `SegmentedControl`. New `code-surface` tokens (deliberately
+  theme-invariant — no dark-block override).
 - **0.6.0** — Added `Badge`: the status chip. `tone` speaks the semantic
   status vocabulary, `appearance` covers both recurring shapes — filled
   container pill (status labels, KPI deltas) and inline tone-colored

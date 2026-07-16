@@ -1,0 +1,36 @@
+import { cva } from "class-variance-authority";
+
+/**
+ * Field style variants (cva), shared by Input and Textarea so both fields
+ * speak the same vocabulary. Kept in its own module (see button-variants.ts)
+ * so files can share it without tripping react-refresh's
+ * "only export components" rule.
+ *
+ * `default` — the framed form field (border, surface, focus ring).
+ * `inline` — borderless in-flow field for composers inside Cards and in-row
+ * editing (the surrounding row/Card provides the frame, so the field itself
+ * carries no border, padding, or focus ring).
+ */
+export const fieldVariants = cva(
+  [
+    "w-full text-on-surface outline-none transition-all",
+    "placeholder:text-on-surface-variant",
+    "disabled:cursor-not-allowed disabled:opacity-60",
+    "aria-[invalid=true]:border-error aria-[invalid=true]:focus-visible:ring-error",
+  ],
+  {
+    variants: {
+      variant: {
+        default: [
+          "rounded-field border border-outline-variant bg-surface px-4 py-3",
+          "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus-ring",
+        ],
+        inline:
+          "rounded-none border-0 bg-transparent p-0 text-sm focus-visible:ring-0",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);

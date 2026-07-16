@@ -18,6 +18,8 @@ export const buttonVariants = cva(
           "border border-outline-variant bg-transparent text-on-surface hover:bg-surface-container-high",
         ghost: "text-on-surface hover:bg-surface-container-high",
         destructive: "bg-error text-on-error shadow-sm hover:brightness-110",
+        "destructive-outline":
+          "border border-error bg-transparent text-error hover:bg-error hover:text-on-error",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
