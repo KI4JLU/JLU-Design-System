@@ -38,6 +38,8 @@ export {
 } from "./components/form";
 export { Input } from "./components/input";
 export { Label } from "./components/label";
+export { NavItem, type NavItemProps } from "./components/nav-item";
+export { navItemVariants } from "./components/nav-item-variants";
 export { Switch } from "./components/switch";
 export { Textarea } from "./components/textarea";
 export { ThemeToggle } from "./components/theme-toggle";

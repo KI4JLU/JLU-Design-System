@@ -115,6 +115,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Label` | `label.tsx` | Radix Label |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
+| `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` | `textarea.tsx` | mirrors `Input` (tokens, focus ring, `aria-invalid`) |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
@@ -172,6 +173,11 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.3.0** — Added `NavItem` (sidebar/menu navigation row): levels top/sub,
+  active state with `aria-current="page"`, `asChild` for router links.
+  Formalizes the CampusAgents sidebar pattern so apps carry no skin classes
+  and Storybook matches the apps 1:1. New rule documented in
+  COMPONENT_GUIDELINES: `className` on shared components is layout-only.
 - **0.2.1** — Fix: `cn()` now uses `extendTailwindMerge` configured with our
   custom font-size scale (`text-body-base`, `text-label-sm`, …) and elevation
   shadows. Plain tailwind-merge lumped custom sizes and custom colors into one

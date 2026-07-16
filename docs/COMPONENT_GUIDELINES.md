@@ -14,6 +14,11 @@ governance.
    Never `bg-blue-500`, `text-gray-700`, `#0052ff`, `green-600`, etc.
 3. **No manual `dark:` color variants.** Tokens switch with the theme
    automatically. `dark:` is only for the rare non-color tweak.
+4. **`className` on shared components is layout-only** (width, margins, grid
+   placement, `ml-auto`). Never re-skin a component at the call site (colors,
+   padding, typography) — that makes the app diverge from Storybook. If a
+   component doesn't look right, add/change a variant in the design system;
+   Storybook and every app then stay 1:1.
 
 ## Colors → tokens cheat sheet
 
