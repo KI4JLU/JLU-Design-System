@@ -21,6 +21,8 @@ export {
   CardContent,
   CardFooter,
 } from "./components/card";
+export { ChatBubble, type ChatBubbleProps } from "./components/chat-bubble";
+export { chatBubbleVariants } from "./components/chat-bubble-variants";
 export { Checkbox } from "./components/checkbox";
 export { CodeBlock, type CodeBlockProps } from "./components/code-block";
 export {
