@@ -172,6 +172,12 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.2.1** — Fix: `cn()` now uses `extendTailwindMerge` configured with our
+  custom font-size scale (`text-body-base`, `text-label-sm`, …) and elevation
+  shadows. Plain tailwind-merge lumped custom sizes and custom colors into one
+  conflict group and silently dropped color classes (nav buttons lost their
+  active `text-on-primary`, so currentColor icons didn't invert). Regression
+  tests added. **Keep the classGroups lists in sync when adding scale tokens.**
 - **0.2.0** — Added `Switch` (Radix) and `Textarea` components (+ stories,
   tests). New chart-series tokens `--color-chart-1..4` + `--color-chart-track`
   (light + dark; new primitive `--p-blue-300`) so SVG charts in consumers can
