@@ -67,17 +67,20 @@ export const InForm: Story = {
     <div className="max-w-xs">
       <FormItem>
         <FormLabel>Standard-Modell</FormLabel>
-        <FormControl>
-          <Select defaultValue="haiku">
+        <Select defaultValue="haiku">
+          {/* FormControl um den Trigger, nicht um Select: das Radix-Root
+              rendert kein DOM-Element — id/aria-describedby kämen nie am
+              Button an und das Label zeigte ins Leere. */}
+          <FormControl>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="haiku">Claude Haiku</SelectItem>
-              <SelectItem value="sonnet">Claude Sonnet</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormControl>
+          </FormControl>
+          <SelectContent>
+            <SelectItem value="haiku">Claude Haiku</SelectItem>
+            <SelectItem value="sonnet">Claude Sonnet</SelectItem>
+          </SelectContent>
+        </Select>
         <FormDescription>Gilt für neue Widgets.</FormDescription>
       </FormItem>
     </div>
