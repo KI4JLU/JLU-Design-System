@@ -6,6 +6,7 @@ import { NavItem } from "./nav-item";
 import { Container } from "./container";
 import { PageHeader } from "./page-header";
 import { Card } from "./card";
+import { Logo } from "./logo";
 
 const meta = {
   title: "Layout/AppShell",
@@ -16,12 +17,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const brand = (
-  <>
-    <Brain width="1.25em" height="1.25em" aria-hidden className="text-primary" />
-    <span className="font-semibold">CampusAgents</span>
-  </>
-);
+const brand = <Logo product="CampusAgents" size="sm" />;
 
 /**
  * Ab lg: feste Sidebar mit rechtem Rand. Darunter: Top-Bar mit Menü-Button,

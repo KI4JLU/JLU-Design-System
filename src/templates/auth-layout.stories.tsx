@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
-import { Brain, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { AuthLayout } from "./auth-layout";
+import { Logo } from "../components/logo";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { Stack } from "../components/stack";
@@ -23,12 +24,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const brand = (
-  <div className="flex items-center gap-stack-sm">
-    <Brain width="1.5em" height="1.5em" aria-hidden className="text-primary" />
-    <span className="font-headline-md text-headline-md-mobile">CampusAgents</span>
-  </div>
-);
+const brand = <Logo product="CampusAgents" size="lg" />;
 
 /**
  * Der Standardfall: Single Sign-on über OIDC/Keycloak — ein einziger

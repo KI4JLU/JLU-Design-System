@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
 import { Brain, ChartColumn, Waypoints } from "lucide-react";
 import { AppShellLayout } from "./app-shell-layout";
+import { Logo } from "../components/logo";
 import { NavItem } from "../components/nav-item";
 import { Avatar } from "../components/avatar";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -22,16 +23,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const brand = (
-  <>
-    <Brain width="1.25em" height="1.25em" aria-hidden className="text-primary" />
-    <span className="font-semibold">CampusAgents</span>
-  </>
-);
-
 export const WithDashboard: Story = {
   args: {
-    logo: brand,
+    logo: <Logo product="CampusAgents" size="sm" />,
     nav: (
       <>
         <NavItem active>

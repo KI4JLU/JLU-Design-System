@@ -63,6 +63,8 @@ export {
 } from "./components/form";
 export { Input, type InputProps } from "./components/input";
 export { Label } from "./components/label";
+export { Logo, type LogoProps } from "./components/logo";
+export { logoVariants } from "./components/logo-variants";
 export { MenuItem, type MenuItemProps } from "./components/menu-item";
 export { menuItemVariants } from "./components/menu-item-variants";
 export { NavItem, type NavItemProps } from "./components/nav-item";

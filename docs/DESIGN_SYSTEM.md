@@ -119,6 +119,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
+| `Logo` (+ `logoVariants`) | `logo.tsx` / `logo-variants.ts` | platform wordmark „JLU [Produkt]" (CampusAgents/API/RAG): prefix + primary badge, sizes sm/default/lg; token colors, theme-aware, real text (no aria needed) |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
@@ -249,8 +250,13 @@ change here.
   content + MDX docs per template; Chromatic workflow with a per-template mode
   matrix (light/dark × desktop/mobile); template contribution process in §6.
   `cn()` classGroups extended with the named spacing tokens (`gap-stack-md` vs
-  `gap-gutter` now merge correctly). *(Entries 0.9.0–0.18.1 were tracked on
-  the board and in Storybook; this file's changelog resumes here.)*
+  `gap-gutter` now merge correctly). New `Logo` component formalizes the
+  platform wordmark („JLU [CampusAgents]" / „JLU [API]" / „JLU [RAG]") with
+  token colors instead of the brand template's hardcoded hex — used in the
+  AppShell/Auth logo slots. AuthLayout's primary documented pattern is SSO
+  (OIDC/Keycloak, single sign-in button); email/password is the local-account
+  fallback. *(Entries 0.9.0–0.18.1 were tracked on the board and in
+  Storybook; this file's changelog resumes here.)*
 - **0.8.1** — `layout-only-classname` refinement: single-side paddings
   (`pl-9` icon insets) count as layout and are no longer flagged; only
   symmetric `p-/px-/py-` shrinking is skin.
