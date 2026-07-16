@@ -55,7 +55,7 @@ Component  ─uses→  Semantic (--color-primary)  ─references→  Primitive (
 - **Typography / spacing / radius** — display/headline/label/stat/body scales,
   `spacing-gutter`/`stack-*`/`margin-page`, `radius-*`.
 - **Control radii** — `radius-action` (Buttons **and** NavItems, one dial:
-  default pill/`full`) and `radius-field` (Input/Textarea, default `lg`).
+  default `lg`) and `radius-field` (Input/Textarea, default `lg`).
   Change the token, every control follows — never hardcode a radius on a
   control at a call site.
 
@@ -178,6 +178,9 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.5.1** — Default `--radius-action` changed from `full` to `lg`: stock
+  buttons keep their familiar rounding and the sidebar NavItems adopt it —
+  the first real use of the one-dial radius token.
 - **0.5.0** — Semantic control radii: new tokens `--radius-action`
   (Button + NavItem, default `full`) and `--radius-field` (Input/Textarea,
   default `lg`). One token edit now changes the radius of all action controls
