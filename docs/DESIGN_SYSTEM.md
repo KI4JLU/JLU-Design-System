@@ -115,6 +115,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Label` | `label.tsx` | Radix Label |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
+| `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` | `textarea.tsx` | mirrors `Input` (tokens, focus ring, `aria-invalid`) |
@@ -173,6 +174,11 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.4.0** — Added `MenuItem`: the standard row for dropdown menus,
+  comboboxes, and popover menus (`selected`, keyboard `highlighted`,
+  `destructive`, `asChild`). Replaces four almost-identical hand-rolled row
+  styles in CampusAgents (filter/sort dropdowns, model combobox, sidebar user
+  menu) with one documented look.
 - **0.3.0** — Added `NavItem` (sidebar/menu navigation row): levels top/sub,
   active state with `aria-current="page"`, `asChild` for router links.
   Formalizes the CampusAgents sidebar pattern so apps carry no skin classes
