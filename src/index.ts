@@ -37,6 +37,17 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./components/dialog";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuGroup,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  type DropdownMenuItemProps,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./components/dropdown-menu";
 export { fieldVariants } from "./components/field-variants";
 export {
   FormItem,
@@ -51,6 +62,13 @@ export { MenuItem, type MenuItemProps } from "./components/menu-item";
 export { menuItemVariants } from "./components/menu-item-variants";
 export { NavItem, type NavItemProps } from "./components/nav-item";
 export { navItemVariants } from "./components/nav-item-variants";
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverAnchor,
+  PopoverClose,
+  PopoverContent,
+} from "./components/popover";
 export {
   SegmentedControl,
   type SegmentedControlOption,
