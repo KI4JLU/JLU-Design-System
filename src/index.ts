@@ -51,6 +51,7 @@ export {
   type SegmentedControlOption,
   type SegmentedControlProps,
 } from "./components/segmented-control";
+export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Switch } from "./components/switch";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle } from "./components/theme-toggle";
