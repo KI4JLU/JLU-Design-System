@@ -19,9 +19,17 @@ across sessions it stays visible what is open / in progress / done.
 |---|---|---|
 | `Backlog` | `ufnbo2903wz6` | Known future work, not scheduled yet |
 | `To Do` | `o99qy0x98v5f` | Scheduled, ready to pick up next |
+| `Needs Decision` | `rp5lhfs3hdey` | **Blocked on user input** — see rule below |
 | `In Progress` | `7u3f8zan9jrk` | **Actively being worked right now** |
 | `Code Review` | `t3tanijo46nm` | Finished, awaiting review/verification |
 | `Done` | `7ahgbomojvew` | Finished and verified |
+
+**`Needs Decision` rule:** whenever a card is blocked on input only the user can give
+(a go/no-go, a scope choice, infrastructure, priorities), move it to `Needs Decision`
+instead of leaving it in Backlog/To Do — and **append a "Decision needed:" section to the
+card description** stating the concrete question and the options, so the user can decide
+asynchronously from the board alone. Once decided, move the card back into the normal flow
+and record the decision (with date) in the description.
 
 **Labels** — publicIds:
 
