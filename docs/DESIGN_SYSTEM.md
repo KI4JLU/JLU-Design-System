@@ -113,6 +113,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 ### Shared component inventory (`src/components/`)
 | Component | File | Notes |
 |-----------|------|-------|
+| `Badge` (+ `badgeVariants`) | `badge.tsx` / `badge-variants.ts` | status chip: `tone` = neutral/primary/secondary/success/warning/error/info; `appearance` = filled pill or inline text |
 | `Button` (+ `buttonVariants`) | `button.tsx` / `button-variants.ts` | variants: default/secondary/outline/ghost/destructive/link; sizes: default/sm/lg/icon; `asChild` via Radix Slot |
 | `Card` (+ Header/Title/Description/Content/Footer) | `card.tsx` | surface + border + `shadow-card` |
 | `Input` | `input.tsx` | honors `aria-invalid` styling |
@@ -178,6 +179,10 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.6.0** — Added `Badge`: the status chip. `tone` speaks the semantic
+  status vocabulary, `appearance` covers both recurring shapes — filled
+  container pill (status labels, KPI deltas) and inline tone-colored
+  icon+text (health checks). Replaces hand-rolled chips in CampusAgents.
 - **0.5.1** — Default `--radius-action` changed from `full` to `lg`: stock
   buttons keep their familiar rounding and the sidebar NavItems adopt it —
   the first real use of the one-dial radius token.

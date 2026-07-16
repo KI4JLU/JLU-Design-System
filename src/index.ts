@@ -7,6 +7,8 @@
  *   @source "../node_modules/@ki4jlu/design-system";
  * (see README for full consumer setup, fonts, and the no-flash theme script)
  */
+export { Badge, type BadgeProps } from "./components/badge";
+export { badgeVariants } from "./components/badge-variants";
 export { Button, type ButtonProps } from "./components/button";
 export { buttonVariants } from "./components/button-variants";
 export {
