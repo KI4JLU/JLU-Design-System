@@ -70,6 +70,16 @@ export {
   PopoverContent,
 } from "./components/popover";
 export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+} from "./components/select";
+export {
   SegmentedControl,
   type SegmentedControlOption,
   type SegmentedControlProps,
