@@ -52,6 +52,7 @@ export {
   DropdownMenuSeparator,
 } from "./components/dropdown-menu";
 export { fieldVariants } from "./components/field-variants";
+export { FilterMenu, type FilterMenuProps, type FilterMenuOption } from "./components/filter-menu";
 export { Grid, type GridProps } from "./components/grid";
 export { gridVariants } from "./components/grid-variants";
 export {
@@ -63,6 +64,7 @@ export {
 } from "./components/form";
 export { Input, type InputProps } from "./components/input";
 export { Label } from "./components/label";
+export { ListToolbar, type ListToolbarProps } from "./components/list-toolbar";
 export { Logo, type LogoProps } from "./components/logo";
 export { logoVariants } from "./components/logo-variants";
 export { MenuItem, type MenuItemProps } from "./components/menu-item";

@@ -241,6 +241,14 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.20.0** — Added `FilterMenu` (labeled filter/sort dropdown button,
+  `src/components/filter-menu.tsx`) and `ListToolbar` (responsive
+  search + filter/sort row, `src/components/list-toolbar.tsx`).
+  `DashboardLayout` gained a `toolbar` slot (rendered through `PageHeader`'s
+  existing children slot — the same contract `TableLayout.toolbar` already
+  had). Replaces CampusAgents' hand-rolled `SearchToolbar`/`ToolbarDropdown`
+  composition (Connector dashboard) with one documented pattern now shared by
+  the Connector and Agent dashboards.
 - **0.19.0** — Layout layer: primitives `Stack`, `Grid`, `Container`,
   `PageHeader`, `Sidebar`, `AppShell` (token-only layout values, responsive
   behavior built in — sidebar collapses into a Radix-Dialog drawer below lg)
