@@ -20,6 +20,8 @@ jobs:
           cache: npm
           registry-url: https://npm.pkg.github.com
       - run: npm ci
+      # Storybook-Story-Tests laufen im Vitest-Browser-Mode (Playwright/Chromium).
+      - run: npx playwright install --with-deps chromium
       - run: npm test
       - run: npm run build
       - run: npm publish
