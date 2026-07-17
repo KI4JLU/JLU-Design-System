@@ -6,9 +6,10 @@ import * as DashboardLayoutStories from "./dashboard-layout.stories";
 # DashboardLayout
 
 Übersichtsseiten: `PageHeader` (Titel, Beschreibung, Aktionen), optionale
-KPI-Zeile im responsiven Raster, freier Inhalt darunter. Sitzt im Regelfall
-als `children` in `AppShellLayout`. Daten holen und aggregieren bleibt in der
-App — das Template besitzt nur das Skelett.
+Toolbar-Zeile (Suche/Filter), optionale KPI-Zeile im responsiven Raster,
+freier Inhalt darunter. Sitzt im Regelfall als `children` in `AppShellLayout`.
+Daten holen und aggregieren bleibt in der App — das Template besitzt nur das
+Skelett.
 
 <Canvas of={DashboardLayoutStories.Standard} />
 
@@ -19,8 +20,11 @@ App — das Template besitzt nur das Skelett.
 | `title` | `ReactNode` | ✅ | Seitentitel (`<h1>`). |
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
 | `actions` | `ReactNode` | — | Rechte Header-Aktionen (Zeitraum-Umschalter, Export …). |
+| `toolbar` | `ReactNode` | — | Such-/Filter-Zeile unter dem Titel, z. B. `ListToolbar` mit `FilterMenu`s. |
 | `stats` | `ReactNode` | — | KPI-Kacheln — werden im 4er-Grid angeordnet (`Grid cols={4}`). |
 | `children` | `ReactNode` | ✅ | Freier Inhalt; für Kartenraster `<Grid>` verwenden. |
+
+<Canvas of={DashboardLayoutStories.WithToolbar} />
 
 <Controls />
 

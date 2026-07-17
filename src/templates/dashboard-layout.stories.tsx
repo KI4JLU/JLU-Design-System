@@ -1,9 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
+import { useState } from "react";
+import { ArrowUpDown, ListFilter, Search } from "lucide-react";
 import { DashboardLayout } from "./dashboard-layout";
 import { Button } from "../components/button";
 import { Card } from "../components/card";
+import { FilterMenu } from "../components/filter-menu";
 import { Grid } from "../components/grid";
+import { Input } from "../components/input";
+import { ListToolbar } from "../components/list-toolbar";
 import { Stack } from "../components/stack";
 import { templateChromaticModes } from "./chromatic-modes";
 import * as cardStories from "../components/card.stories";
@@ -72,4 +77,73 @@ export const WithoutStats: Story = {
       </Grid>
     </DashboardLayout>
   ),
+};
+
+const FILTER_OPTIONS = [
+  { value: "all", label: "Alle" },
+  { value: "active", label: "Aktiv" },
+  { value: "paused", label: "Pause" },
+];
+
+const SORT_OPTIONS = [
+  { value: "name", label: "Name (A-Z)" },
+  { value: "conversations", label: "Gespräche" },
+  { value: "rating", label: "Bewertung" },
+];
+
+const WithToolbarExample = () => {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOption, setSortOption] = useState("name");
+  return (
+    <DashboardLayout
+      title="Dashboard Übersicht"
+      description="3 Konnektoren"
+      toolbar={
+        <ListToolbar
+          search={
+            <Input
+              leadingIcon={<Search aria-hidden />}
+              placeholder="Konnektoren durchsuchen…"
+              aria-label="Konnektoren durchsuchen"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          }
+          filters={
+            <>
+              <FilterMenu
+                icon={ListFilter}
+                label="Filter"
+                options={FILTER_OPTIONS}
+                value={statusFilter}
+                defaultValue="all"
+                onChange={setStatusFilter}
+              />
+              <FilterMenu
+                icon={ArrowUpDown}
+                label="Sortieren"
+                options={SORT_OPTIONS}
+                value={sortOption}
+                defaultValue="name"
+                onChange={setSortOption}
+              />
+            </>
+          }
+        />
+      }
+    >
+      <Grid cols={3}>
+        <CardInteractive />
+        <CardInteractive />
+        <CardInteractive />
+      </Grid>
+    </DashboardLayout>
+  );
+};
+
+/** Mit Toolbar-Zeile: Suche + Filter/Sortieren über dem Karten-Grid — das Konnektoren-/Agenten-Dashboard-Muster. */
+export const WithToolbar: Story = {
+  args: { title: "Dashboard Übersicht" },
+  render: () => <WithToolbarExample />,
 };
