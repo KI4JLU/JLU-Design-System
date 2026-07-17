@@ -41,6 +41,7 @@ governance.
 | Info / pending | `text-info` / `bg-info-container text-on-info-container` |
 | Warning | `text-warning` / `bg-warning-container text-on-warning-container` |
 | Error / destructive | `text-error`; button: `<Button variant="destructive">` |
+| Brand wordmark (use `<Logo>`) | `text-brand-wordmark` (prefix) + `bg-brand text-on-brand` (badge); badge is theme-invariant |
 | Elevation | `shadow-card`, `hover:shadow-card-hover`, `shadow-overlay` |
 
 If you need a color with no matching token, **don't invent a hex** — propose a new
@@ -132,6 +133,34 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 Radix gives focus trap, Escape-to-close, scroll lock, and ARIA roles for free —
 **always** use this instead of a hand-rolled modal. Every dialog needs a
 `DialogTitle` (screen-reader requirement); a close "X" is included automatically.
+
+## Layout & Templates
+
+Pages are **assembled, not laid out by hand**:
+
+```tsx
+import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-system";
+
+<AppShellLayout logo={<Brand />} nav={<NavItems />} sidebarFooter={<UserMenu />}>
+  <DashboardLayout title="Statistiken" actions={<RangeSwitch />} stats={<KpiCards />}>
+    <Grid cols={2}>…</Grid>
+  </DashboardLayout>
+</AppShellLayout>
+```
+
+- **Use the templates** (`AppShellLayout`, `AuthLayout`, `DashboardLayout`,
+  `FormLayout`, `ChatLayout`, `TableLayout`) for their page category — never
+  rebuild a page skeleton in the app. Missing slot/variant? Extend the template
+  in the design system (owner review), don't fork the layout.
+- **Spacing through primitives**: gaps/rhythm via `Stack`/`Grid` `gap`
+  (`sm|md|lg|gutter` = spacing tokens), page margins via `Container` — no
+  ad-hoc `gap-[13px]` or hand-rolled breakpoint ladders; `Grid cols` already
+  collapses responsively.
+- Templates carry **no business logic**: routing lives in the injected
+  `NavItem`s, form state in the app (`FormLayout` renders no `<form>` — wrap
+  your own around it), chat state in the widget.
+- Storybook group `Templates/` documents each template's slots, responsive
+  behavior, and do's/don'ts.
 
 ## Theming
 

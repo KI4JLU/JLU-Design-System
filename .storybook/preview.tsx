@@ -14,7 +14,15 @@ function ThemeSync({ theme }: { theme: Theme }) {
 const withTheme: Decorator = (Story, context) => (
   <ThemeProvider>
     <ThemeSync theme={context.globals.theme as Theme} />
-    <div className="bg-surface text-on-surface min-h-screen p-8">
+    {/* Full-page templates (parameters.layout: "fullscreen") render edge-to-edge;
+        component stories keep the padded canvas. */}
+    <div
+      className={
+        context.parameters.layout === "fullscreen"
+          ? "bg-surface text-on-surface min-h-screen"
+          : "bg-surface text-on-surface min-h-screen p-8"
+      }
+    >
       <Story />
     </div>
   </ThemeProvider>

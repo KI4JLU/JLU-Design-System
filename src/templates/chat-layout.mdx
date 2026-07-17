@@ -1,0 +1,39 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as ChatLayoutStories from "./chat-layout.stories";
+
+<Meta of={ChatLayoutStories} />
+
+# ChatLayout
+
+Das Chat-Widget-Gerüst: Card-gerahmte Spalte mit optionalem Header (Avatar,
+Name, Status), scrollbarem Nachrichtenbereich und unten gepinntem Composer.
+Nachrichten-State, Auto-Scroll und Senden bleiben in der App/dem Widget.
+
+<Canvas of={ChatLayoutStories.Widget} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `header` | `ReactNode` | — | Widget-Kopf: `Avatar` (mit `online`), Name, Status. |
+| `children` | `ReactNode` | ✅ | Der Gesprächsverlauf — `<ChatBubble>`s, vertikal gestapelt (`gap` = `stack-sm`). |
+| `composer` | `ReactNode` | — | Eingabezeile: `Textarea variant="inline"` + Senden-`Button` (`aria-label`!). |
+
+<Controls />
+
+## Responsives Verhalten
+
+- Füllt die Höhe des **Eltern-Containers** (`h-full`) — der Einbettungskontext
+  bestimmt die Widget-Größe (siehe Story: `h-96`-Rahmen).
+- Nur der Nachrichtenbereich scrollt; Header und Composer bleiben stehen
+  (`overflow-y-auto` in der Mitte, `shrink-0` außen).
+
+## Do's & Don'ts
+
+- ✅ Dem einbettenden Element eine feste Höhe geben — ohne Höhe kein
+  scrollender Verlauf.
+- ✅ Nachrichten als `<ChatBubble from="user|assistant">` übergeben.
+- ❌ Kein eigenes Scroll-Handling im Verlauf nachbauen; Auto-Scroll gehört in
+  die App (Ref auf das Ende der Liste), nicht ins Template.
+- ❌ Composer-Buttons nie verkleinern/quetschen — Icon-Button mit `aria-label`
+  verwenden (Guidelines Regel 5).

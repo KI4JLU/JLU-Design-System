@@ -23,6 +23,8 @@
   --p-blue-200: #adc6ff;
   --p-blue-300: #7cb3ff;
   --p-blue-600: #0052ff;
+  --p-blue-700: #0056b3;
+  --p-blue-800: #003366;
   --p-blue-900: #001a4d;
   --p-blue-950: #001433;
 
@@ -118,9 +120,9 @@
  * ========================================================================== */
 @theme {
   /* Primary */
-  --color-primary: var(--p-blue-600);
+  --color-primary: var(--p-blue-700);
   --color-on-primary: var(--p-white);
-  --color-primary-container: var(--p-blue-600);
+  --color-primary-container: var(--p-blue-700);
   --color-on-primary-container: var(--p-white);
   --color-primary-fixed: var(--p-blue-100);
   --color-on-primary-fixed: var(--p-blue-950);
@@ -176,7 +178,7 @@
 
   --color-outline: var(--p-gray-500);
   --color-outline-variant: var(--p-gray-300);
-  --color-surface-tint: var(--p-blue-600);
+  --color-surface-tint: var(--p-blue-700);
 
   /* Border radius */
   --radius-DEFAULT: 0.25rem;
@@ -253,6 +255,19 @@
   --color-on-info-container: var(--p-teal-900);
 
   /* --------------------------------------------------------------------------
+   * BRAND — Plattform-Wortmarke (Logo: „JLU [CampusAgents]").
+   * Werte aus der Brand-Vorlage: Badge #0056b3, Prefix-Navy #003366.
+   * Das Brand-Blau (--p-blue-700) ist zugleich die Basis von
+   * --color-primary — Marke und Primäraktion teilen EINE Farbe.
+   * `brand`/`on-brand` (Badge) bleiben BEWUSST in beiden Themes gleich —
+   * Markenfarbe ist Identität (wie code-surface). Nur die Wortmarke
+   * (`brand-wordmark`) invertiert im Dark-Mode zur Lesbarkeit.
+   * ------------------------------------------------------------------------ */
+  --color-brand: var(--p-blue-700);
+  --color-on-brand: var(--p-white);
+  --color-brand-wordmark: var(--p-blue-800);
+
+  /* --------------------------------------------------------------------------
    * CODE-SURFACE — Editor-Optik für Code-/Terminal-Viewer (CodeBlock).
    * Diese Tokens schalten BEWUSST NICHT im Dark-Mode um (kein Override im
    * [data-theme="dark"]-Block): ein Code-Viewer bleibt in hell UND dunkel
@@ -268,7 +283,7 @@
    * ------------------------------------------------------------------------ */
   --color-primary-hover: var(--p-blue-900);
   --color-primary-active: var(--p-blue-950);
-  --color-focus-ring: var(--p-blue-600);
+  --color-focus-ring: var(--p-blue-700);
   --color-disabled: var(--color-surface-container-high);
   --color-on-disabled: var(--color-outline);
 
@@ -278,7 +293,7 @@
    * Serienfarben sind Absicht („1. Serie"), keine Markenfarben — im Dark-Mode
    * hellen sie auf, damit sie auf dunklen Flächen lesbar bleiben.
    * ------------------------------------------------------------------------ */
-  --color-chart-1: var(--p-blue-600);
+  --color-chart-1: var(--p-blue-700);
   --color-chart-2: var(--p-blue-300);
   --color-chart-3: var(--p-gray-300);
   --color-chart-4: var(--p-gray-175);
@@ -356,6 +371,10 @@
     --color-info-container: var(--p-teal-900);
     --color-on-info-container: var(--p-teal-200);
 
+    /* Brand: Badge bleibt markenkonstant (kein Override); nur die Wortmarke
+       wird hell, damit sie auf dunklem Grund lesbar ist. */
+    --color-brand-wordmark: var(--p-gray-125);
+
     /* Interaktions-Zustände: im Dunkeln hellt der Hover auf statt abzudunkeln. */
     --color-primary-hover: var(--p-blue-200);
     --color-primary-active: var(--p-blue-100);
@@ -363,7 +382,7 @@
 
     /* Chart-Serien: hellere Akzente, gedämpfte Neutrale, dunkler Track. */
     --color-chart-1: var(--p-blue-200);
-    --color-chart-2: var(--p-blue-600);
+    --color-chart-2: var(--p-blue-700);
     --color-chart-3: var(--p-gray-450);
     --color-chart-4: var(--p-gray-820);
     --color-chart-track: var(--p-gray-880);

@@ -1,0 +1,55 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as AuthLayoutStories from "./auth-layout.stories";
+
+<Meta of={AuthLayoutStories} />
+
+# AuthLayout
+
+Login-/Auth-Seiten: eine zentrierte Karte auf der Seitenfläche — Logo darüber,
+Titel/Beschreibung im Kartenkopf, der Anmelde-Inhalt als `children`, gedämpfte
+Links darunter. Die Auth-Logik (OIDC-Redirect, Submit, Validierung) bleibt in
+der App.
+
+**Der Standardfall ist Single Sign-on** (OIDC/Keycloak): `children` ist ein
+einziger primärer Button, der zum Identity Provider weiterleitet — keine
+lokalen Felder.
+
+<Canvas of={AuthLayoutStories.SSO} />
+
+Für lokale Konten (Fallback ohne SSO) trägt `children` stattdessen die Felder
+aus den Form-Primitives:
+
+<Canvas of={AuthLayoutStories.Login} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `logo` | `ReactNode` | — | Markenblock, zentriert über der Karte. |
+| `title` | `ReactNode` | ✅ | Kartenüberschrift (z. B. „Anmelden"). |
+| `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
+| `children` | `ReactNode` | ✅ | Der Anmelde-Inhalt: SSO-Button (Standard) oder Felder aus `FormItem`/`Input`/`Button`. |
+| `footer` | `ReactNode` | — | Zentrierte, gedämpfte Zone unter der Karte („Passwort vergessen?"). |
+
+<Controls />
+
+## Responsives Verhalten
+
+- Füllt die Viewport-Höhe (`min-h-dvh`) und zentriert die Karte vertikal
+  und horizontal.
+- Die Karte ist `max-w-md`; auf schmalen Screens halten die Token-Ränder
+  (`gutter`) den Abstand zum Rand.
+
+## Do's & Don'ts
+
+- ✅ SSO als Standard: ein primärer `Button` in voller Breite („Mit
+  JLU-Account anmelden"); der OIDC-/Keycloak-Redirect gehört in die App,
+  nicht ins Template.
+- ✅ Fallback-Felder mit den Form-Primitives bauen (`FormItem` verdrahtet
+  Label, Fehler und `aria-*` automatisch); Fehlerzustände über
+  `FormItem error=` (siehe Story „WithFieldError").
+- ✅ Auth-Fehler vom Identity Provider (abgelehnt, Session abgelaufen) als
+  Inhalt über dem Button rendern — z. B. Text in `text-error`.
+- ❌ Kein zweispaltiges Hero-Layout hier hineinzwängen — das wäre ein neues
+  Template, kein `className`-Umbau.
+- ❌ Keine Navigation/Sidebar: Auth-Seiten stehen außerhalb der AppShell.

@@ -119,6 +119,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
+| `Logo` (+ `logoVariants`) | `logo.tsx` / `logo-variants.ts` | platform wordmark „JLU [Produkt]" (CampusAgents/API/RAG): prefix + badge on the brand tokens (`brand`/`on-brand` theme-invariant, `brand-wordmark` inverts in dark), sizes sm/default/lg; real text (no aria needed) |
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
@@ -127,6 +128,38 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
+
+*(Inventory above predates v0.9.0; Avatar, Badge dot, ChatBubble, Checkbox,
+DropdownMenu, Popover, Select, Spinner are documented in Storybook and the
+Changelog cards on the board.)*
+
+### Layout primitives (`src/components/`)
+Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
+`margin-page`, `container-max`, radius, colors) — no raw pixel values.
+
+| Component | File | Notes |
+|-----------|------|-------|
+| `Stack` (+ `stackVariants`) | `stack.tsx` / `stack-variants.ts` | 1-D flex: `direction` column/row, `gap` = spacing tokens, align/justify/wrap; `asChild` for semantic elements |
+| `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
+| `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`, max `container-max`; `size="narrow"` for forms |
+| `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
+| `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
+| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer |
+
+### Page templates (`src/templates/`)
+One template per page category of the migration order — real importable
+components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
+`ChatLayout`, `TableLayout`). Rules:
+
+- Templates are **layout composition only**: slots (`ReactNode` props) for
+  injected content, no business logic, no data fetching.
+- Responsive behavior lives **inside** the template (sidebar collapse, grid
+  breaks, mobile action stacking) — consuming apps write no breakpoint ladders.
+- Apps **import** templates; they never rebuild a page skeleton. If a template
+  doesn't fit, extend it here (owner review), don't fork it in the app.
+- Each template has a story under `Templates/` (content composed from existing
+  component stories via portable stories) and an MDX page documenting slots,
+  responsive behavior, and do's/don'ts.
 
 ### Tooling & enforcement
 - **Lint gate** — the shipped ESLint plugin
@@ -149,6 +182,14 @@ consuming repo** — new exceptions get the same scrutiny there.
   props tables, a11y addon, MDX pages (Einführung / Tokens / Theming), theme
   toolbar switching light/dark/system live via the real ThemeProvider.
 - **Review gate** — [`.github/CODEOWNERS`](../.github/CODEOWNERS).
+- **Visual regression** — Chromatic
+  ([`.github/workflows/chromatic.yml`](../.github/workflows/chromatic.yml)):
+  snapshots every story on each PR; template stories additionally in a mode
+  matrix (light/dark × desktop/mobile, `src/templates/chromatic-modes.ts`), so
+  layout regressions are caught at the **composition** level, not only per
+  component. Changed snapshots fail the check until the owner accepts them in
+  the Chromatic UI. One-time setup: add the repo secret
+  `CHROMATIC_PROJECT_TOKEN` (job skips while it's missing).
 
 ---
 
@@ -177,6 +218,20 @@ Minimum bar for every shared component:
 3. Add a `*.stories.tsx` next to the component (Storybook is the documentation).
 4. New variants need explicit owner review.
 
+**Adding a template (`src/templates/`)**
+1. Compose **only** layout primitives + existing shared components; layout
+   values only via tokens. Single responsibility: slots in, skeleton out — no
+   business logic.
+2. Responsive behavior (breakpoints, collapse) belongs inside the template.
+3. Add a story under `Templates/` — reuse existing component stories via
+   portable stories (`composeStories`) instead of re-mocking content — plus an
+   MDX page (slots/props, responsive behavior, do's/don'ts). Set
+   `chromatic: { modes: templateChromaticModes }` so the template is
+   snapshotted in both themes and at mobile width.
+4. **No template is used in an app before its PR is reviewed** (CODEOWNERS
+   requests the owner) **and its Chromatic snapshots are accepted.** Both-theme
+   visual QA (§3) applies.
+
 ---
 
 ## 7. Versioning & Changelog
@@ -186,6 +241,32 @@ Semantic versioning, published to GitHub Packages via the release workflow
 change here.
 
 ### Changelog
+- **0.19.0** — Layout layer: primitives `Stack`, `Grid`, `Container`,
+  `PageHeader`, `Sidebar`, `AppShell` (token-only layout values, responsive
+  behavior built in — sidebar collapses into a Radix-Dialog drawer below lg)
+  and page templates `AppShellLayout`, `AuthLayout`, `DashboardLayout`,
+  `FormLayout`, `ChatLayout`, `TableLayout` under `src/templates/` (slot-based,
+  layout-composition only). Storybook group `Templates/` with portable-story
+  content + MDX docs per template; Chromatic workflow with a per-template mode
+  matrix (light/dark × desktop/mobile); template contribution process in §6.
+  `cn()` classGroups extended with the named spacing tokens (`gap-stack-md` vs
+  `gap-gutter` now merge correctly). New `Logo` component formalizes the
+  platform wordmark („JLU [CampusAgents]" / „JLU [API]" / „JLU [RAG]") — used
+  in the AppShell/Auth logo slots. New **brand tokens** carry the brand
+  template's exact values: primitives `--p-blue-700` (#0056b3) /
+  `--p-blue-800` (#003366); semantic `--color-brand` + `--color-on-brand`
+  (badge, deliberately theme-invariant like `code-surface`) and
+  `--color-brand-wordmark` (#003366 light / `--p-gray-125` dark). The brand
+  blue is also the new **primary base**: every semantic token that referenced
+  `--p-blue-600` (#0052ff) — `primary`, `primary-container`, `surface-tint`,
+  `focus-ring`, `chart-1`, dark `chart-2` — now points at `--p-blue-700`
+  (#0056b3), so brand and primary action share one color. Visual delta:
+  primary buttons/active nav shift from vivid blue to the deeper brand blue
+  (white-on-primary contrast improves). `--p-blue-600` stays in the palette,
+  currently unreferenced. AuthLayout's primary documented pattern is SSO
+  (OIDC/Keycloak, single sign-in button); email/password is the local-account
+  fallback. *(Entries 0.9.0–0.18.1 were tracked on the board and in
+  Storybook; this file's changelog resumes here.)*
 - **0.8.1** — `layout-only-classname` refinement: single-side paddings
   (`pl-9` icon insets) count as layout and are no longer flagged; only
   symmetric `p-/px-/py-` shrinking is skin.

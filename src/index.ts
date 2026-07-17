@@ -7,6 +7,7 @@
  *   @source "../node_modules/@ki4jlu/design-system";
  * (see README for full consumer setup, fonts, and the no-flash theme script)
  */
+export { AppShell, type AppShellProps } from "./components/app-shell";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Badge, type BadgeProps } from "./components/badge";
 export { badgeVariants } from "./components/badge-variants";
@@ -25,6 +26,8 @@ export { ChatBubble, type ChatBubbleProps } from "./components/chat-bubble";
 export { chatBubbleVariants } from "./components/chat-bubble-variants";
 export { Checkbox } from "./components/checkbox";
 export { CodeBlock, type CodeBlockProps } from "./components/code-block";
+export { Container, type ContainerProps } from "./components/container";
+export { containerVariants } from "./components/container-variants";
 export {
   Dialog,
   DialogPortal,
@@ -49,6 +52,8 @@ export {
   DropdownMenuSeparator,
 } from "./components/dropdown-menu";
 export { fieldVariants } from "./components/field-variants";
+export { Grid, type GridProps } from "./components/grid";
+export { gridVariants } from "./components/grid-variants";
 export {
   FormItem,
   FormLabel,
@@ -58,10 +63,13 @@ export {
 } from "./components/form";
 export { Input, type InputProps } from "./components/input";
 export { Label } from "./components/label";
+export { Logo, type LogoProps } from "./components/logo";
+export { logoVariants } from "./components/logo-variants";
 export { MenuItem, type MenuItemProps } from "./components/menu-item";
 export { menuItemVariants } from "./components/menu-item-variants";
 export { NavItem, type NavItemProps } from "./components/nav-item";
 export { navItemVariants } from "./components/nav-item-variants";
+export { PageHeader, type PageHeaderProps } from "./components/page-header";
 export {
   Popover,
   PopoverTrigger,
@@ -84,7 +92,10 @@ export {
   type SegmentedControlOption,
   type SegmentedControlProps,
 } from "./components/segmented-control";
+export { Sidebar, type SidebarProps } from "./components/sidebar";
 export { Spinner, type SpinnerProps } from "./components/spinner";
+export { Stack, type StackProps } from "./components/stack";
+export { stackVariants } from "./components/stack-variants";
 export { Switch } from "./components/switch";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle } from "./components/theme-toggle";
@@ -94,4 +105,16 @@ export {
   type Theme,
   type ResolvedTheme,
 } from "./theme/ThemeContext";
+export {
+  AppShellLayout,
+  type AppShellLayoutProps,
+} from "./templates/app-shell-layout";
+export { AuthLayout, type AuthLayoutProps } from "./templates/auth-layout";
+export { ChatLayout, type ChatLayoutProps } from "./templates/chat-layout";
+export {
+  DashboardLayout,
+  type DashboardLayoutProps,
+} from "./templates/dashboard-layout";
+export { FormLayout, type FormLayoutProps } from "./templates/form-layout";
+export { TableLayout, type TableLayoutProps } from "./templates/table-layout";
 export { cn } from "./lib/utils";
