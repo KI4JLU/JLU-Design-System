@@ -47,8 +47,17 @@ Component  ─uses→  Semantic (--color-primary)  ─references→  Primitive (
 - **Status/feedback** — `success`, `warning`, `info` (+ `on-*` and
   `*-container` variants).
 - **Interaction states** — `primary-hover`, `primary-active`, `focus-ring`,
-  `disabled`, `on-disabled`.
-- **Elevation** — `shadow-card`, `shadow-card-hover`, `shadow-overlay`.
+  `disabled`, `on-disabled`. In dark these lighten *beyond* `primary`, which
+  itself flips to a light accent — `bg-primary` therefore always pairs with
+  `text-on-primary`, never with a hardcoded white.
+- **Elevation** — four steps: `shadow-card`, `shadow-card-hover`,
+  `shadow-overlay`, `shadow-modal`. Values live in the `--elevation-*` ramp
+  (plain `:root`, not `@theme`) so the dark block can raise their opacity:
+  Tailwind inlines `@theme` shadow values rather than referencing them, so a
+  `--shadow-*` override would be silently ignored. Adding a step means adding
+  it to the `shadow` classGroup in `src/lib/utils.ts` too.
+- **Scrim** — `--color-scrim` (black in both themes), used as `bg-scrim/50`
+  under modal surfaces. Translucent `bg-black/<n>` is lint-blocked.
 - **Chart series** — `chart-1..4` + `chart-track` for SVG charts
   (`fill-chart-1`, `stroke-chart-2`, `bg-chart-3` for legend dots); lighten in
   dark mode so series stay readable on dark surfaces.
@@ -240,7 +249,50 @@ Semantic versioning, published to GitHub Packages via the release workflow
 (push a `v*` tag). Consumers pin a semver range. Record every token/component
 change here.
 
+### Distribution — open follow-up: publish to npmjs.com
+
+Consumers currently install from git (README). That works everywhere without a
+token, but costs a build on install and requires `git` in the build image.
+Publishing to the public npm registry would be strictly better for every
+consumer. Not done yet because it needs an account action nobody has taken:
+
+1. Create the `@ki4jlu` organisation/scope on npmjs.com.
+2. Add an automation access token as the `NPM_TOKEN` repository secret.
+3. Switch `publishConfig.registry` in `package.json` to
+   `https://registry.npmjs.org`, and point `registry-url` +
+   `NODE_AUTH_TOKEN` in `.github/workflows/publish.yml` at it.
+
+Until then the git path carries us; keep the README's git section first.
+
 ### Changelog
+- **0.21.0** — Consumer-integration round, from the JustRAG token migration.
+  **Install without a token:** added `prepare` to `package.json`, so
+  `npm install github:KI4JLU/JLU-Design-System#v0.21.0` builds `dist/` on
+  install. `npm.pkg.github.com` requires auth even for public packages; the
+  git path needs no registry, no PAT, no `.npmrc` (see README). Note that
+  `prepare` also runs on every local `npm install`/`npm ci` in this repo.
+  **Visual delta (dark mode):** `--color-primary` now flips to a light accent
+  in dark (`blue-200`) with `--color-on-primary` = `blue-900`, and
+  `primary-hover`/`-active` move one step lighter (`blue-100`/new `blue-50`
+  primitive). Previously `--color-primary` stayed `#0056b3` in both themes
+  while hover/active already lightened — self-contradictory, and `text-primary`
+  on a dark surface scored ~1.9:1. Now 10.9:1 as text, 9.9:1 as a filled
+  surface. Affects Button, NavItem, ChatBubble, Checkbox, Switch,
+  SegmentedControl in dark; all Chromatic dark baselines change.
+  `--color-primary-container` is deliberately untouched.
+  **Elevation:** fourth step `shadow-modal` (Dialog + AppShell drawer, which
+  previously shared `shadow-overlay` with dropdowns), and all four steps now
+  gain opacity in dark (0.05 → 0.4 on step 1). The values moved into an
+  `--elevation-*` ramp because Tailwind *inlines* `@theme` shadow values
+  instead of referencing them — a `--shadow-*` override in
+  `[data-theme="dark"]` would have had no effect. Colors are unaffected
+  (`bg-primary` does compile to `var(--color-primary)`).
+  **Scrim:** new `--color-scrim` token; `Dialog` uses `bg-scrim/50` instead of
+  `bg-black/50`, and `no-hardcoded-colors` now flags translucent
+  `bg-black/<n>` (opaque `black`/`white` stay allowed).
+  **No `--color-*-rgb` tokens:** documented `color-mix(in srgb, …)` and
+  `bg-primary/10` as the way to build tints, since a mirrored RGB triplet
+  would have to be hand-synced with the primitive and would go stale silently.
 - **0.20.0** — Added `FilterMenu` (labeled filter/sort dropdown button,
   `src/components/filter-menu.tsx`) and `ListToolbar` (responsive
   search + filter/sort row, `src/components/list-toolbar.tsx`).

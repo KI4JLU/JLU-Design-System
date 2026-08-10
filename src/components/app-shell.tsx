@@ -47,7 +47,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
                 <DialogOverlay />
                 <DialogPrimitive.Content
                   aria-describedby={undefined}
-                  className="fixed inset-y-0 left-0 z-50 flex shadow-overlay focus:outline-none"
+                  className="fixed inset-y-0 left-0 z-50 flex shadow-modal focus:outline-none"
                   onClick={(e) => {
                     // Links navigate → the drawer is done; section-toggle
                     // buttons stay interactive without closing it.

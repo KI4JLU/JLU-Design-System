@@ -31,10 +31,60 @@ Der Dark-Mode überschreibt ausschließlich die semantische Ebene
 | Warnung | `text-warning` / `bg-warning-container text-on-warning-container` |
 | Fehler / destruktiv | `text-error`; Button: `<Button variant="destructive">` |
 | Marken-Wortmarke (nutze `<Logo>`) | `text-brand-wordmark` + `bg-brand text-on-brand` (Badge theme-invariant) |
-| Elevation | `shadow-card`, `hover:shadow-card-hover`, `shadow-overlay` |
+| Abdunkelung unter Modalen | `bg-scrim/50` (steckt in `<Dialog>`) |
+| Elevation | siehe Leiter unten |
 
 Fehlt ein Token: **keinen Hex-Wert erfinden**, sondern ein neues Token über den
 Prozess in `docs/DESIGN_SYSTEM.md` §6 vorschlagen.
+
+## Primary kippt im Dark Mode
+
+`--color-primary` ist im hellen Theme ein **dunkles** Blau und im dunklen ein
+**helles** — mit `--color-on-primary` als jeweiligem Gegenstück (M3). Das heißt:
+
+- `bg-primary` **immer** zusammen mit `text-on-primary` — nie mit `text-white`.
+  Ein Token kann nicht gleichzeitig Fläche und Schrift bedienen.
+- `text-primary` / `border-primary` funktionieren in **beiden** Themes auf
+  `surface` (10,9:1 im Dunkeln).
+- Wer umgekehrt eine *dunkle* Fläche mit hellem Primary-Akzent braucht (etwa
+  auf `inverse-surface`), nutzt `text-inverse-primary`.
+
+`--color-brand` bleibt davon unberührt: die Markenfarbe ist Identität und in
+beiden Themes gleich.
+
+## Elevation — vier Stufen
+
+| Stufe | Utility | Wofür |
+|-------|---------|-------|
+| 1 | `shadow-card` | ruhende Karte |
+| 2 | `hover:shadow-card-hover` | angehobene Karte |
+| 3 | `shadow-overlay` | Popover, Dropdown, Select |
+| 4 | `shadow-modal` | Dialog, Drawer |
+
+Im Dark Mode steigt die Deckkraft automatisch (0.05 → 0.4 auf Stufe 1) — auf
+dunklem Grund verschwände ein Schatten sonst. Die Werte liegen in der
+`--elevation-*`-Rampe in `tokens.css`; **in Komponenten nur die vier Utilities
+verwenden**.
+
+## Transparente Farbflächen (Tints)
+
+Für „Primary mit 8 % Deckkraft" **keinen Hex-Wert spiegeln** — das veraltet
+still, sobald sich das Blau ändert. Stattdessen aus dem Token ableiten:
+
+```css
+/* CSS */
+background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+```
+
+```tsx
+/* Tailwind — dasselbe, kürzer */
+<div className="bg-primary/10" />
+```
+
+Beide Wege folgen dem Token und schalten mit dem Theme mit. Ein
+`--color-primary-rgb`-Token gibt es bewusst **nicht**: es müsste von Hand mit
+dem Primitiv synchron gehalten werden und wäre damit genau die Fehlerquelle,
+die es lösen soll.
 
 ## Weitere Skalen
 
@@ -43,4 +93,5 @@ Prozess in `docs/DESIGN_SYSTEM.md` §6 vorschlagen.
 - **Spacing**: `gutter`, `stack-sm/md/lg`, `margin-page`, `container-max`.
 - **Radius**: `rounded`, `rounded-lg`, `rounded-xl`, `rounded-full`.
 - **Interaktionszustände**: `primary-hover`, `primary-active`, `focus-ring`,
-  `disabled`, `on-disabled`.
+  `disabled`, `on-disabled`. Im Dark Mode hellen `hover`/`active` gegenüber
+  `primary` weiter auf, statt abzudunkeln.
