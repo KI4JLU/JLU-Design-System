@@ -414,8 +414,9 @@
        mit dunkler Schrift darauf (M3). Vorher blieb --color-primary in beiden
        Themes #0056b3, während hover/active bereits aufhellten — in sich
        widersprüchlich, und als Textfarbe (`text-primary`, `border-primary`)
-       auf dunkler Fläche mit ~1,9:1 unlesbar. Jetzt: text-primary 10,9:1 auf
-       surface, bg-primary + text-on-primary 9,9:1.
+       auf dunkler Fläche unlesbar (1,4:1 bis 2,6:1 je nach Container).
+       Jetzt: text-primary 10,8:1 auf surface, 6,6:1 auf der hellsten dunklen
+       Fläche (surface-container-highest); bg-primary + text-on-primary 9,8:1.
        Wer eine dunkle Fläche mit hellem Primary-Text braucht, nutzt weiterhin
        --color-inverse-primary. */
     --color-primary: var(--p-blue-200);

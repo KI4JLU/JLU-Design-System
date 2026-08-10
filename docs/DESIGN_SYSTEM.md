@@ -276,8 +276,9 @@ Until then the git path carries us; keep the README's git section first.
   `primary-hover`/`-active` move one step lighter (`blue-100`/new `blue-50`
   primitive). Previously `--color-primary` stayed `#0056b3` in both themes
   while hover/active already lightened — self-contradictory, and `text-primary`
-  on a dark surface scored ~1.9:1. Now 10.9:1 as text, 9.9:1 as a filled
-  surface. Affects Button, NavItem, ChatBubble, Checkbox, Switch,
+  on a dark surface scored 1.4:1–2.6:1 depending on the container. Now 10.8:1
+  as text on `surface` (worst case 6.6:1 on `surface-container-highest`) and
+  9.8:1 as a filled surface. Affects Button, NavItem, ChatBubble, Checkbox, Switch,
   SegmentedControl in dark; all Chromatic dark baselines change.
   `--color-primary-container` is deliberately untouched.
   **Elevation:** fourth step `shadow-modal` (Dialog + AppShell drawer, which
