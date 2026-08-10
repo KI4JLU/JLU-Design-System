@@ -7,16 +7,15 @@ describe("Card", () => {
     render(<Card data-testid="card">Inhalt</Card>);
     const card = screen.getByTestId("card");
     expect(card).toHaveClass("shadow-card");
-    expect(card.className).not.toContain("hover:-translate-y-1");
+    expect(card.className).not.toContain("hover:border-primary");
     expect(card.className).not.toContain("border-l-4");
   });
 
-  it("adds the hover lift when interactive", () => {
+  it("adds the hover border highlight when interactive, without moving the card", () => {
     render(<Card interactive data-testid="card" />);
-    expect(screen.getByTestId("card")).toHaveClass(
-      "hover:-translate-y-1",
-      "hover:shadow-card-hover",
-    );
+    const card = screen.getByTestId("card");
+    expect(card).toHaveClass("hover:border-primary");
+    expect(card.className).not.toContain("translate");
   });
 
   it("adds the left accent border when accent", () => {
@@ -27,6 +26,6 @@ describe("Card", () => {
   it("combines both variants", () => {
     render(<Card interactive accent data-testid="card" />);
     const card = screen.getByTestId("card");
-    expect(card).toHaveClass("hover:-translate-y-1", "border-l-primary");
+    expect(card).toHaveClass("hover:border-primary", "border-l-primary");
   });
 });

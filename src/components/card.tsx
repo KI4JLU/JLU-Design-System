@@ -5,13 +5,15 @@ import { cn } from "../lib/utils";
  * Shared card surface. Replaces the repeated
  * `bg-surface-container-lowest border border-outline-variant rounded-xl` blocks.
  *
- * `interactive` — hover lift (shadow + translate) for clickable cards in
- * grids; combine with a focusable child (link/button) for keyboard users.
+ * `interactive` — hover highlight for clickable cards in grids: the existing
+ * border takes the primary color, so the card stays put (no translate) and
+ * nothing around it shifts. Combine with a focusable child (link/button) for
+ * keyboard users.
  * `accent` — left primary accent border (step/callout cards).
  * Both compose freely with each other and the sub-parts.
  */
 export interface CardProps extends React.ComponentProps<"div"> {
-  /** Hover lift for clickable cards (shadow + slight translate). */
+  /** Hover highlight for clickable cards — recolors the border, no movement. */
   interactive?: boolean;
   /** Left primary accent border (steps, callouts). */
   accent?: boolean;
@@ -23,7 +25,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       ref={ref}
       className={cn(
         "rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface shadow-card",
-        interactive && "transition-all hover:-translate-y-1 hover:shadow-card-hover",
+        interactive && "transition-colors hover:border-primary",
         accent && "border-l-4 border-l-primary",
         className,
       )}
