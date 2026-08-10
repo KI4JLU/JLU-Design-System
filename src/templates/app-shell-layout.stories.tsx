@@ -1,17 +1,30 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
-import { Brain, ChartColumn, Waypoints } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
 import { AppShellLayout } from "./app-shell-layout";
+import { DropdownMenuItem } from "../components/dropdown-menu";
 import { Logo } from "../components/logo";
 import { NavItem } from "../components/nav-item";
-import { Avatar } from "../components/avatar";
-import { ThemeToggle } from "../components/theme-toggle";
+import { SidebarUserMenu } from "../components/sidebar-user-menu";
 import { templateChromaticModes } from "./chromatic-modes";
 import * as dashboardStories from "./dashboard-layout.stories";
 
 // Portable Stories: die Dashboard-Template-Story ist der Seiteninhalt —
 // Templates komponieren ineinander, nichts wird neu gemockt.
 const { Standard: DashboardPage } = composeStories(dashboardStories, {});
+
+const userMenu = (
+  <SidebarUserMenu initials="JL" name="Jamie Lee" role="Admin">
+    <DropdownMenuItem>
+      <Settings width="1em" height="1em" aria-hidden />
+      Einstellungen
+    </DropdownMenuItem>
+    <DropdownMenuItem variant="destructive">
+      <LogOut width="1em" height="1em" aria-hidden />
+      Abmelden
+    </DropdownMenuItem>
+  </SidebarUserMenu>
+);
 
 const meta = {
   title: "Templates/AppShellLayout",
@@ -25,29 +38,25 @@ type Story = StoryObj<typeof meta>;
 
 export const WithDashboard: Story = {
   args: {
-    logo: <Logo product="CampusAgents" size="sm" />,
+    logo: <Logo product="App" size="sm" />,
+    pageLabel: "Dashboard",
     nav: (
       <>
         <NavItem active>
-          <Brain width="1em" height="1em" aria-hidden />
-          <span>Agenten</span>
+          <LayoutDashboard width="1em" height="1em" aria-hidden />
+          <span>Übersicht</span>
         </NavItem>
         <NavItem>
-          <Waypoints width="1em" height="1em" aria-hidden />
-          <span>Konnektoren</span>
+          <Users width="1em" height="1em" aria-hidden />
+          <span>Team</span>
         </NavItem>
         <NavItem>
-          <ChartColumn width="1em" height="1em" aria-hidden />
-          <span>Statistiken</span>
+          <Settings width="1em" height="1em" aria-hidden />
+          <span>Einstellungen</span>
         </NavItem>
       </>
     ),
-    sidebarFooter: (
-      <div className="flex items-center justify-between gap-stack-sm">
-        <Avatar initials="JL" aria-label="Justus Liebig" />
-        <ThemeToggle />
-      </div>
-    ),
+    sidebarFooter: userMenu,
   },
   render: (args) => (
     <AppShellLayout {...args}>
