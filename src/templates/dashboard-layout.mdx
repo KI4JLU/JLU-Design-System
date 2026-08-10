@@ -5,11 +5,11 @@ import * as DashboardLayoutStories from "./dashboard-layout.stories";
 
 # DashboardLayout
 
-Übersichtsseiten: `PageHeader` (Titel, Beschreibung, Aktionen), optionale
-Toolbar-Zeile (Suche/Filter), optionale KPI-Zeile im responsiven Raster,
-freier Inhalt darunter. Sitzt im Regelfall als `children` in `AppShellLayout`.
-Daten holen und aggregieren bleibt in der App — das Template besitzt nur das
-Skelett.
+Übersichtsseiten: optionale Toolbar-Zeile (Suche/Filter) zuerst, dann
+`PageHeader` (Titel, Beschreibung, Aktionen), optionale KPI-Zeile im
+responsiven Raster, freier Inhalt darunter. Sitzt im Regelfall als `children`
+in `AppShellLayout`. Daten holen und aggregieren bleibt in der App — das
+Template besitzt nur das Skelett.
 
 <Canvas of={DashboardLayoutStories.Standard} />
 
@@ -17,14 +17,12 @@ Skelett.
 
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
+| `toolbar` | `ReactNode` | — | Such-/Filter-Zeile über dem Titel, z. B. `ListToolbar` mit `FilterMenu`s. |
 | `title` | `ReactNode` | ✅ | Seitentitel (`<h1>`). |
-| `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
-| `actions` | `ReactNode` | — | Rechte Header-Aktionen (Zeitraum-Umschalter, Export …). |
-| `toolbar` | `ReactNode` | — | Such-/Filter-Zeile unter dem Titel, z. B. `ListToolbar` mit `FilterMenu`s. |
+| `description` | `ReactNode` | — | Gedämpfte Erklärzeile unter dem Titel. |
+| `actions` | `ReactNode` | — | Rechte Header-Aktionen, in derselben Zeile wie der Titel — z. B. Zeitraum-Umschalter, Export, oder eine gedämpfte Anzahl der Einträge (`text-on-surface-variant`). |
 | `stats` | `ReactNode` | — | KPI-Kacheln — werden im 4er-Grid angeordnet (`Grid cols={4}`). |
 | `children` | `ReactNode` | ✅ | Freier Inhalt; für Kartenraster `<Grid>` verwenden. |
-
-<Canvas of={DashboardLayoutStories.WithToolbar} />
 
 <Controls />
 
