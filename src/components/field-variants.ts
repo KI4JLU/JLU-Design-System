@@ -22,7 +22,7 @@ export const fieldVariants = cva(
     variants: {
       variant: {
         default: [
-          "rounded-field border border-outline-variant bg-surface px-4 py-3",
+          "rounded-field border border-outline-variant bg-surface-container-lowest px-4 py-3",
           "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-focus-ring",
         ],
         inline:

@@ -204,7 +204,7 @@
   --color-inverse-primary: var(--p-blue-200);
 
   --color-outline: var(--p-gray-500);
-  --color-outline-variant: var(--p-gray-300);
+  --color-outline-variant: var(--p-gray-100);
   --color-surface-tint: var(--p-blue-700);
 
   /* Scrim — abdunkelnde Schicht unter modalen Flächen (Dialog, Drawer).
@@ -366,8 +366,11 @@
     --color-on-surface-variant: var(--p-gray-350);
     --color-surface-variant: var(--p-gray-820);
 
-    /* Container heller als der Hintergrund, damit Karten sichtbar abheben. */
-    --color-surface-container-lowest: var(--p-gray-940);
+    /* Chrome-Flächen (Sidebar, Header, Card, …) sind schwarz — das dunkle
+     * Gegenstück zum reinen Weiß im Hellmodus. Sie heben sich damit bewusst
+     * dunkler ab als der Seitenhintergrund (surface, dunkelgrau), analog zur
+     * Beziehung Weiß-auf-Hellgrau im Light-Theme. */
+    --color-surface-container-lowest: var(--p-black);
     --color-surface-container-low: var(--p-gray-925);
     --color-surface-container: var(--p-gray-910);
     --color-surface-container-high: var(--p-gray-880);
@@ -378,7 +381,10 @@
     --color-inverse-on-surface: var(--p-gray-870);
 
     --color-outline: var(--p-gray-450);
-    --color-outline-variant: var(--p-gray-825);
+    /* Dividers spiegeln im Dunkeln das Hell-Verhältnis: dort eine Spur dunkler
+     * als das weiße Chrome, hier eine Spur heller als das schwarze — gedämpft,
+     * nie als helle Linie auf dunklem Grund. */
+    --color-outline-variant: var(--p-gray-880);
 
     /* Sekundär-Container (Hover/aktive Sub-Navigation) gedämpftes Blau. */
     --color-secondary-container: var(--p-slate-800);

@@ -20,7 +20,7 @@ export const buttonVariants = cva(
         secondary:
           "bg-secondary-container text-on-secondary-container hover:brightness-105",
         outline: [
-          "border border-outline-variant bg-transparent text-on-surface hover:bg-surface-container-high",
+          "border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-high",
           "aria-[pressed=true]:border-primary aria-[pressed=true]:bg-primary/10 aria-[pressed=true]:text-primary",
           "data-[state=open]:border-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary",
         ].join(" "),
