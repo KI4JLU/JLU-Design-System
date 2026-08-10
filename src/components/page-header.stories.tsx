@@ -35,7 +35,7 @@ export const Playground: Story = {
 
 /** Untergeordnete Zeile (children) für Toolbars/Filter unter dem Titel. */
 export const WithToolbarRow: Story = {
-  args: { title: "Konnektoren" },
+  args: { title: "Team" },
   render: (args) => (
     <PageHeader {...args} actions={<Button>Neu</Button>}>
       <Input placeholder="Suchen…" className="max-w-xs" />

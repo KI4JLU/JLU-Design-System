@@ -24,7 +24,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const brand = <Logo product="CampusAgents" size="lg" />;
+const brand = <Logo product="App" size="lg" />;
 
 /**
  * Der Standardfall: Single Sign-on über OIDC/Keycloak — ein einziger
@@ -61,7 +61,7 @@ export const SSO: Story = {
 export const Login: Story = {
   args: {
     title: "Anmelden",
-    description: "CampusAgents-Verwaltung der JLU.",
+    description: "Plattform-Verwaltung der JLU.",
   },
   render: (args) => (
     <AuthLayout
