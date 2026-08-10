@@ -17,8 +17,9 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 |---|---|---|---|
 | `logo` | `ReactNode` | ✅ | Markenblock — erscheint im Sidebar-Header **und** in der mobilen Top-Bar. |
 | `nav` | `ReactNode` | ✅ | Navigations-Einträge, typischerweise `<NavItem>`s (mit `asChild` für Router-Links). |
-| `sidebarFooter` | `ReactNode` | — | Gepinnter Sidebar-Fuß: Nutzermenü, `<ThemeToggle>`. |
+| `sidebarFooter` | `ReactNode` | — | Gepinnter Sidebar-Fuß: Nutzermenü. |
 | `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
+| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-groß und fett, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt; rechts daneben sitzt der `ThemeToggle`. |
 | `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
 
 <Controls />
