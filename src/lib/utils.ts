@@ -29,7 +29,7 @@ const twMerge = extendTailwindMerge({
           ],
         },
       ],
-      shadow: [{ shadow: ["card", "card-hover", "overlay"] }],
+      shadow: [{ shadow: ["card", "card-hover", "overlay", "modal"] }],
       rounded: [{ rounded: ["action", "field"] }],
       gap: [{ gap: spacingTokens }],
       "gap-x": [{ "gap-x": spacingTokens }],

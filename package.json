@@ -1,6 +1,6 @@
 {
   "name": "@ki4jlu/design-system",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "JLU design system: design tokens, light/dark theming, and shared React UI components for JLU projects — consumed as a dependency for a unified look and feel.",
   "type": "module",
   "license": "UNLICENSED",
@@ -32,6 +32,7 @@
   "scripts": {
     "build": "vite build && npm run build:tokens",
     "build:tokens": "cp src/tokens.css dist/tokens.css",
+    "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

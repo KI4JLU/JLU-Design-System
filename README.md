@@ -21,8 +21,28 @@ Nutzungsregeln: [docs/COMPONENT_GUIDELINES.md](docs/COMPONENT_GUIDELINES.md).
 
 ## Installation im Projekt
 
-Das Paket liegt in der GitHub Packages Registry (privat). Einmalig `.npmrc` im
-Projekt:
+### Empfohlen: direkt aus git (ohne Token)
+
+Das Repo ist öffentlich, dieser Weg braucht **keine Registry und keinen Token** —
+weder lokal noch in CI noch im Docker-Build:
+
+```bash
+npm install github:KI4JLU/JLU-Design-System#v0.21.0
+```
+
+Immer auf einen **Tag** pinnen, nicht auf `main`. Beim Installieren baut das
+`prepare`-Script `dist/` (inkl. `tokens.css`); npm holt dafür kurzzeitig die
+devDependencies, führt deren Install-Scripts aber nicht aus — es landet also
+weder Storybook noch ein Playwright-Browser im Consumer-Baum.
+
+Einzige Voraussetzung: `git` muss in der Build-Umgebung verfügbar sein (in
+schlanken Docker-Images ggf. nachinstallieren).
+
+### Alternativ: GitHub Packages Registry
+
+`npm.pkg.github.com` verlangt einen Token — **auch für öffentliche Packages**;
+das ist eine Einschränkung der npm-Registry von GitHub Packages. Einmalig
+`.npmrc` im Projekt:
 
 ```ini
 @ki4jlu:registry=https://npm.pkg.github.com

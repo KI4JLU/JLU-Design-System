@@ -6,8 +6,10 @@
  *     Flags raw Tailwind palette color utilities (bg-blue-500, text-gray-700,
  *     dark:text-green-400, …) and arbitrary hex color classes (bg-[#1e1e2e]) in
  *     any string / template literal. Colors must go through semantic tokens
- *     (bg-primary, text-on-surface, bg-success, …). `white`/`black` are allowed
- *     (common contrast overlays). Genuine exceptions get an eslint-disable line.
+ *     (bg-primary, text-on-surface, bg-success, …). Opaque `white`/`black` stay
+ *     allowed (common contrast overlays), but a TRANSLUCENT black background
+ *     (bg-black/50) is a scrim and must use bg-scrim/<n>.
+ *     Genuine exceptions get an eslint-disable line.
  *
  *   design-system/no-raw-ui-elements  (warn)
  *     Flags raw <button> / <input> JSX; prefer @ki4jlu/design-system Button / Input.
@@ -35,9 +37,16 @@ const paletteRe = new RegExp(
 );
 // Arbitrary hex color class, e.g. bg-[#1e1e2e], text-[#fff].
 const hexClassRe = /-\[#[0-9a-fA-F]{3,8}\]/;
+// Translucent black as a background — that is a scrim, and there is a token
+// for it. Opaque `bg-black` and `text-white` stay allowed (contrast overlays).
+const scrimRe = /(?:^|[\s:'"`])(?:bg|from|to|via)-black\/\d/;
 
+/** Returns the messageId to report, or null when the text is clean. */
 function testColor(text) {
-  return typeof text === "string" && (paletteRe.test(text) || hexClassRe.test(text));
+  if (typeof text !== "string") return null;
+  if (scrimRe.test(text)) return "scrim";
+  if (paletteRe.test(text) || hexClassRe.test(text)) return "hardcoded";
+  return null;
 }
 
 const noHardcodedColors = {
@@ -47,18 +56,20 @@ const noHardcodedColors = {
     messages: {
       hardcoded:
         "Hardcoded color class. Use a semantic token (e.g. bg-primary, text-on-surface, bg-success) — see docs/COMPONENT_GUIDELINES.md.",
+      scrim:
+        "Translucent black background. Use the scrim token instead (bg-scrim/50) — see Storybook „Tokens“.",
     },
     schema: [],
   },
   create(context) {
     return {
       Literal(node) {
-        if (testColor(node.value)) context.report({ node, messageId: "hardcoded" });
+        const messageId = testColor(node.value);
+        if (messageId) context.report({ node, messageId });
       },
       TemplateElement(node) {
-        if (testColor(node.value && node.value.cooked)) {
-          context.report({ node, messageId: "hardcoded" });
-        }
+        const messageId = testColor(node.value && node.value.cooked);
+        if (messageId) context.report({ node, messageId });
       },
     };
   },

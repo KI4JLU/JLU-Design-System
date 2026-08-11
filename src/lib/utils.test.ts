@@ -32,4 +32,8 @@ describe("cn", () => {
       "shadow-card shadow-black/20",
     );
   });
+
+  it("resolves the four elevation steps against each other", () => {
+    expect(cn("shadow-overlay", "shadow-modal")).toBe("shadow-modal");
+  });
 });
