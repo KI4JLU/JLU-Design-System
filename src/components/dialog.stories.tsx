@@ -24,11 +24,11 @@ export const Confirm: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">Widget löschen</Button>
+        <Button variant="destructive">Element löschen</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Widget löschen?</DialogTitle>
+          <DialogTitle>Element löschen?</DialogTitle>
           <DialogDescription>
             Diese Aktion kann nicht rückgängig gemacht werden.
           </DialogDescription>

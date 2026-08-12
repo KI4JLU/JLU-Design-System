@@ -28,9 +28,9 @@ export const Widget: Story = {
       <ChatLayout
         header={
           <>
-            <Avatar initials="CB" online aria-label="Campus-Bot, online" />
+            <Avatar initials="AS" online aria-label="Assistent, online" />
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-semibold text-on-surface">Campus-Bot</span>
+              <span className="truncate text-sm font-semibold text-on-surface">Assistent</span>
               <span className="text-xs text-on-surface-variant">Online</span>
             </div>
           </>

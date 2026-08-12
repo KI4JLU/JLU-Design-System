@@ -81,7 +81,7 @@ export const InForm: Story = {
             <SelectItem value="sonnet">Claude Sonnet</SelectItem>
           </SelectContent>
         </Select>
-        <FormDescription>Gilt für neue Widgets.</FormDescription>
+        <FormDescription>Gilt für neue Elemente.</FormDescription>
       </FormItem>
     </div>
   ),

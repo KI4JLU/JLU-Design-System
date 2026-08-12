@@ -14,8 +14,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {
   args: {
-    title: "Widgets",
-    description: "Alle Chat-Widgets dieser Organisation.",
+    title: "Elemente",
+    description: "Alle Elemente dieser Organisation.",
   },
   render: (args) => (
     <PageHeader
@@ -25,7 +25,7 @@ export const Playground: Story = {
           <Button variant="outline">Importieren</Button>
           <Button>
             <Plus width="1em" height="1em" aria-hidden />
-            Widget anlegen
+            Element anlegen
           </Button>
         </>
       }
