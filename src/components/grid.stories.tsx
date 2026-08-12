@@ -20,7 +20,7 @@ export const Playground: Story = {
   args: { cols: 3, gap: "gutter" },
   render: (args) => (
     <Grid {...args}>
-      {["Campus-Bot", "Prüfungsamt-Bot", "Bibliotheks-Bot"].map((name) => (
+      {["Element A", "Element B", "Element C"].map((name) => (
         <Card key={name}>
           <CardHeader>
             <CardTitle className="text-body-base">{name}</CardTitle>

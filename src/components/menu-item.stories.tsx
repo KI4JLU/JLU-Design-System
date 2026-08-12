@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Check, ExternalLink, LogOut, Bot } from "lucide-react";
+import { Check, ExternalLink, LogOut, SlidersHorizontal } from "lucide-react";
 import { MenuItem } from "./menu-item";
 
 const meta = {
@@ -43,12 +43,12 @@ export const PopoverMenu: Story = {
       <MenuItem asChild className="border-b border-outline-variant">
         <a href="#portal" target="_blank" rel="noopener noreferrer">
           <ExternalLink className="text-[18px]" width="1em" height="1em" aria-hidden />
-          Mock-Widget-Portal
+          Externes Portal
         </a>
       </MenuItem>
       <MenuItem type="button">
-        <Bot className="text-[18px]" width="1em" height="1em" aria-hidden />
-        Modell wechseln
+        <SlidersHorizontal className="text-[18px]" width="1em" height="1em" aria-hidden />
+        Einstellungen
       </MenuItem>
       <MenuItem type="button" variant="destructive">
         <LogOut className="text-[18px]" width="1em" height="1em" aria-hidden />

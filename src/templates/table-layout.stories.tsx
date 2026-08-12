@@ -23,15 +23,15 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const rows = [
-  ["Campus-Bot", "Allgemein", "online"],
-  ["Prüfungsamt-Bot", "Prüfungsamt", "online"],
-  ["Bibliotheks-Bot", "Bibliothek", "offline"],
+  ["Element A", "Gruppe 1", "online"],
+  ["Element B", "Gruppe 2", "online"],
+  ["Element C", "Gruppe 3", "offline"],
 ] as const;
 
 export const Admin: Story = {
   args: {
-    title: "Widgets",
-    description: "Alle Chat-Widgets dieser Organisation.",
+    title: "Elemente",
+    description: "Alle Elemente dieser Organisation.",
   },
   render: (args) => (
     <TableLayout
@@ -39,12 +39,12 @@ export const Admin: Story = {
       actions={
         <Button>
           <Plus width="1em" height="1em" aria-hidden />
-          Widget anlegen
+          Element anlegen
         </Button>
       }
       toolbar={
         <>
-          <Input placeholder="Suchen…" aria-label="Widgets durchsuchen" className="max-w-xs" />
+          <Input placeholder="Suchen…" aria-label="Elemente durchsuchen" className="max-w-xs" />
           <ModelSelect />
         </>
       }

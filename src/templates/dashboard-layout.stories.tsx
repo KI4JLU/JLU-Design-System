@@ -2,15 +2,15 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import {
   ArrowUpDown,
-  Bot,
-  Code,
+  Box,
+  Layers,
   Link2,
   ListFilter,
-  MessageCircle,
   Plus,
   Search,
   Settings,
-  Sparkles,
+  Shapes,
+  Share2,
 } from "lucide-react";
 import { DashboardLayout } from "./dashboard-layout";
 import { Badge } from "../components/badge";
@@ -35,13 +35,13 @@ type Story = StoryObj<typeof meta>;
 const FILTER_OPTIONS = [
   { value: "all", label: "Alle" },
   { value: "active", label: "Aktiv" },
-  { value: "paused", label: "Pause" },
+  { value: "inactive", label: "Inaktiv" },
 ];
 
 const SORT_OPTIONS = [
   { value: "name", label: "Name (A-Z)" },
-  { value: "conversations", label: "Gespräche" },
-  { value: "rating", label: "Bewertung" },
+  { value: "field-2", label: "Feld 2" },
+  { value: "field-3", label: "Feld 3" },
 ];
 
 const ACCENT_CLASSES = {
@@ -50,42 +50,43 @@ const ACCENT_CLASSES = {
 } as const;
 
 const FOOTER_ACTIONS = [
-  { icon: Settings, label: "Einstellungen" },
-  { icon: Code, label: "Einbetten" },
+  { icon: Settings, label: "Aktion 1" },
+  { icon: Share2, label: "Aktion 2" },
 ];
 
-// Spiegelt Felder und Aktionen der Konnektor-Karten aus CampusAgents 1:1 —
-// keine reduzierte Platzhalter-Karte, damit das Template realistisch bleibt.
+// Bewusst anwendungsneutrale Platzhalter: die Karte behält die Feld- und
+// Aktionsdichte einer echten Listen-Karte (Icon, Status, Zuordnung, drei
+// Kennzahlen, zwei Aktionen), bindet das Template aber an keine konkrete App.
 const ITEMS = [
   {
-    icon: Bot,
+    icon: Box,
     accent: "primary",
     status: { tone: "primary", label: "Aktiv" },
-    name: "Sales Tracker",
-    linkedTo: "Team Alpha",
-    routing: "public",
-    conversations: 128,
-    rating: "4,8 / 5",
+    name: "Element A",
+    group: "Gruppe 1",
+    field1: "Wert",
+    field2: 128,
+    field3: "4,8",
   },
   {
-    icon: MessageCircle,
+    icon: Layers,
     accent: "secondary",
-    status: { tone: "neutral", label: "Pause" },
-    name: "Support Bot",
-    linkedTo: "Team Beta",
-    routing: "internal",
-    conversations: 64,
-    rating: "4,2 / 5",
+    status: { tone: "neutral", label: "Inaktiv" },
+    name: "Element B",
+    group: "Gruppe 2",
+    field1: "Wert",
+    field2: 64,
+    field3: "4,2",
   },
   {
-    icon: Sparkles,
+    icon: Shapes,
     accent: "primary",
     status: { tone: "primary", label: "Aktiv" },
-    name: "Onboarding Guide",
-    linkedTo: "Team Gamma",
-    routing: "public",
-    conversations: 212,
-    rating: "4,9 / 5",
+    name: "Element C",
+    group: "Gruppe 3",
+    field1: "Wert",
+    field2: 212,
+    field3: "4,9",
   },
 ] as const;
 
@@ -95,21 +96,21 @@ const StandardExample = () => {
   const [sortOption, setSortOption] = useState("name");
   return (
     <DashboardLayout
-      title="Konnektoren"
+      title="Elemente"
       description={
         <>
-          Konnektoren sind die <b className="text-on-surface">Front eines Agenten</b>: Chat, Formular oder
-          API-Endpunkt.
+          Erklärzeile unter dem Titel — Platz für einen{" "}
+          <b className="text-on-surface">hervorgehobenen Begriff</b> und einen kurzen Zusatz.
         </>
       }
-      actions={<span className="text-body-base text-on-surface-variant">{ITEMS.length} Konnektoren</span>}
+      actions={<span className="text-body-base text-on-surface-variant">{ITEMS.length} Elemente</span>}
       toolbar={
         <ListToolbar
           search={
             <Input
               leadingIcon={<Search aria-hidden />}
-              placeholder="Konnektoren durchsuchen…"
-              aria-label="Konnektoren durchsuchen"
+              placeholder="Elemente durchsuchen…"
+              aria-label="Elemente durchsuchen"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -159,7 +160,7 @@ const StandardExample = () => {
                 <h4 className="font-headline-md text-base font-bold">{item.name}</h4>
                 <div className="mt-1 flex items-center gap-2 text-on-surface-variant">
                   <Link2 className="text-sm" width="1em" height="1em" aria-hidden />
-                  <span className="font-label-sm text-xs truncate">{item.linkedTo}</span>
+                  <span className="font-label-sm text-xs truncate">{item.group}</span>
                 </div>
               </div>
 
@@ -170,16 +171,16 @@ const StandardExample = () => {
                   Kartenbreite an der Spaltenzahl hängt, nicht am Viewport. */}
               <div className="mb-4 grid grid-cols-1 gap-2 @[16rem]:grid-cols-3">
                 <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-xs text-on-surface-variant">Routing</span>
-                  <span className="truncate text-sm font-semibold">{item.routing}</span>
+                  <span className="truncate text-xs text-on-surface-variant">Feld 1</span>
+                  <span className="truncate text-sm font-semibold">{item.field1}</span>
                 </div>
                 <div className="flex min-w-0 flex-col @[16rem]:border-l @[16rem]:border-outline-variant/30 @[16rem]:pl-2">
-                  <span className="truncate text-xs text-on-surface-variant">Gespräche</span>
-                  <span className="truncate text-sm font-semibold">{item.conversations}</span>
+                  <span className="truncate text-xs text-on-surface-variant">Feld 2</span>
+                  <span className="truncate text-sm font-semibold">{item.field2}</span>
                 </div>
                 <div className="flex min-w-0 flex-col @[16rem]:border-l @[16rem]:border-outline-variant/30 @[16rem]:pl-2">
-                  <span className="truncate text-xs text-on-surface-variant">Bewertung</span>
-                  <span className="truncate text-sm font-semibold">{item.rating}</span>
+                  <span className="truncate text-xs text-on-surface-variant">Feld 3</span>
+                  <span className="truncate text-sm font-semibold">{item.field3}</span>
                 </div>
               </div>
 
@@ -209,10 +210,10 @@ const StandardExample = () => {
 
 /**
  * Toolbar (Suche + Filter/Sortieren) zuerst, dann Titel mit gedämpfter
- * Anzahl in derselben Zeile, Erklärtext darunter — das Konnektoren-/
- * Agenten-Dashboard-Muster. Karten-Grid max. 4 pro Reihe (`Grid cols={4}`).
+ * Anzahl in derselben Zeile, Erklärtext darunter — das Listen-Dashboard-
+ * Muster. Karten-Grid max. 4 pro Reihe (`Grid cols={4}`).
  */
 export const Standard: Story = {
-  args: { title: "Konnektoren" },
+  args: { title: "Elemente" },
   render: () => <StandardExample />,
 };

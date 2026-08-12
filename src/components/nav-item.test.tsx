@@ -29,7 +29,7 @@ describe("NavItem", () => {
   });
 
   it("uses the nested sizing for level=sub", () => {
-    render(<NavItem level="sub">Campus-Bot</NavItem>);
+    render(<NavItem level="sub">Unterpunkt</NavItem>);
     expect(screen.getByRole("button")).toHaveClass("px-3", "py-2");
   });
 });

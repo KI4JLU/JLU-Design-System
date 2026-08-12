@@ -7,13 +7,13 @@ import { NavItem } from "./nav-item";
 
 const shell = (
   <AppShell
-    topBar={<span>CampusAgents</span>}
+    topBar={<span>Anwendung</span>}
     sidebar={
       <Sidebar>
         <NavItem asChild>
-          <a href="#agenten">Agenten</a>
+          <a href="#bereich-a">Bereich A</a>
         </NavItem>
-        <NavItem>Konnektoren</NavItem>
+        <NavItem>Bereich B</NavItem>
       </Sidebar>
     }
   >
@@ -42,7 +42,7 @@ describe("AppShell", () => {
     render(shell);
     await userEvent.click(screen.getByRole("button", { name: "Navigation öffnen" }));
     const drawer = await screen.findByRole("dialog");
-    await userEvent.click(within(drawer).getByRole("link", { name: "Agenten" }));
+    await userEvent.click(within(drawer).getByRole("link", { name: "Bereich A" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
@@ -50,7 +50,7 @@ describe("AppShell", () => {
     render(shell);
     await userEvent.click(screen.getByRole("button", { name: "Navigation öffnen" }));
     const drawer = await screen.findByRole("dialog");
-    await userEvent.click(within(drawer).getByRole("button", { name: "Konnektoren" }));
+    await userEvent.click(within(drawer).getByRole("button", { name: "Bereich B" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 

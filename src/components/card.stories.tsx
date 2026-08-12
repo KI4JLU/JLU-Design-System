@@ -21,11 +21,11 @@ export const Basic: Story = {
   render: () => (
     <Card className="max-w-sm">
       <CardHeader>
-        <CardTitle>Widget-Statistik</CardTitle>
+        <CardTitle>Element-Statistik</CardTitle>
         <CardDescription>Letzte 30 Tage</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-on-surface-variant">1 284 Konversationen, 92 % gelöst.</p>
+        <p className="text-on-surface-variant">1 284 Vorgänge, 92 % abgeschlossen.</p>
       </CardContent>
       <CardFooter className="justify-end">
         <Button variant="outline" size="sm">
@@ -44,7 +44,7 @@ export const Basic: Story = {
 export const Interactive: Story = {
   render: () => (
     <div className="grid max-w-2xl grid-cols-2 gap-4">
-      {["Prüfungsamt-Bot", "Bibliotheks-Bot"].map((name) => (
+      {["Element A", "Element B"].map((name) => (
         <Card key={name} interactive>
           <CardHeader>
             <CardTitle className="text-body-base">{name}</CardTitle>

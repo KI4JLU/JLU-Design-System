@@ -39,7 +39,7 @@ export const Filled: Story = {
 };
 
 /**
- * Status-Punkt (`dot`): Live-/Online-Pills (Widget-Status, Kanal-Chips).
+ * Status-Punkt (`dot`): Live-/Online-Pills (Verbindungsstatus, Kanal-Chips).
  * Der Punkt läuft in der Textfarbe des Tons mit — dekorativ, die Bedeutung
  * trägt der Text.
  */
@@ -53,7 +53,7 @@ export const WithDot: Story = {
         Offline
       </Badge>
       <Badge dot tone="info">
-        Web-Widget
+        Verbunden
       </Badge>
       <Badge dot appearance="text" tone="success">
         Aktiv

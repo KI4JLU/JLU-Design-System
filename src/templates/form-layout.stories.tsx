@@ -25,7 +25,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Settings: Story = {
   args: {
-    title: "Widget-Einstellungen",
+    title: "Element-Einstellungen",
     description: "Name, Standard-Modell und Fehlerzustände.",
   },
   render: (args) => (
