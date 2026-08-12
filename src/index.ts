@@ -95,6 +95,10 @@ export {
   type SegmentedControlProps,
 } from "./components/segmented-control";
 export { Sidebar, type SidebarProps } from "./components/sidebar";
+export {
+  SidebarUserMenu,
+  type SidebarUserMenuProps,
+} from "./components/sidebar-user-menu";
 export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Stack, type StackProps } from "./components/stack";
 export { stackVariants } from "./components/stack-variants";

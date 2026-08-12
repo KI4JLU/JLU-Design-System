@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CodeBlock } from "./code-block";
 
-const EMBED_SNIPPET = `<!-- CampusAgents Chat-Widget -->
+const EMBED_SNIPPET = `<!-- Chat-Widget Embed -->
 <script
-  src="https://campusagents.uni-giessen.de/widget.js"
+  src="https://example.com/widget.js"
   data-widget-id="w_a1b2c3"
   defer
 ></script>`;

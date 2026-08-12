@@ -4,7 +4,7 @@ import { Logo } from "./logo";
 const meta = {
   title: "Components/Logo",
   component: Logo,
-  args: { product: "CampusAgents" },
+  args: { product: "App" },
   argTypes: {
     size: { control: "select", options: ["sm", "default", "lg"] },
   },
@@ -19,7 +19,7 @@ export const Playground: Story = {};
 export const Platforms: Story = {
   render: () => (
     <div className="flex flex-col items-start gap-stack-md">
-      <Logo product="CampusAgents" />
+      <Logo product="App" />
       <Logo product="API" />
       <Logo product="RAG" />
     </div>
@@ -30,9 +30,9 @@ export const Platforms: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex flex-col items-start gap-stack-md">
-      <Logo product="CampusAgents" size="sm" />
-      <Logo product="CampusAgents" />
-      <Logo product="CampusAgents" size="lg" />
+      <Logo product="App" size="sm" />
+      <Logo product="App" />
+      <Logo product="App" size="lg" />
     </div>
   ),
 };

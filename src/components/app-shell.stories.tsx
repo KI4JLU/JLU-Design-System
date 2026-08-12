@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Brain, ChartColumn, Waypoints } from "lucide-react";
+import { LayoutDashboard, Settings, Users } from "lucide-react";
 import { AppShell } from "./app-shell";
 import { Sidebar } from "./sidebar";
 import { NavItem } from "./nav-item";
@@ -17,7 +17,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const brand = <Logo product="CampusAgents" size="sm" />;
+const brand = <Logo product="App" size="sm" />;
 
 /**
  * Ab lg: feste Sidebar mit rechtem Rand. Darunter: Top-Bar mit Menü-Button,
@@ -30,16 +30,16 @@ export const Responsive: Story = {
     sidebar: (
       <Sidebar header={brand}>
         <NavItem active>
-          <Brain width="1em" height="1em" aria-hidden />
-          <span>Agenten</span>
+          <LayoutDashboard width="1em" height="1em" aria-hidden />
+          <span>Übersicht</span>
         </NavItem>
         <NavItem>
-          <Waypoints width="1em" height="1em" aria-hidden />
-          <span>Konnektoren</span>
+          <Users width="1em" height="1em" aria-hidden />
+          <span>Team</span>
         </NavItem>
         <NavItem>
-          <ChartColumn width="1em" height="1em" aria-hidden />
-          <span>Statistiken</span>
+          <Settings width="1em" height="1em" aria-hidden />
+          <span>Einstellungen</span>
         </NavItem>
       </Sidebar>
     ),
@@ -47,7 +47,7 @@ export const Responsive: Story = {
   render: (args) => (
     <AppShell {...args}>
       <Container className="py-gutter md:py-margin-page">
-        <PageHeader title="Agenten" description="Hauptbereich — Inhalt kommt von der Seite." />
+        <PageHeader title="Übersicht" description="Hauptbereich — Inhalt kommt von der Seite." />
         <Card className="mt-gutter p-6">Seiteninhalt</Card>
       </Container>
     </AppShell>

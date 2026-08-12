@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Brain, ChartColumn, ChevronDown, Waypoints } from "lucide-react";
+import { ChevronDown, LayoutDashboard, Settings, Users } from "lucide-react";
 import { NavItem } from "./nav-item";
 
 const meta = {
@@ -19,8 +19,8 @@ export const Playground: Story = {
   args: {
     children: (
       <>
-        <Brain width="1em" height="1em" aria-hidden />
-        <span>Agenten</span>
+        <LayoutDashboard width="1em" height="1em" aria-hidden />
+        <span>Übersicht</span>
       </>
     ),
     active: false,
@@ -31,29 +31,28 @@ export const Playground: Story = {
 export const SidebarExample: Story = {
   render: () => (
     <nav className="flex w-64 flex-col gap-2 rounded-xl bg-surface-container-low border border-outline-variant p-4">
+      <NavItem>
+        <LayoutDashboard width="1em" height="1em" aria-hidden />
+        <span>Übersicht</span>
+      </NavItem>
       <NavItem active>
-        <Brain width="1em" height="1em" aria-hidden />
-        <span>Agenten</span>
+        <Users width="1em" height="1em" aria-hidden />
+        <span>Team</span>
         <ChevronDown width="1em" height="1em" aria-hidden className="ml-auto" />
       </NavItem>
       <div className="ml-4 flex flex-col gap-1 border-l border-outline-variant pl-3">
         <NavItem level="sub" active>
-          <Brain width="1em" height="1em" aria-hidden />
-          <span className="truncate">Campus-Bot</span>
+          <Users width="1em" height="1em" aria-hidden />
+          <span className="truncate">Mitglieder</span>
         </NavItem>
         <NavItem level="sub">
-          <Brain width="1em" height="1em" aria-hidden />
-          <span className="truncate">Prüfungsamt-Bot</span>
+          <Users width="1em" height="1em" aria-hidden />
+          <span className="truncate">Rollen</span>
         </NavItem>
       </div>
       <NavItem>
-        <Waypoints width="1em" height="1em" aria-hidden />
-        <span>Konnektoren</span>
-        <ChevronDown width="1em" height="1em" aria-hidden className="ml-auto" />
-      </NavItem>
-      <NavItem>
-        <ChartColumn width="1em" height="1em" aria-hidden />
-        <span>Statistiken</span>
+        <Settings width="1em" height="1em" aria-hidden />
+        <span>Einstellungen</span>
       </NavItem>
     </nav>
   ),
@@ -63,9 +62,9 @@ export const SidebarExample: Story = {
 export const AsLink: Story = {
   render: () => (
     <NavItem asChild active className="w-64">
-      <a href="#statistiken">
-        <ChartColumn width="1em" height="1em" aria-hidden />
-        <span>Statistiken</span>
+      <a href="#uebersicht">
+        <LayoutDashboard width="1em" height="1em" aria-hidden />
+        <span>Übersicht</span>
       </a>
     </NavItem>
   ),

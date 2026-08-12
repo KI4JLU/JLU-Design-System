@@ -7,9 +7,10 @@ import { Dialog, DialogTrigger, DialogPortal, DialogOverlay } from "./dialog";
 
 /**
  * Responsive application frame. From lg up the `sidebar` node is a sticky
- * full-height column with a right border; below lg it moves into a left
- * drawer (Radix Dialog: focus trap, Escape, scroll lock) opened from a
- * sticky top bar. Pass the SAME node (typically <Sidebar>) — AppShell
+ * full-height column with a right border (separating it from the page
+ * content, e.g. the pageLabel bar in `AppShellLayout`); below lg it moves
+ * into a left drawer (Radix Dialog: focus trap, Escape, scroll lock) opened
+ * from a sticky top bar. Pass the SAME node (typically <Sidebar>) — AppShell
  * renders it in both places, only one is visible per breakpoint.
  *
  * The drawer closes automatically when a link inside it is clicked (SPA
@@ -36,7 +37,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
           {sidebar}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex items-center gap-stack-sm border-b border-outline-variant bg-surface px-gutter py-stack-sm lg:hidden">
+          <header className="sticky top-0 z-10 flex items-center gap-stack-sm border-b border-outline-variant bg-surface-container-lowest px-gutter py-stack-sm lg:hidden">
             <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Navigation öffnen">
