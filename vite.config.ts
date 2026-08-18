@@ -18,6 +18,9 @@ const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(file
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  resolve: {
+    alias: { "@": path.resolve(dirname, "./src") }
+  },
   plugins: [react(), tailwindcss(), dts({
     include: ["src"],
     exclude: ["src/**/*.stories.tsx", "src/**/*.test.ts", "src/**/*.test.tsx", "src/test"]
@@ -29,7 +32,7 @@ export default defineConfig({
       fileName: "index"
     },
     rollupOptions: {
-      external: [/^react($|\/)/, /^react-dom($|\/)/, /^@radix-ui\//, "class-variance-authority", "clsx", "tailwind-merge", /^lucide-react($|\/)/]
+      external: [/^react($|\/)/, /^react-dom($|\/)/, /^@radix-ui\//, /^radix-ui($|\/)/, "class-variance-authority", "clsx", "tailwind-merge", /^lucide-react($|\/)/]
     }
   },
   test: {

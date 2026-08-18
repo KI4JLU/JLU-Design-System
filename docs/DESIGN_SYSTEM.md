@@ -115,6 +115,15 @@ consuming repo** — new exceptions get the same scrutiny there.
   shadcn's own token names (`bg-background`, `text-primary-foreground`, …) —
   **re-point them to our semantic tokens** (`bg-surface`, `text-on-primary`, …)
   before merge, so there is one vocabulary.
+- Generated components import Radix from the unified `radix-ui` package
+  (`import { Tooltip } from "radix-ui"`). **Swap it for the individual
+  `@radix-ui/react-*` package** this repo already depends on, so there is one
+  Radix style and the import stays externalised out of the bundle.
+- Internal imports may use the `@/*` alias (`@/lib/utils`, `@/components/x`),
+  which is what the generator emits; existing files use relative paths and
+  both resolve. `vite-plugin-dts` rewrites the alias to a relative path in the
+  published `.d.ts`, so it never reaches consumers — verified, do not
+  "simplify" this away.
 - `cva` variant maps live in a sibling `*-variants.ts` file (see
   [`button-variants.ts`](../src/components/button-variants.ts)), not in the
   component file, to satisfy react-refresh's "only export components" rule.
@@ -222,7 +231,11 @@ Minimum bar for every shared component:
 4. Note it in the Changelog. PR requires owner approval.
 
 **Adding a component / variant**
-1. Prefer `npx shadcn@latest add <component>`; style with tokens only.
+1. Prefer `npx shadcn@latest add <component>` (wired via `components.json`;
+   writes flat into `src/components/`). Normalise the generated file before
+   merge — see §3: re-point tokens, split the `cva` map into `*-variants.ts`,
+   and swap the unified `radix-ui` import for the individual
+   `@radix-ui/react-*` package.
 2. Meet the accessibility bar (§5). Add a test where behaviour is non-trivial.
 3. Add a `*.stories.tsx` next to the component (Storybook is the documentation).
 4. New variants need explicit owner review.
