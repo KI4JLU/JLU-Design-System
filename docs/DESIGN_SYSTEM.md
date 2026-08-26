@@ -110,11 +110,21 @@ consuming repo** — new exceptions get the same scrutiny there.
 - Compose classes with `cn()` (exported by the package).
 - New component **variants require review** by the design system owner before
   merge.
-- New components follow shadcn/ui patterns (Radix primitives + cva + tokens).
-  Components generated with `npx shadcn@latest add <component>` ship with
-  shadcn's own token names (`bg-background`, `text-primary-foreground`, …) —
-  **re-point them to our semantic tokens** (`bg-surface`, `text-on-primary`, …)
-  before merge, so there is one vocabulary.
+- New components follow shadcn/ui patterns (Radix primitives + cva + tokens),
+  and `npx shadcn@latest add <component>` is the preferred way to start one.
+  A generated file is **not** mergeable as emitted: it ships shadcn's own token
+  vocabulary, the unified `radix-ui` import, an inline `cva` map, and it writes
+  a token block into `src/tokens.css`. The canonical, ordered normalisation
+  steps — including the full **shadcn → JLU token mapping table** and the
+  guardrail greps for the reverted `tokens.css` injection — live in
+  [COMPONENT_GUIDELINES.md → „Generating a component with the shadcn CLI"](./COMPONENT_GUIDELINES.md#generating-a-component-with-the-shadcn-cli).
+  One copy, deliberately: a mapping restated in two files is a mapping that
+  goes stale in one of them.
+- Internal imports may use the `@/*` alias (`@/lib/utils`, `@/components/x`),
+  which is what the generator emits; existing files use relative paths and
+  both resolve. `vite-plugin-dts` rewrites the alias to a relative path in the
+  published `.d.ts`, so it never reaches consumers — verified, do not
+  "simplify" this away.
 - `cva` variant maps live in a sibling `*-variants.ts` file (see
   [`button-variants.ts`](../src/components/button-variants.ts)), not in the
   component file, to satisfy react-refresh's "only export components" rule.
@@ -222,7 +232,14 @@ Minimum bar for every shared component:
 4. Note it in the Changelog. PR requires owner approval.
 
 **Adding a component / variant**
-1. Prefer `npx shadcn@latest add <component>`; style with tokens only.
+1. Prefer `npx shadcn@latest add <component>` (wired via `components.json`;
+   writes flat into `src/components/`), then work through the **post-generation
+   checklist** in
+   [COMPONENT_GUIDELINES.md](./COMPONENT_GUIDELINES.md#post-generation-checklist)
+   — it is the canonical, ordered list (token mapping, reverting the
+   `tokens.css` injection, the Radix import swap, the `*-variants.ts` split,
+   story/MDX/test, both-theme QA) and covers steps 2–4 below for generated
+   components.
 2. Meet the accessibility bar (§5). Add a test where behaviour is non-trivial.
 3. Add a `*.stories.tsx` next to the component (Storybook is the documentation).
 4. New variants need explicit owner review.
@@ -265,6 +282,35 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.22.1** — Tooling and docs round, opening the JustRAG adoption. **No
+  change to the published surface:** `dist/` components and `src/tokens.css`
+  are untouched, which is why this is a patch — `components.json` and the
+  `@/*` alias are repo tooling and are not in `package.json`'s `files` list.
+  **shadcn CLI wired** (`components.json` + the `@/*` path alias in
+  `tsconfig.json`/`vite.config.ts`), so `npx shadcn@latest add <component>`
+  works in this repo. **Canonical normalisation docs** in
+  COMPONENT_GUIDELINES.md → „Generating a component with the shadcn CLI": a
+  28-row shadcn→JLU token mapping table (every token grep-verified against
+  `src/tokens.css`; `chart-5` and the whole `sidebar-*` family are recorded as
+  *absent* rather than mapped to an invented name), the rule that the CLI's
+  token injection into `src/tokens.css` is always reverted plus three guardrail
+  greps, and the post-generation checklist as six ordered steps. §4 and §6 now
+  reference that one copy instead of restating it (and a wrong „see §3"
+  cross-reference is fixed). Two traps recorded while verifying: `rounded-md`
+  and `rounded-sm` *compile* from Tailwind's default theme and are therefore
+  silent non-tokens, and `--color-secondary` / `--color-on-secondary` exist but
+  have no dark-block override and no component using them — the secondary
+  action pair is `secondary-container` / `on-secondary-container`. Also
+  app-neutral fixtures in the remaining stories and tests.
+- **0.22.0** — *(backfilled: this release shipped without a changelog entry,
+  contrary to the rule at the top of this section — reconstructed from
+  `v0.21.0..v0.22.0`.)* App-chrome redesign round (PR #4). **Theming:**
+  white/black chrome surfaces, dimmer dividers, filled fields. **`Card`:**
+  `interactive` hover now highlights the border instead of moving the card (no
+  layout shift). **`DashboardLayout`:** toolbar above the header, narrow-safe
+  demo cards. **`AppShellLayout`:** new `pageLabel` bar with the `ThemeToggle`
+  on the right. **New component `SidebarUserMenu`** (name, role, chevron).
+  **Storybook:** generic demo copy instead of CampusAgents branding.
 - **0.21.0** — Consumer-integration round, from the JustRAG token migration.
   **Install without a token:** added `prepare` to `package.json`, so
   `npm install github:KI4JLU/JLU-Design-System#v0.21.0` builds `dist/` on

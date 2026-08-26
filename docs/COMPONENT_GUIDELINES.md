@@ -47,6 +47,127 @@ governance.
 If you need a color with no matching token, **don't invent a hex** — propose a new
 token via the process in DESIGN_SYSTEM.md §6.
 
+## Generating a component with the shadcn CLI
+
+`npx shadcn@latest add <component>` is the preferred way to start a new
+component (wired via [`components.json`](../components.json); it writes flat
+into `src/components/`). What it emits is **shadcn's** vocabulary, not ours —
+generated files are normalised before merge. This section is the canonical
+reference for that normalisation; DESIGN_SYSTEM.md §4/§6 point here rather than
+restating it.
+
+### shadcn → JLU token mapping
+
+The CLI styles components against its own Tailwind-4 CSS-variable set
+(`bg-background`, `text-muted-foreground`, `border-input`, …). Re-point every
+one of them to a JLU semantic token. Every `--color-*` / `--radius-*` /
+`--shadow-*` name below was checked to exist in
+[`src/tokens.css`](../src/tokens.css); "none" means the concept has **no** JLU
+equivalent and needs a token proposal (DESIGN_SYSTEM.md §6), not an invented
+name.
+
+**The authoritative list is the CLI's own diff, not this table.** Read what the
+run actually injected into `src/tokens.css` (see the next subsection) — any
+variable in that diff which is missing below is unmapped: treat it as "no token
+yet, open a card" instead of guessing a counterpart.
+
+| shadcn variable → utility | JLU utility | Backing token in `src/tokens.css` + note |
+|---|---|---|
+| `--background` → `bg-background` | `bg-surface` | `--color-surface`. `--color-background` also exists and holds the same primitive, but `surface` is the documented M3 vocabulary every component uses — keep one name. |
+| `--foreground` → `text-foreground` | `text-on-surface` | `--color-on-surface`. |
+| `--card` → `bg-card` | `bg-surface-container-lowest` | `--color-surface-container-lowest`. No `--color-card`. A card is a *raised* surface, not the page: pair with `border-outline-variant` + `shadow-card`, as [`card.tsx`](../src/components/card.tsx) does. |
+| `--card-foreground` → `text-card-foreground` | `text-on-surface` | `--color-on-surface`. No separate token — `on-surface` is the correct text color on a container. |
+| `--popover` → `bg-popover` | `bg-surface-container-lowest` + `shadow-overlay` | `--color-surface-container-lowest`, `--shadow-overlay`. No `--color-popover`. A floating panel is the *same* color as a card; the **elevation** distinguishes it — `popover.tsx`, `dropdown-menu.tsx` and `select.tsx` all use exactly this pair. |
+| `--popover-foreground` → `text-popover-foreground` | `text-on-surface` | `--color-on-surface`. |
+| `--primary` → `bg-primary` | `bg-primary` | `--color-primary`. Name coincides, value does not: ours is the brand blue and it **inverts in dark** (light accent on dark text), so never pair it with a literal white. |
+| `--primary-foreground` → `text-primary-foreground` | `text-on-primary` | `--color-on-primary`. |
+| `--secondary` → `bg-secondary` | `bg-secondary-container` | `--color-secondary-container`. **Not** `bg-secondary`: `--color-secondary` exists but has *no* dark-block override and is used by no component, so a control styled on it would not switch theme. The secondary *action* pair is the one in [`button-variants.ts`](../src/components/button-variants.ts). |
+| `--secondary-foreground` → `text-secondary-foreground` | `text-on-secondary-container` | `--color-on-secondary-container` (has a dark override). `--color-on-secondary` exists too — same reason not to use it. |
+| `--muted` → `bg-muted` | `bg-surface-container` | `--color-surface-container`. No `--color-muted`. If the generated usage is really a row *hover/highlight* fill rather than a quiet panel, use `bg-surface-container-high` — that is what our menu/select/dropdown rows use. |
+| `--muted-foreground` → `text-muted-foreground` | `text-on-surface-variant` | `--color-on-surface-variant`. Same role, different naming logic: shadcn names the *surface* ("muted"), we name the *relationship* — text **on** a surface, the quieter variant. Also our placeholder color ([`field-variants.ts`](../src/components/field-variants.ts)). |
+| `--accent` → `bg-accent` | `bg-surface-container-high` | `--color-surface-container-high`. No `--color-accent`, and none is wanted: shadcn's `accent` is not a brand accent — it is the hover / keyboard-highlight fill of menu rows, which is `surface-container-high` in `dropdown-menu.tsx`, `select.tsx`, `menu-item-variants.ts` and Button's `ghost`/`outline` hover. |
+| `--accent-foreground` → `text-accent-foreground` | `text-on-surface` (i.e. leave the resting text color) | `--color-on-surface`. Our rows do **not** recolor text on hover, only the fill changes — do not invent an `on-accent`. |
+| `--destructive` → `bg-destructive` / `text-destructive` | `bg-error` / `text-error` | `--color-error`. Prefer `<Button variant="destructive">` over restyling. If the generated file puts a literal `text-white` on a destructive surface, that is a re-point too → `text-on-error`. |
+| `--destructive-foreground` → `text-destructive-foreground` | `text-on-error` | `--color-on-error`. |
+| `--border` → `border-border` | `border-outline-variant` | `--color-outline-variant`. No `--color-border`. Stronger line: `border-outline` (`--color-outline`). |
+| `--input` → `border-input` | `border-outline-variant` | `--color-outline-variant`. shadcn's `input` is only the field *border* color, not a fill; `field-variants.ts` frames Input/Textarea with exactly this. |
+| `--ring` → `ring-ring`, `outline-ring/50` | `ring-focus-ring` | `--color-focus-ring`. Keep our focus recipe: `focus-visible:ring-2 focus-visible:ring-focus-ring` (plus `focus-visible:ring-offset-2 focus-visible:ring-offset-surface` on controls). |
+| `--radius` → `rounded-sm` / `rounded-md` | `rounded-action` (buttons, nav rows) · `rounded-field` (Input/Textarea) · `rounded-xl` (cards, popovers, menus) | `--radius-action`, `--radius-field`, `--radius-xl`. **Silent-divergence trap:** `rounded-md`/`rounded-sm` *compile* — `--radius-md: .375rem` and `--radius-sm: .25rem` come from Tailwind's own default theme, verified in the built CSS, **not** from `src/tokens.css`, which defines only `--radius-DEFAULT`, `-lg`, `-xl`, `-full`, `-action`, `-field`. A leftover `rounded-md` therefore looks fine and is not a token. (shadcn centres its radii on a single `--radius`; the exact derivation depends on the CLI version — read the diff, don't assume.) |
+| `--chart-1` … `--chart-4` → `fill-chart-1`, `stroke-chart-2`, `bg-chart-3` | same names | `--color-chart-1` … `--color-chart-4`. Names coincide; values are ours and lighten in dark. We additionally have `chart-track` (donut/bar backgrounds), which shadcn has no equivalent for. |
+| `--chart-5` | **none — no token yet, open a card** | Our series ramp stops at 4. A 5th series needs a primitive + a light *and* dark value through DESIGN_SYSTEM.md §6 — do not reuse `chart-track` (it is a background, not a series) and do not add a hex. |
+| `--sidebar` → `bg-sidebar` | `bg-surface-container-lowest` | **No `sidebar-*` tokens exist, deliberately.** Our [`sidebar.tsx`](../src/components/sidebar.tsx) uses the ordinary surface vocabulary. |
+| `--sidebar-foreground` | `text-on-surface` | `--color-on-surface`. |
+| `--sidebar-primary` / `--sidebar-primary-foreground` | `bg-primary` / `text-on-primary` | `--color-primary` / `--color-on-primary`. This is the active top-level row in [`nav-item-variants.ts`](../src/components/nav-item-variants.ts). |
+| `--sidebar-accent` / `--sidebar-accent-foreground` | `bg-secondary-container` / `text-on-secondary-container` | `--color-secondary-container` / `--color-on-secondary-container`. NavItem's hover and its active *sub*-level row. |
+| `--sidebar-border` | `border-outline-variant` | `--color-outline-variant`. |
+| `--sidebar-ring` | `ring-focus-ring` | `--color-focus-ring`. |
+
+A generated `sidebar` component that wants the whole `sidebar-*` block as its
+own palette is a **token proposal** (DESIGN_SYSTEM.md §6), not a local hex and not a new parallel
+vocabulary: the sidebar is chrome built from the same surfaces as everything
+else, which is why one theme change moves it too.
+
+### The CLI's token injection into `src/tokens.css` is reverted
+
+`components.json` points the CLI at `"css": "src/tokens.css"` with
+`cssVariables: true`, so `shadcn add` will **write its own token block into our
+token file** (its `--background`, `--card`, `--muted`, `--sidebar-*`, `--radius`
+… with literal color values). That injection is always reverted — keep the
+component file, drop the CSS. `src/tokens.css` has exactly one vocabulary, and
+every semantic token references a primitive (`var(--p-*)`); a second, literal
+palette sitting next to it is how the two silently drift apart.
+
+Reviewer guardrail (from DESIGN_SYSTEM.md §2) — must return **nothing**:
+
+```bash
+grep -nE '^\s*--(color|shadow)-[a-z-]+:\s*#' src/tokens.css
+```
+
+That one catches a literal **hex**. The CLI's block does not necessarily use
+hex, so check the injected *names* and non-hex color functions too — both must
+also return nothing:
+
+```bash
+grep -nE -- '--color-(card|popover|muted|accent|destructive|ring|input|border|sidebar)' src/tokens.css
+grep -nE 'oklch\(|@theme inline' src/tokens.css
+```
+
+All three are clean on the current file — a hit means a `shadcn add` was merged
+without reverting its injection.
+
+### Post-generation checklist
+
+Run these in order on every file `shadcn add` produced, before the PR:
+
+1. **Re-point the tokens.** Replace every shadcn color/radius utility using the
+   mapping table above. A concept with no JLU token stops here: propose the
+   token (DESIGN_SYSTEM.md §6) or open a card — never a hex, never a raw Tailwind palette class
+   (`no-hardcoded-colors` is an ESLint **error**, but `rounded-md` and
+   `bg-background` pass lint, so this step is a *read*, not just a lint run).
+2. **Revert the `src/tokens.css` injection** and run the three guardrail greps
+   above.
+3. **Swap the Radix import.** Generated files import from the unified `radix-ui`
+   package (`import { Tooltip } from "radix-ui"`). Replace it with the
+   individual `@radix-ui/react-*` package this repo already lists in
+   `dependencies`, so there is one Radix style and the import stays
+   externalised out of the bundle. If the needed `@radix-ui/react-*` package is
+   not in `dependencies` yet, add it there (not the unified package).
+4. **Move the `cva` variant map into a sibling `*-variants.ts`** — the generator
+   puts it inline in the component file. `foo.tsx` + `foo-variants.ts`,
+   following [`button-variants.ts`](../src/components/button-variants.ts). This
+   is the standing repo rule (rationale in DESIGN_SYSTEM.md §4), not a
+   generation detail — it just always needs doing after a generate.
+5. **Add a story, an MDX page where the component needs prose, and a test**
+   where behaviour is non-trivial: `foo.stories.tsx` next to the component
+   (Storybook *is* the documentation — autodocs props table, a11y addon), plus
+   `foo.test.tsx` for behaviour. Meet the accessibility bar in
+   DESIGN_SYSTEM.md §5.
+6. **Both-theme visual QA.** Switch the Storybook theme toolbar to light **and**
+   dark and look at the component in each — including hover, active, focus and
+   disabled. This is a required pass, not code review (DESIGN_SYSTEM.md §3);
+   missing interaction states are the most common theme bug. New variants also
+   need owner review, and Chromatic snapshots must be accepted.
+
 ## Button
 
 ```tsx
