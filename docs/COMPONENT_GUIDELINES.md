@@ -270,10 +270,15 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
 ```
 
 - **Use the templates** (`AppShellLayout`, `AuthLayout`, `DashboardLayout`,
-  `FormLayout`, `ChatLayout`, `TableLayout`, `SectionedGridLayout`) for their
-  page category — never rebuild a page skeleton in the app. Missing
-  slot/variant? Extend the template in the design system (owner review), don't
-  fork the layout.
+  `FormLayout`, `ChatLayout`, `TableLayout`, `WorkspaceLayout`,
+  `SectionedGridLayout`) for their page category — never rebuild a page skeleton in the app. Missing slot/variant?
+  Extend the template in the design system (owner review), don't fork the
+  layout.
+- **Three-pane workspaces** (side pane | content | side pane, one pane at a
+  time on narrow screens) are `WorkspaceLayout`: pass the panes' `isOpen` /
+  `width` and the current mobile tab in as controlled props — never a
+  breakpoint check or a pane frame of your own. Hiding a pane goes through
+  `showRight`, never through its collapse state.
 - **Overview pages of grouped card collections** are `SectionedGridLayout`:
   pass `sections` (each with `isOpen`/`onOpenChange` as controlled props) and
   hang the template into `AppShellLayout` as `children`. Per section the body

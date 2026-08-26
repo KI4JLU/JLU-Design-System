@@ -147,4 +147,11 @@ export {
   type SectionedGridSectionBody,
 } from "./templates/sectioned-grid-layout";
 export { TableLayout, type TableLayoutProps } from "./templates/table-layout";
+export {
+  WorkspaceLayout,
+  type WorkspaceLayoutProps,
+  type WorkspacePane,
+  type WorkspacePaneId,
+  type WorkspaceMobileTab,
+} from "./templates/workspace-layout";
 export { cn } from "./lib/utils";

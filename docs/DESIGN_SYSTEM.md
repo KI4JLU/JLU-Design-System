@@ -165,13 +165,13 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
 | `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer |
 | `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. No viewport awareness: which pane is rendered is the template's job |
-| `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: `role="slider"` with `aria-valuemin/max/now`, clamped. Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Offener Punkt" in the MDX: the `slider`-vs-`separator` role and the vertical mirroring are one open decision, not two |
+| `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: focusable `role="separator"` (WAI-ARIA APG „Window Splitter") with `aria-valuemin/max/now`, clamped, and `aria-orientation="vertical"` for the bar itself (not the role's default). Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Entschieden: `separator` statt `slider`" in the MDX — role **and** vertical mirroring were one decision and are both settled (owner, 08/2026); `aria-controls` is the one *required* APG piece still missing (`Enter` is optional in the pattern) |
 | `BottomTabBar` | `bottom-tab-bar.tsx` / `bottom-tab-bar-variants.ts` | fixed bottom `navigation` landmark for narrow-screen pane switching: `items` of icon + label, exactly one `aria-current="page"`. Deliberately **not** `SegmentedControl` — that is a `role="group"` of `aria-pressed` toggles, an inline control rather than a landmark whose active item is the displayed view |
 
 ### Page templates (`src/templates/`)
 One template per page category of the migration order — real importable
 components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
-`ChatLayout`, `TableLayout`, `SectionedGridLayout`). Rules:
+`ChatLayout`, `TableLayout`, `WorkspaceLayout`, `SectionedGridLayout`). Rules:
 
 - Templates are **layout composition only**: slots (`ReactNode` props) for
   injected content, no business logic, no data fetching. `SectionedGridLayout`
@@ -196,6 +196,15 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   its own `<section aria-label>`.
 - Responsive behavior lives **inside** the template (sidebar collapse, grid
   breaks, mobile action stacking) — consuming apps write no breakpoint ladders.
+  Which *mechanism* the template uses is its own choice: CSS wherever CSS can
+  do it, and a **single** JS media query where the arrangement genuinely
+  differs rather than merely narrowing. `WorkspaceLayout` is the one case so
+  far — below `lg` a pane fills the screen, ignores its collapse state and
+  loses its collapse control, and none of the three is expressible as a class
+  on the same markup. It queries Tailwind's own `--breakpoint-lg` (`64rem`),
+  i.e. the same boundary `AppShell` switches its drawer at; a second, differing
+  breakpoint anywhere in a template is a review FAIL. The consumer still writes
+  no ladder — it passes the current pane as a controlled prop.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
