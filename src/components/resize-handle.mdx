@@ -40,6 +40,31 @@ Distanz die neue Breite, klammert sie auf `[min, max]` und meldet sie über
   geteilte Zustand, den diese Komponente abschafft.
 - Beim Unmount mitten im Ziehen werden die Listener entfernt.
 
+## Rolle & ARIA
+
+Der Griff ist ein **fokussierbarer `separator`** — das WAI-ARIA-APG-Muster
+„Window Splitter", das Muster für genau dieses Widget. Konkret:
+
+- `role="separator"` mit `tabIndex={0}` (im Tab-Fokus, weil er bedienbar ist),
+  dazu `aria-valuemin` / `aria-valuemax` / `aria-valuenow` und `aria-label`.
+- `aria-orientation="vertical"` beschreibt die Ausrichtung **der Trennlinie
+  selbst**. Für `separator` ist `horizontal` der Default, „vertical" muss also
+  ausdrücklich dastehen — ein senkrechter Balken zwischen zwei nebeneinander
+  liegenden Bereichen.
+- Die Tasten sind **richtungsbezogen**: sie verschieben die Trennlinie, und
+  `aria-valuenow` meldet die Breite des *Bereichs*. Deshalb vergrößert dieselbe
+  Taste eine linke Leiste und verkleinert eine rechte.
+
+Bewusste Abweichungen vom Muster:
+
+- **`aria-controls`** (Verweis auf den Bereich, dessen Größe gemeldet wird) fehlt
+  — der Griff kennt die `id` des Bereichs nicht. Eine entsprechende Prop wäre
+  eine eigene Änderung; bis dahin folgt der Griff dem Muster in Rolle und
+  Tastatur, aber **volle APG-Konformität ist nicht bestätigt**.
+- **`Enter`** (im Muster optional: Bereich einklappen / wiederherstellen) tut
+  hier nichts. Das Ein- und Ausklappen gehört dem `SidePanel` — dort ist es ein
+  sichtbarer Button, kein verstecktes Tastenkürzel auf dem Griff.
+
 ## Tastatur
 
 | Taste | Wirkung |
@@ -49,16 +74,18 @@ Distanz die neue Breite, klammert sie auf `[min, max]` und meldet sie über
 | `Home` | `min` |
 | `End` | `max` |
 
-`↑`/`↓` sind **Aliase** von `→`/`←` und spiegeln sich genauso pro Seite: ein
-Widget, ein Verhalten, egal zu welcher Achse der Nutzer greift. Sie existieren,
-weil dieses Handle `aria-orientation="vertical"` angibt — eine angekündigte
-Achse, auf der keine Taste etwas tut, ist ein Defekt.
+Das Muster weist einem senkrechten Splitter `←`/`→` zu — die Achse, auf der sich
+dieser Balken tatsächlich bewegt. `↑`/`↓` sind zusätzliche **Aliase** von
+`→`/`←` und spiegeln sich genauso pro Seite: ein Widget, ein Verhalten, egal zu
+welcher Achse der Nutzer greift. Auf einem senkrechten Splitter haben die
+Vertikaltasten im Muster keine andere Bedeutung, der Alias ist also eine
+Erweiterung und kein Widerspruch.
 
 Die Pfeile folgen der **Richtung** und spiegeln sich deshalb mit `side`: die
 Kante einer linken Leiste liegt rechts, die einer rechten Leiste links.
-`Home`/`End` sind laut WAI-ARIA **Werte** (Minimum/Maximum), keine Richtungen —
-sie spiegeln sich nicht. Beide Richtungen sind pro Seite mit einem Test
-festgenagelt; das Vertauschen ist der naheliegende Fehler.
+`Home`/`End` sind dagegen **Werte** (das angekündigte Minimum bzw. Maximum),
+keine Richtungen — sie spiegeln sich nicht. Beide Richtungen sind pro Seite mit
+einem Test festgenagelt; das Vertauschen ist der naheliegende Fehler.
 
 `aria-valuenow` liegt immer innerhalb von `[min, max]` — beide Eingabewege
 klammern, und auch ein veralteter Wert aus dem Konsumenten wird geklammert
@@ -82,20 +109,30 @@ durchgereicht.
 
 <Canvas of={ResizeHandleStories.InAWorkspace} />
 
-## Offener Punkt
+## Entschieden: `separator` statt `slider`
 
-Die Rolle ist `slider` mit `aria-orientation="vertical"` (die Orientierung des
-**Balkens**, während sich der Wert waagerecht bewegt) — so übernommen aus der
-App, die dieses Muster vorgemacht hat. Das WAI-ARIA-APG-Muster „Window
-Splitter" benutzt für genau dieses Widget `role="separator"` mit `tabindex`. Ob
-ein Wechsel für Hilfstechnik eine Verbesserung ist, ist **nicht bestätigt** —
-zu entscheiden, bevor viele Konsumenten daran hängen.
+Hier stand eine offene Doppelfrage — Rolle und Spiegelung der Vertikaltasten.
+Beide sind entschieden (Design-System-Owner, 08/2026); der Abschnitt bleibt als
+Protokoll stehen, damit die Frage nicht neu aufgemacht wird.
 
-An **einer** Stelle hängt an dieser offenen Entscheidung eine sichtbare Folge,
-die hier bewusst festgehalten statt versteckt wird: Weil `↑` ein Alias von `→`
-ist und `→` eine **rechte** Leiste schmaler macht, verkleinert `↑` dort
-`aria-valuenow`. Für `role="slider"` ist die verbreitete Erwartung, dass `↑` den
-Wert **vergrößert**; für `role="separator"` sind die Tasten dagegen
-richtungsbezogen und die Spiegelung ist richtig. Der Alias ist unter beiden
-Ausgängen bedienbar, die Spiegelung der Vertikaltasten sollte aber **zusammen
-mit** der Rollenfrage entschieden werden — nicht vorher und nicht einzeln.
+**1. Die Rolle ist `separator`, nicht `slider`.** `slider` war aus der App
+übernommen, die dieses Muster vorgemacht hat; das APG-Muster für genau dieses
+Widget ist „Window Splitter" mit `role="separator"` und `tabindex`. Das Repo
+bevorzugt Standards vor Eigenbau, und der Wechsel behebt zugleich den
+eigentlichen Defekt: `aria-orientation` bedeutet unter `slider` die Achse, auf
+der sich der **Wert** bewegt (hier waagerecht) — „vertical" war dort also
+falsch. Unter `separator` beschreibt dasselbe Attribut die Ausrichtung der
+**Trennlinie**, und die ist senkrecht. `aria-orientation="vertical"` bleibt
+deshalb stehen und ist jetzt korrekt statt widersprüchlich (Details unter
+„Rolle & ARIA").
+
+**2. Die Spiegelung der Vertikaltasten bleibt genau so, wie sie ist.** Weil `↑`
+ein Alias von `→` ist und `→` eine **rechte** Leiste schmaler macht, verkleinert
+`↑` dort `aria-valuenow`. Unter `slider` widersprach das der verbreiteten
+Erwartung, dass `↑` den Wert vergrößert — unter `separator` sind die Tasten
+richtungsbezogen (sie verschieben die Trennlinie), und damit ist die Spiegelung
+das Muster und keine Abweichung davon. Die Rollenentscheidung beantwortet also
+beide Fragen auf einmal: am Tastaturverhalten ändert sich **nichts**.
+
+Rein zugänglichkeitsseitige Änderung: es ändert sich kein Markup außer den
+ARIA-Attributen, keine Klasse und kein Token — **optisch null Wirkung**.
