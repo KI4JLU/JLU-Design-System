@@ -7,12 +7,19 @@ import { ResizeHandle } from "./resize-handle";
 /**
  * Oracles used here are external to the component:
  *
- * 1. **WAI-ARIA 1.2, `slider` role** — `aria-valuenow` is required,
- *    `aria-valuemin`/`aria-valuemax` default to 0/100 and so must be stated,
- *    the widget must be focusable, and „the value of aria-valuenow must be
- *    between aria-valuemin and aria-valuemax". Home/End are defined as the
- *    minimum resp. maximum *value* — not as a direction, so they cannot depend
- *    on `side`.
+ * 1. **The WAI-ARIA APG „Window Splitter" pattern and the `separator` role it
+ *    uses** — a *focusable* separator carries `aria-valuenow` plus
+ *    `aria-valuemin`/`aria-valuemax` (which default to 0/100 and so must be
+ *    stated), is in the tab order, and „the value of aria-valuenow must be
+ *    between aria-valuemin and aria-valuemax". `aria-orientation` on a
+ *    `separator` describes the orientation of the separator itself and defaults
+ *    to `horizontal`, so a bar standing between two side-by-side panes must
+ *    state `vertical` — that expected value comes from the widget's geometry
+ *    (oracle 2) and the role's default, not from reading the component.
+ *    The splitter's arrow keys are **directional** (they move the separator),
+ *    which is why the same key raises the reported width of a left pane and
+ *    lowers that of a right one; Home/End are the advertised minimum resp.
+ *    maximum *value*, not a direction, so they cannot depend on `side`.
  * 2. **Hand-computed geometry** — a pane whose resizable edge faces right gets
  *    wider by exactly the distance the pointer travelled right; a pane whose
  *    edge faces left gets narrower by that same distance. Every expected number
@@ -55,7 +62,7 @@ function press(key: string) {
 }
 
 describe("ResizeHandle", () => {
-  it("exposes the required slider contract", () => {
+  it("exposes the focusable-separator contract of the splitter pattern", () => {
     render(
       <ResizeHandle
         side="left"
@@ -67,24 +74,36 @@ describe("ResizeHandle", () => {
         onValueChange={() => {}}
       />,
     );
-    // Oracle 1: the attributes the slider role requires, by name and value.
-    // `aria-orientation` is NOT asserted here — WAI-ARIA does not dictate which
-    // axis this widget declares, so pinning „vertical" against the ARIA oracle
-    // would only restate the implementation. It is covered by the axis test
-    // below, against the contract the component itself documents.
-    const handle = screen.getByRole("slider", { name: "Breite ändern" });
+    // Oracle 1: the attributes a focusable separator (window splitter) carries,
+    // by name and value. The query itself is the role assertion — `getByRole`
+    // resolves the role through aria-query, so a wrong `role` attribute makes
+    // this line throw rather than pass.
+    const handle = screen.getByRole("separator", { name: "Breite ändern" });
     expect(handle).toHaveAttribute("aria-valuemin", String(MIN));
     expect(handle).toHaveAttribute("aria-valuemax", String(MAX));
     expect(handle).toHaveAttribute("aria-valuenow", "320");
     expect(handle).toHaveAttribute("tabindex", "0");
+    // Oracle 1 + 2, and deliberately *not* a read-back of the implementation:
+    // `aria-orientation` on a `separator` describes the orientation of the
+    // separator itself and defaults to `horizontal` — checkable in-repo, and by the
+    // same transcription `getByRole` resolves through:
+    // node_modules/aria-query/lib/etc/roles/literal/separatorRole.js:16.
+    // (`sliderRole` defaults to `horizontal` too, so the old `vertical` was an
+    // active false claim of a vertical value axis, not inherited redundancy.)
+    // This bar stands between two
+    // side-by-side panes, so the geometry says vertical and the default says it
+    // must be stated. (Under the former `slider` role the attribute meant the
+    // axis the *value* moves along — horizontal — which is why asserting
+    // „vertical" there could only have restated the code.)
+    expect(handle).toHaveAttribute("aria-orientation", "vertical");
   });
 
-  it("declares a vertical value axis and answers to BOTH key axes", async () => {
-    // Oracle: the component's own documented contract (resize-handle.tsx +
-    // resize-handle.mdx) — it declares `aria-orientation="vertical"`, so a
-    // vertical key must move the value; leaving the declared axis inert is the
-    // defect this pins. The horizontal axis stays operable because the widget
-    // visually moves horizontally.
+  it("answers to both key axes: ↑/↓ are aliases of →/←", async () => {
+    // Oracle: the documented alias contract (resize-handle.tsx +
+    // resize-handle.mdx). The splitter pattern assigns ←/→ to a vertical
+    // separator; ↑/↓ carry no other meaning on it, so this handle also accepts
+    // them and both axes must move the value by one `step`. Numbers are
+    // arithmetic on the props (300 + 10), never read back out of the component.
     const onValueChange = vi.fn();
     render(
       <ResizeHandle
@@ -97,8 +116,7 @@ describe("ResizeHandle", () => {
         onValueChange={onValueChange}
       />,
     );
-    const handle = screen.getByRole("slider");
-    expect(handle).toHaveAttribute("aria-orientation", "vertical");
+    const handle = screen.getByRole("separator");
     handle.focus();
 
     await press("ArrowUp");
@@ -130,7 +148,7 @@ describe("ResizeHandle", () => {
         {...smuggled}
       />,
     );
-    const handle = screen.getByRole("slider", { name: "Breite ändern" });
+    const handle = screen.getByRole("separator", { name: "Breite ändern" });
     expect(handle).toHaveAttribute("aria-valuenow", "320");
     expect(handle).toHaveAttribute("aria-valuemax", String(MAX));
     expect(handle).toHaveAttribute("tabindex", "0");
@@ -149,7 +167,7 @@ describe("ResizeHandle", () => {
         onValueChange={() => {}}
       />,
     );
-    expect(screen.getByRole("slider")).toHaveAttribute(
+    expect(screen.getByRole("separator")).toHaveAttribute(
       "aria-valuenow",
       String(MAX),
     );
@@ -169,7 +187,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
 
       await press("ArrowRight");
       expect(onValueChange).toHaveBeenLastCalledWith(310); // 300 + 10
@@ -193,7 +211,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
 
       await press("ArrowLeft");
       expect(onValueChange).toHaveBeenLastCalledWith(310); // 300 + 10
@@ -217,7 +235,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
 
       await press("ArrowUp");
       expect(onValueChange).toHaveBeenLastCalledWith(310);
@@ -227,9 +245,12 @@ describe("ResizeHandle", () => {
 
     it("mirrors ArrowUp/ArrowDown per side on a RIGHT pane", async () => {
       // The alias holds on both sides: Up == Right, and Right narrows a right
-      // pane, so Up narrows it too. See „Offener Punkt" in resize-handle.mdx —
-      // this is the one place where the alias and the ARIA convention that Up
-      // *increases* aria-valuenow disagree, and it is recorded, not hidden.
+      // pane, so Up narrows it too. Oracle 1: the splitter's keys are
+      // *directional* — they move the separator, and the value follows from
+      // which pane the separator is moving into. So a key lowering
+      // `aria-valuenow` on a right pane is the pattern, not a deviation from it
+      // (it was one under `slider`, where ↑ is conventionally „increase"; the
+      // role decision settled that — see resize-handle.mdx).
       const onValueChange = vi.fn();
       render(
         <ResizeHandle
@@ -242,7 +263,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
 
       await press("ArrowUp");
       expect(onValueChange).toHaveBeenLastCalledWith(290);
@@ -265,7 +286,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
       await press("ArrowRight");
       expect(onValueChange).toHaveBeenCalledTimes(1);
       expect(onValueChange).toHaveBeenCalledWith(310);
@@ -284,7 +305,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      screen.getByRole("slider").focus();
+      screen.getByRole("separator").focus();
       await press("ArrowRight");
       expect(onValueChange).toHaveBeenLastCalledWith(325); // 300 + 25
     });
@@ -294,8 +315,9 @@ describe("ResizeHandle", () => {
     it.each(["left", "right"] as const)(
       "jumps to min on Home and to max on End (%s pane)",
       async (side) => {
-        // Oracle 1: WAI-ARIA defines Home = minimum value, End = maximum value.
-        // Both are values, not directions, so the mirroring must NOT apply.
+        // Oracle 1: Home is the advertised minimum and End the advertised
+        // maximum *value* (`aria-valuemin`/`aria-valuemax`). Both are values,
+        // not directions, so the per-side mirroring must NOT apply to them.
         const onValueChange = vi.fn();
         render(
           <ResizeHandle
@@ -307,7 +329,7 @@ describe("ResizeHandle", () => {
             onValueChange={onValueChange}
           />,
         );
-        screen.getByRole("slider").focus();
+        screen.getByRole("separator").focus();
 
         await press("Home");
         expect(onValueChange).toHaveBeenLastCalledWith(MIN);
@@ -324,7 +346,7 @@ describe("ResizeHandle", () => {
     render(
       <ControlledHandle side="left" initial={590} onValueChange={onValueChange} />,
     );
-    const handle = screen.getByRole("slider");
+    const handle = screen.getByRole("separator");
     handle.focus();
 
     for (let i = 0; i < 10; i += 1) await press("ArrowRight");
@@ -353,7 +375,7 @@ describe("ResizeHandle", () => {
         onValueChange={onValueChange}
       />,
     );
-    screen.getByRole("slider").focus();
+    screen.getByRole("separator").focus();
     await press("Enter");
     await press("PageUp");
     await press("PageDown");
@@ -378,7 +400,7 @@ describe("ResizeHandle", () => {
           onResizeEnd={onResizeEnd}
         />,
       );
-      const handle = screen.getByRole("slider");
+      const handle = screen.getByRole("separator");
 
       fireEvent.pointerDown(handle, { button: 0, clientX: 500 });
       expect(onResizeStart).toHaveBeenCalledTimes(1);
@@ -408,7 +430,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      fireEvent.pointerDown(screen.getByRole("slider"), {
+      fireEvent.pointerDown(screen.getByRole("separator"), {
         button: 0,
         clientX: 500,
       });
@@ -430,7 +452,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      fireEvent.pointerDown(screen.getByRole("slider"), {
+      fireEvent.pointerDown(screen.getByRole("separator"), {
         button: 0,
         clientX: 500,
       });
@@ -446,10 +468,12 @@ describe("ResizeHandle", () => {
     });
 
     it("takes focus, so the arrow keys work right after a drag", async () => {
-      // Oracle: a pointer press on a slider focuses it (native range inputs do,
-      // and the ARIA slider pattern assumes the widget is focused before its
-      // keys apply). Suppressing the text selection on pointerdown also
-      // suppresses the default focus, so this is a real trap.
+      // Oracle 1: the splitter is a keyboard widget in the tab order, and its
+      // keys only apply while it has focus — so a pointer drag that left focus
+      // elsewhere would strand the user on a widget they just used. (Native
+      // range inputs focus on press for the same reason.) Suppressing the text
+      // selection on pointerdown also suppresses the default focus, so this is
+      // a real trap.
       const onValueChange = vi.fn();
       render(
         <ResizeHandle
@@ -462,7 +486,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      const handle = screen.getByRole("slider");
+      const handle = screen.getByRole("separator");
       fireEvent.pointerDown(handle, { button: 0, clientX: 500 });
       fireEvent.pointerUp(window);
       expect(handle).toHaveFocus();
@@ -484,7 +508,7 @@ describe("ResizeHandle", () => {
           onResizeStart={onResizeStart}
         />,
       );
-      fireEvent.pointerDown(screen.getByRole("slider"), {
+      fireEvent.pointerDown(screen.getByRole("separator"), {
         button: 2,
         clientX: 500,
       });
@@ -503,7 +527,7 @@ describe("ResizeHandle", () => {
           onValueChange={onValueChange}
         />,
       );
-      fireEvent.pointerDown(screen.getByRole("slider"), {
+      fireEvent.pointerDown(screen.getByRole("separator"), {
         button: 0,
         clientX: 500,
       });

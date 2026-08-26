@@ -23,8 +23,11 @@ import { ThemeProvider } from "../theme/ThemeContext";
  *    Testing Library computes those roles from the markup (aria-query +
  *    dom-accessibility-api); it never reads our class names, so „the right
  *    areas are on screen" is checkable without asserting our own output.
- * 2. **WAI-ARIA's slider contract**, which `ResizeHandle` implements:
- *    `aria-valuemin`/`-valuemax`/`-valuenow` and a keyboard step. The bounds
+ * 2. **The WAI-ARIA APG „Window Splitter" contract**, which `ResizeHandle`
+ *    implements as a focusable `separator`: `aria-valuemin`/`-valuemax`/
+ *    `-valuenow` and a keyboard step. The handles are therefore queried by
+ *    `role="separator"`, which Testing Library resolves from the markup — this
+ *    file never reads `ResizeHandle`'s classes or props back out. The bounds
  *    asserted below are deliberately **not** the source implementation's
  *    150–600 / 150–800 — if this template hardcoded any bounds instead of
  *    passing the props through, these tests fail.
@@ -163,12 +166,12 @@ describe("WorkspaceLayout — desktop arrangement", () => {
     stubViewport(true);
     renderWorkspace();
 
-    const leftHandle = screen.getByRole("slider", { name: "Breite des Verlaufs ändern" });
+    const leftHandle = screen.getByRole("separator", { name: "Breite des Verlaufs ändern" });
     expect(leftHandle).toHaveAttribute("aria-valuemin", String(LEFT_MIN));
     expect(leftHandle).toHaveAttribute("aria-valuemax", String(LEFT_MAX));
     expect(leftHandle).toHaveAttribute("aria-valuenow", "320");
 
-    const rightHandle = screen.getByRole("slider", { name: "Breite der Quellen ändern" });
+    const rightHandle = screen.getByRole("separator", { name: "Breite der Quellen ändern" });
     expect(rightHandle).toHaveAttribute("aria-valuemin", String(RIGHT_MIN));
     expect(rightHandle).toHaveAttribute("aria-valuemax", String(RIGHT_MAX));
     expect(rightHandle).toHaveAttribute("aria-valuenow", "280");
@@ -179,11 +182,11 @@ describe("WorkspaceLayout — desktop arrangement", () => {
     renderWorkspace({ left: leftPane({ isOpen: false }) });
 
     expect(
-      screen.queryByRole("slider", { name: "Breite des Verlaufs ändern" }),
+      screen.queryByRole("separator", { name: "Breite des Verlaufs ändern" }),
     ).not.toBeInTheDocument();
     // The other pane is untouched — the gate is per pane, not global.
     expect(
-      screen.getByRole("slider", { name: "Breite der Quellen ändern" }),
+      screen.getByRole("separator", { name: "Breite der Quellen ändern" }),
     ).toBeInTheDocument();
   });
 
@@ -205,7 +208,7 @@ describe("WorkspaceLayout — desktop arrangement", () => {
     const pane = leftPane();
     renderWorkspace({ left: pane });
 
-    const handle = screen.getByRole("slider", { name: "Breite des Verlaufs ändern" });
+    const handle = screen.getByRole("separator", { name: "Breite des Verlaufs ändern" });
     handle.focus();
     // ResizeHandle's documented keyboard contract: a left pane grows on
     // ArrowRight, by its default step of 10.
@@ -235,7 +238,7 @@ describe("WorkspaceLayout — hidden is not collapsed", () => {
 
     expect(screen.queryByRole("complementary", { name: "Quellen" })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("slider", { name: "Breite der Quellen ändern" }),
+      screen.queryByRole("separator", { name: "Breite der Quellen ändern" }),
     ).not.toBeInTheDocument();
     // The whole point: hiding must not travel through the consumer's collapse
     // state (the source implementation's bug was hiding *by* collapsing, which
@@ -266,7 +269,7 @@ describe("WorkspaceLayout — hidden is not collapsed", () => {
     renderWorkspace({ right: undefined });
 
     expect(screen.getAllByRole("complementary")).toHaveLength(1);
-    expect(screen.getAllByRole("slider")).toHaveLength(1);
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
   });
 });
 
