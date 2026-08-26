@@ -173,6 +173,18 @@ One template per page category of the migration order — real importable
 components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
 `ChatLayout`, `TableLayout`, `WorkspaceLayout`, `SectionedGridLayout`). Rules:
 
+- **Two kinds of template, and the difference is not size.** Most templates are
+  page *content* and hang into `AppShellLayout` as `children`
+  (`DashboardLayout`, `FormLayout`, `TableLayout`, `ChatLayout`,
+  `SectionedGridLayout`) — their own landmark is a `<section aria-label>` inside
+  the shell's one `<main>`. `WorkspaceLayout` is the opposite and the one case
+  so far: it **owns the viewport and *is* the chrome of its screen** — its two
+  side panes are the vertical chrome columns — so it must **never** be nested in
+  `AppShellLayout`, where the shell's nav column plus the left pane put two
+  chrome columns on one screen (found in Storybook, `fix(workspace-layout):
+  standalone`). Consequently it renders the page's `<main>` itself, because
+  nothing above it does. The deciding question for a new template is „does it
+  bring the chrome, or fill a slot", and its MDX has to answer it.
 - Templates are **layout composition only**: slots (`ReactNode` props) for
   injected content, no business logic, no data fetching. `SectionedGridLayout`
   is the overview/browse page category — a stack of collapsible sections, each
@@ -202,7 +214,7 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   far — below `lg` a pane fills the screen, ignores its collapse state and
   loses its collapse control, and none of the three is expressible as a class
   on the same markup. It queries Tailwind's own `--breakpoint-lg` (`64rem`),
-  i.e. the same boundary `AppShell` switches its drawer at; a second, differing
+  Tailwind's own `--breakpoint-lg`, read from `theme.css` rather than restated; a second, differing
   breakpoint anywhere in a template is a review FAIL. The consumer still writes
   no ladder — it passes the current pane as a controlled prop.
 - Apps **import** templates; they never rebuild a page skeleton. If a template

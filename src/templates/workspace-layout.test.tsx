@@ -3,26 +3,29 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { FolderOpen, History, MessageSquare, Sparkles } from "lucide-react";
-import { AppShellLayout } from "./app-shell-layout";
 import {
   WorkspaceLayout,
   type WorkspaceMobileTab,
   type WorkspacePane,
 } from "./workspace-layout";
-import { NavItem } from "../components/nav-item";
 import { bottomTabBarVariants } from "../components/bottom-tab-bar-variants";
 import { SIDE_PANEL_RAIL_WIDTH } from "../components/side-panel-variants";
-import { ThemeProvider } from "../theme/ThemeContext";
 
 /**
  * Oracles used here — all of them outside this template:
  *
  * 1. **ARIA landmark roles as HTML-AAM defines them** — `aside` with an
- *    accessible name is `complementary`, `section` with one is `region`,
- *    `nav` is `navigation`, and a document has at most **one** `main`.
- *    Testing Library computes those roles from the markup (aria-query +
+ *    accessible name is `complementary`, `main` is `main`, `nav` is
+ *    `navigation`, and a document has at most **one** `main`. Testing Library
+ *    computes those roles from the markup (aria-query +
  *    dom-accessibility-api); it never reads our class names, so „the right
  *    areas are on screen" is checkable without asserting our own output.
+ *    This is the oracle for the structural claim the template's contract now
+ *    rests on: **standalone**, it contributes the page's one `<main>`. The
+ *    tests query `role="main"` and count `main` elements in the container —
+ *    a `<section aria-label>` (what this template rendered while it was
+ *    wrongly specified as page content inside the app-shell template) is a
+ *    `region` and fails both, so the assertion cannot pass by accident.
  * 2. **The WAI-ARIA APG „Window Splitter" contract**, which `ResizeHandle`
  *    implements as a focusable `separator`: `aria-valuemin`/`-valuemax`/
  *    `-valuenow` and a keyboard step. The handles are therefore queried by
@@ -43,7 +46,15 @@ import { ThemeProvider } from "../theme/ThemeContext";
  *    the code under test.
  * 5. **Tailwind's own theme** — `--breakpoint-lg: 64rem`
  *    (`node_modules/tailwindcss/theme.css`), which is the boundary the `lg:`
- *    utilities in `AppShell` use, and the same 1024px as oracle 4.
+ *    utilities in this library use, and the same 1024px as oracle 4.
+ *
+ * Nothing in this file renders the app-shell template: this one is standalone
+ * and must never be nested in the shell (that puts two vertical chrome columns
+ * on the screen). A test asserting such a nesting is the bug, not the proof —
+ * which is why the shell template's name is spelled out nowhere in this file:
+ * a grep for it over this suite has to stay empty, and that grep is part of
+ * the card's oracle. The reason lives in `workspace-layout.tsx`'s doc comment
+ * and in `workspace-layout.mdx`.
  *
  * jsdom does not implement `window.matchMedia` (verified against jsdom 29), so
  * the viewport is stubbed per test — that stub *is* the test's viewport, and
@@ -145,21 +156,32 @@ describe("WorkspaceLayout — desktop arrangement", () => {
     renderWorkspace();
 
     expect(screen.getByRole("complementary", { name: "Verlauf" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Arbeitsbereich" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Arbeitsbereich" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
     // The tab bar is the only `navigation` landmark this template renders, and
     // it belongs to the narrow-screen arrangement only.
     expect(screen.queryAllByRole("navigation")).toHaveLength(0);
   });
 
-  it("keeps the main area out of a second <main> element", () => {
+  it("contributes exactly one <main>, named, as the page's main landmark", () => {
     stubViewport(true);
     const { container } = renderWorkspace();
-    // A nested <main> is invalid HTML (and a second `main` landmark), which is
-    // what this template would produce if it claimed the element for itself —
-    // it is documented to nest inside AppShellLayout, whose children already
-    // sit in one.
-    expect(container.querySelectorAll("main")).toHaveLength(0);
+    // The structural claim of „standalone": this template *is* the page, so it
+    // owns the one `main` landmark — nothing above it provides one. Counted as
+    // elements (not roles) so that a second `<main>` would fail even if it
+    // were unnamed, and asserted by role for the accessible name, which is
+    // what a screen-reader user actually lands on.
+    const mains = container.querySelectorAll("main");
+    expect(mains).toHaveLength(1);
+    expect(mains[0]).toHaveAccessibleName("Arbeitsbereich");
+    expect(screen.getByRole("main", { name: "Arbeitsbereich" })).toBe(mains[0]);
+    // The panes are *not* inside it — they are siblings, i.e. the chrome of
+    // this screen rather than content of its main area.
+    for (const paneName of ["Verlauf", "Quellen"]) {
+      expect(mains[0]).not.toContainElement(
+        screen.getByRole("complementary", { name: paneName }),
+      );
+    }
   });
 
   it("hands each pane's own bounds and width to its resize handle", () => {
@@ -287,15 +309,37 @@ describe("WorkspaceLayout — narrow-screen arrangement", () => {
 
       const complementary = screen.queryAllByRole("complementary");
       if (paneName === null) {
-        expect(screen.getByRole("region", { name: "Arbeitsbereich" })).toBeInTheDocument();
+        expect(screen.getByRole("main", { name: "Arbeitsbereich" })).toBeInTheDocument();
         expect(complementary).toHaveLength(0);
       } else {
         expect(complementary).toHaveLength(1);
         expect(complementary[0]).toHaveAccessibleName(paneName);
-        expect(screen.queryByRole("region", { name: "Arbeitsbereich" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("main", { name: "Arbeitsbereich" })).not.toBeInTheDocument();
       }
     },
   );
+
+  it.each([
+    // [active tab, expected number of <main> elements]
+    // The main area is on screen → the one `<main>` is here too, exactly as in
+    // the desktop branch. A side pane is on screen → the main area is not in
+    // the tree at all, so there is no `main` landmark; the pane is a
+    // `complementary` and wrapping it in `main` would misname it. Either way
+    // the count is never 2 — that is the claim this template's docs make.
+    ["chat", 1],
+    ["workspace", 1],
+    ["history", 0],
+    ["files", 0],
+  ] as const)("renders %s with %i <main> and never a second one", (activeMobileTab, expected) => {
+    stubViewport(false);
+    const { container } = renderWorkspace({ activeMobileTab });
+
+    const mains = container.querySelectorAll("main");
+    expect(mains).toHaveLength(expected);
+    if (expected === 1) {
+      expect(mains[0]).toHaveAccessibleName("Arbeitsbereich");
+    }
+  });
 
   it("marks exactly one tab as the current one", () => {
     stubViewport(false);
@@ -333,7 +377,7 @@ describe("WorkspaceLayout — narrow-screen arrangement", () => {
     stubViewport(false);
     renderWorkspace({ right: undefined, activeMobileTab: "files" });
 
-    expect(screen.getByRole("region", { name: "Arbeitsbereich" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Arbeitsbereich" })).toBeInTheDocument();
     expect(screen.queryAllByRole("complementary")).toHaveLength(0);
   });
 
@@ -360,7 +404,7 @@ describe("WorkspaceLayout — narrow-screen arrangement", () => {
     expect(bottomTabBarVariants()).toContain("h-15");
     expect(SIDE_PANEL_RAIL_WIDTH).toBe(60);
     expect(
-      screen.getByRole("region", { name: "Arbeitsbereich" }).getAttribute("style"),
+      screen.getByRole("main", { name: "Arbeitsbereich" }).getAttribute("style"),
     ).toContain(`${SIDE_PANEL_RAIL_WIDTH}px`);
   });
 
@@ -385,7 +429,7 @@ describe("WorkspaceLayout — viewport switch", () => {
     stubViewport(true);
     renderWorkspace();
     // Oracle 5: `--breakpoint-lg: 64rem` in Tailwind's theme, i.e. the exact
-    // boundary of the `lg:` utilities AppShell switches its drawer at.
+    // boundary the `lg:` utilities in this library use.
     expect(askedQueries).toContain("(min-width: 64rem)");
   });
 
@@ -411,7 +455,9 @@ describe("WorkspaceLayout — viewport switch", () => {
     );
     expect(html).toContain('aria-label="Verlauf"');
     expect(html).toContain('aria-label="Quellen"');
-    expect(html).toContain('aria-label="Arbeitsbereich"');
+    // The main area is a `<main>` on the server too — the standalone contract
+    // is markup, not a client-side decision.
+    expect(html).toContain('<main aria-label="Arbeitsbereich"');
     // …and not the narrow-screen arrangement, whose bar is the tell.
     expect(html).not.toContain('aria-label="Bereichswechsel"');
   });
@@ -423,49 +469,6 @@ describe("WorkspaceLayout — viewport switch", () => {
     // polyfill; keeping every area in the tree is the useful degradation.
     expect(screen.getByRole("complementary", { name: "Verlauf" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Arbeitsbereich" })).toBeInTheDocument();
-  });
-});
-
-describe("WorkspaceLayout — nested in AppShellLayout", () => {
-  it("is the page content of the app shell, inside its single <main>", () => {
-    stubViewport(true);
-    render(
-      <ThemeProvider>
-        <AppShellLayout
-          logo={<span>Marke</span>}
-          pageLabel="Wissensbasis"
-          navLabel="Hauptnavigation"
-          nav={<NavItem active>Übersicht</NavItem>}
-        >
-          <WorkspaceLayout
-            left={leftPane()}
-            right={rightPane()}
-            mainLabel="Arbeitsbereich"
-            mobileTabs={TABS}
-            activeMobileTab="chat"
-            onMobileTabChange={() => {}}
-            mobileTabBarLabel="Bereichswechsel"
-          >
-            <p>Haupt-Inhalt</p>
-          </WorkspaceLayout>
-        </AppShellLayout>
-      </ThemeProvider>,
-    );
-
-    // Oracle 1: one `main` per document. Nesting must not add a second one,
-    // and the workspace's own landmarks have to survive the nesting.
-    const mains = screen.getAllByRole("main");
-    expect(mains).toHaveLength(1);
-    expect(mains[0]).toContainElement(screen.getByRole("region", { name: "Arbeitsbereich" }));
-    expect(mains[0]).toContainElement(
-      screen.getByRole("complementary", { name: "Verlauf" }),
-    );
-    expect(mains[0]).toContainElement(
-      screen.getByRole("complementary", { name: "Quellen" }),
-    );
-    // The shell's own navigation is still the only one on a desktop viewport.
-    expect(screen.getAllByRole("navigation")).toHaveLength(1);
-    expect(screen.getByText("Haupt-Inhalt")).toBeVisible();
+    expect(screen.getByRole("main", { name: "Arbeitsbereich" })).toBeInTheDocument();
   });
 });

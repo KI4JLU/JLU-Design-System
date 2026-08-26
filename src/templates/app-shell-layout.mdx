@@ -34,8 +34,11 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 ## Do's & Don'ts
 
 - ✅ Aktiven Zustand über `NavItem active` setzen (setzt `aria-current="page"`).
-- ✅ Seiteninhalt als Template (`DashboardLayout` etc.) einhängen — Templates
-  komponieren ineinander.
+- ✅ Seiteninhalt als **Inhalts**-Template einhängen (`DashboardLayout`,
+  `FormLayout`, `TableLayout`, `ChatLayout`, `SectionedGridLayout`).
+- ❌ **Nicht** jedes Template passt hinein: `WorkspaceLayout` ist eigenständig
+  und besitzt den ganzen Viewport — verschachtelt zeigt der Bildschirm zwei
+  Sidebars. Maßgeblich ist die Inventarliste in DESIGN_SYSTEM.md §4.
 - ❌ Keine eigene Sidebar/Top-Bar in der App bauen oder das Template per
   `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
 - ❌ Keine Business-Logik hinein reichen: Routing und Active-State leben in den

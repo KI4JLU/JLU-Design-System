@@ -111,7 +111,10 @@ Viewport-Kenntnis, und es gibt hier keinen zweiten Breakpoint.
 - Ein Landmark: `region`, benannt über `label`.
 - **Kein zweites `<main>`.** Das Template steckt in `AppShellLayout`, dessen
   `children` schon in einem `<main>` liegen — die eigene Region ist ein
-  `<section aria-label>` (dieselbe Regel wie bei `WorkspaceLayout`).
+  `<section aria-label>`. **Anders als `WorkspaceLayout`:** das ist die ganze
+  Seite (es bringt seine Chrome selbst mit und rendert deshalb ein eigenes
+  `<main>`), dieses Template hier ist Seiten-*Inhalt* und füllt einen Slot der
+  Shell.
 - Überschriften-Ordnung: `title` ⇒ genau eine `h1` (aus `PageHeader`), pro
   Sektion genau eine `h2`. Ohne `title` beginnt die Seite bei `h2` — dann sollte
   der Titel woanders stehen (z. B. in `AppShellLayout`s `pageLabel`).

@@ -279,6 +279,17 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   `width` and the current mobile tab in as controlled props — never a
   breakpoint check or a pane frame of your own. Hiding a pane goes through
   `showRight`, never through its collapse state.
+- **`WorkspaceLayout` is standalone — never a child of `AppShellLayout`.** It
+  owns the full viewport and its panes *are* the page's chrome, so nesting it
+  in the shell puts the shell's nav column next to the left pane: two chrome
+  columns on one screen. Render it as the whole page, inside a frame that has a
+  height (`h-dvh`), and put app navigation into its left pane; it contributes
+  the page's `<main>` itself.
+- **`SectionedGridLayout` is the opposite case — it *is* an `AppShellLayout`
+  child.** It is page content, hung in as `children`, and keeps its own
+  `<section aria-label>` inside the shell's single `<main>`. The dividing
+  question between the two is whether a template brings the chrome (standalone)
+  or fills a slot (shell child) — not how big it is.
 - **Overview pages of grouped card collections** are `SectionedGridLayout`:
   pass `sections` (each with `isOpen`/`onOpenChange` as controlled props) and
   hang the template into `AppShellLayout` as `children`. Per section the body
