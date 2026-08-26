@@ -1,0 +1,82 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as SidePanelStories from "./side-panel.stories";
+
+<Meta of={SidePanelStories} />
+
+# SidePanel
+
+Der Rahmen einer einklappbaren Arbeitsbereichs-Leiste: Breite, Einklapp-Zustand,
+Randseite. Ersetzt die handgebaute Doppelung aus „linke Leiste" und „rechte
+Leiste" — die Position ist eine Prop, kein eigener Bestandteil der Komponente.
+
+<Canvas of={SidePanelStories.Playground} />
+
+## Props
+
+| Prop | Typ | Pflicht | Bedeutung |
+|---|---|---|---|
+| `side` | `'left' \| 'right'` | ✅ | Randseite: bestimmt die Rand**kante** (`border-r` links, `border-l` rechts) und die Chevron-Richtung — siehe „Chevrons" unten. |
+| `isOpen` | `boolean` | ✅ | Ausgeklappt oder auf die Schiene zugeklappt. **Konsumenten-Zustand.** |
+| `width` | `number` | ✅ | Breite in px im ausgeklappten Zustand. **Konsumenten-Zustand.** |
+| `onExpand` / `onCollapse` | `() => void` | ✅ | Klick auf den Ausklapp- bzw. Einklapp-Knopf. |
+| `expandLabel` / `collapseLabel` | `string` | ✅ | Zugängliche Namen der beiden Knöpfe. |
+| `collapsedPreview` | `ReactNode` | — | Icon-Streifen in der zugeklappten Schiene, unter dem Ausklapp-Knopf. |
+| `children` | `ReactNode` | ✅ | Inhalt der Leiste. |
+| `aria-label` | `string` | (empfohlen) | `<aside>` ist ein `complementary`-Landmark; bei mehr als einer Leiste auf der Seite braucht jede einen eigenen Namen. |
+
+<Controls />
+
+## Chevrons
+
+Jeder der beiden Knöpfe hat sein **eigenes** Icon, denn ein Chevron muss in die
+Richtung zeigen, in die er die Leiste bewegt: Einklappen schiebt die Leiste an
+ihre eigene Kante, Ausklappen zieht sie zum Inhalt zurück.
+
+| `side` | einklappen | ausklappen |
+|---|---|---|
+| `left` | `PanelLeftClose` (zeigt nach links) | `PanelLeftOpen` (zeigt nach rechts) |
+| `right` | `PanelRightClose` (zeigt nach rechts) | `PanelRightOpen` (zeigt nach links) |
+
+Maßgeblich ist lucides Pfad-Daten, nicht der Name: `panel-left-close` hat den
+Chevron `m16 15-3-3 3-3` (Spitze links), `panel-left-open` `m14 9 3 3-3 3`
+(Spitze rechts). Beide Zustände sind getestet — ein Test, der nur den
+ausgeklappten Zustand rendert, sieht den Ausklapp-Knopf nie.
+
+## Entscheidungen
+
+- **Nur kontrolliert.** `isOpen` und `width` liegen beim Konsumenten — eine App
+  hält beides typischerweise in einem Context, persistiert es und muss es mit
+  einem `ResizeHandle` und dem Template teilen. Eigener Zustand im Rahmen wäre
+  eine zweite Wahrheit.
+- **Der Einklapp-Knopf gehört zum Rahmen, nicht zu `children`.** Er ist im
+  zugeklappten Zustand das einzige Bedienelement — als Inhalt übergeben wäre er
+  genau dann verschwunden, wenn er gebraucht wird.
+- **Schienenbreite: Konstante, keine Prop.** `SIDE_PANEL_RAIL_WIDTH` = 60px ist
+  eine Design-Konstante — die Schiene trägt genau einen Icon-Knopf und einen
+  schmalen Vorschaustreifen, ein frei gewählter Wert könnte sie nur zu klein für
+  das Touch-Ziel oder so breit machen, dass sie wie eine kaputte Leiste aussieht.
+  Die **ausgeklappte** Breite ist dagegen Zustand (der Nutzer zieht sie) und
+  deshalb eine Prop. Die Konstante wird exportiert, damit ein Template denselben
+  Wert benutzt statt ihn zu wiederholen.
+- **Inhalt bleibt montiert.** Zugeklappt trägt der Rumpf das `hidden`-Attribut
+  (und `display:none`): Scrollposition und halb getippte Eingaben überleben das
+  Einklappen, und der Inhalt ist gleichzeitig aus dem
+  Accessibility-Baum entfernt.
+- **Kein Breiten-Übergang.** Dieselbe Breite wird auch per Maus gezogen; eine
+  animierte Breite würde dem Zeiger nachlaufen.
+- **`collapsedPreview` ist kein Knopf-Inhalt.** Der Ausklapp-Knopf ist ein
+  eigenes, kleines Bedienelement über der Vorschau — nicht die ganze Schiene.
+  Eine Schiene-als-Knopf würde interaktive Elemente in der Vorschau verschachteln
+  (ungültiges HTML) und deren Text in den zugänglichen Namen ziehen. Preis: ein
+  Klick irgendwo auf die Schiene klappt **nicht** aus.
+
+## Do's & Don'ts
+
+- ✅ Randseite über `side` setzen — die Leiste zeichnet genau eine Linie, das
+  `ResizeHandle` keine.
+- ✅ Alle Beschriftungen als Props übergeben (zweisprachige Konsumenten).
+- ❌ Kein eigener Einklapp-Knopf in `children`.
+- ❌ Keine Viewport-Logik hier erwarten: ob auf schmalen Bildschirmen überhaupt
+  eine Leiste erscheint (üblich: eine Ansicht plus `BottomTabBar`), entscheidet
+  das komponierende Workspace-Template — genau wie Positionierung und Drawer bei
+  `Sidebar`/`AppShell`.
