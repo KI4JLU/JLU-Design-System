@@ -1,22 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
 import { useState } from "react";
-import {
-  FolderOpen,
-  History,
-  LayoutDashboard,
-  MessageSquare,
-  Settings,
-  Sparkles,
-} from "lucide-react";
-import { AppShellLayout } from "./app-shell-layout";
+import { FolderOpen, History, MessageSquare, Sparkles } from "lucide-react";
 import {
   WorkspaceLayout,
   type WorkspaceMobileTab,
   type WorkspacePane,
 } from "./workspace-layout";
-import { Logo } from "../components/logo";
-import { NavItem } from "../components/nav-item";
 import { templateChromaticModes } from "./chromatic-modes";
 import * as chatBubbleStories from "../components/chat-bubble.stories";
 import * as checkboxStories from "../components/checkbox.stories";
@@ -80,13 +70,10 @@ const Interactive = ({
   showRight = true,
   leftOpenInitially = true,
   rightOpenInitially = true,
-  nested = false,
 }: {
   showRight?: boolean;
   leftOpenInitially?: boolean;
   rightOpenInitially?: boolean;
-  /** Im AppShell bringt die Shell die Höhe mit; allein stehend braucht die Story einen Rahmen. */
-  nested?: boolean;
 }) => {
   const [leftOpen, setLeftOpen] = useState(leftOpenInitially);
   const [rightOpen, setRightOpen] = useState(rightOpenInitially);
@@ -131,24 +118,26 @@ const Interactive = ({
     resizeLabel: "Breite der Quellen ändern",
   };
 
-  const workspace = (
-    <WorkspaceLayout
-      left={left}
-      right={right}
-      showRight={showRight}
-      mainLabel="Arbeitsbereich"
-      mobileTabs={TABS}
-      activeMobileTab={activeTab}
-      onMobileTabChange={setActiveTab}
-      mobileTabBarLabel="Bereichswechsel"
-    >
-      <div className="flex flex-col gap-stack-md p-gutter">
-        <Conversation />
-      </div>
-    </WorkspaceLayout>
+  // Das Template füllt die Höhe seines Elternelements; als eigenständige
+  // Seite gibt die App (hier die Story) ihm den Viewport — `h-dvh`.
+  return (
+    <div className="h-dvh">
+      <WorkspaceLayout
+        left={left}
+        right={right}
+        showRight={showRight}
+        mainLabel="Arbeitsbereich"
+        mobileTabs={TABS}
+        activeMobileTab={activeTab}
+        onMobileTabChange={setActiveTab}
+        mobileTabBarLabel="Bereichswechsel"
+      >
+        <div className="flex flex-col gap-stack-md p-gutter">
+          <Conversation />
+        </div>
+      </WorkspaceLayout>
+    </div>
   );
-
-  return nested ? workspace : <div className="h-dvh">{workspace}</div>;
 };
 
 /**
@@ -157,6 +146,11 @@ const Interactive = ({
  * ←/→ auf dem Griff). Unter `lg` zeigt dasselbe Template genau **einen**
  * Bereich plus die `BottomTabBar` — im Chromatic-Modus „light mobile" bzw.
  * indem man das Browser-Fenster schmaler zieht.
+ *
+ * Das Template steht **für sich**: die Leisten *sind* die Chrome der Seite,
+ * es füllt den Viewport (hier `h-dvh` um die Story) und wird **nicht** in die
+ * App-Shell gehängt — dort stünden zwei Chrome-Spalten nebeneinander. Details
+ * in `workspace-layout.mdx`.
  */
 export const Workspace: Story = {
   render: () => <Interactive />,
@@ -175,38 +169,4 @@ export const RightPaneHidden: Story = {
 /** Beide Leisten zugeklappt: zwei 60px-Schienen, kein Griff, breiter Hauptbereich. */
 export const PanesCollapsed: Story = {
   render: () => <Interactive leftOpenInitially={false} rightOpenInitially={false} />,
-};
-
-/**
- * Verschachtelt: das Workspace-Template ist der Seiteninhalt des
- * `AppShellLayout` — genau wie `DashboardLayout` & Co. Die Shell bringt die
- * Höhe mit, deshalb steht hier kein eigener Rahmen darum. Der Arbeitsbereich
- * ist ein `region`-Landmark **im** einen `<main>` der Shell, kein zweites
- * `<main>` (in `workspace-layout.test.tsx` genau so geprüft).
- */
-export const InAppShell: Story = {
-  render: () => (
-    <AppShellLayout
-      logo={<Logo product="RAG" size="sm" />}
-      pageLabel="Wissensbasis"
-      nav={
-        <>
-          <NavItem>
-            <LayoutDashboard width="1em" height="1em" aria-hidden />
-            <span>Übersicht</span>
-          </NavItem>
-          <NavItem active>
-            <Sparkles width="1em" height="1em" aria-hidden />
-            <span>Wissensbasis</span>
-          </NavItem>
-          <NavItem>
-            <Settings width="1em" height="1em" aria-hidden />
-            <span>Einstellungen</span>
-          </NavItem>
-        </>
-      }
-    >
-      <Interactive nested />
-    </AppShellLayout>
-  ),
 };

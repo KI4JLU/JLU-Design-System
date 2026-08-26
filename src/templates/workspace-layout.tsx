@@ -8,12 +8,11 @@ import { cn } from "../lib/utils";
 /**
  * Tailwind's `lg` breakpoint, as a media query: `--breakpoint-lg: 64rem` in
  * `node_modules/tailwindcss/theme.css` (this repo adds no `--breakpoint-*`
- * override). One breakpoint for the whole workspace, and deliberately the
- * *same* one `AppShell` switches its sidebar-to-drawer at, so the pane
- * arrangement and the app chrome never disagree about which layout is on
- * screen. It is also the boundary the source implementation uses (JustRAG's
- * `useIsMobile`: `max-width: 1023px` = 1024px = 64rem at the 16px default
- * root size).
+ * override). One breakpoint for the whole workspace, and the same value the
+ * `lg:` utilities elsewhere in this library use, so no template invents a
+ * second boundary. It is also the boundary the source implementation uses
+ * (JustRAG's `useIsMobile`: `max-width: 1023px` = 1024px = 64rem at the 16px
+ * default root size).
  */
 const DESKTOP_QUERY = "(min-width: 64rem)";
 
@@ -121,7 +120,11 @@ export interface WorkspaceLayoutProps extends React.HTMLAttributes<HTMLDivElemen
   showRight?: boolean;
   /** Main area — the middle column on desktop, one of the panes below `lg`. */
   children: React.ReactNode;
-  /** Accessible name of the main area's `region` landmark. */
+  /**
+   * Accessible name of the main area's `main` landmark. The template renders
+   * the page's `<main>` itself, because it is the page (see „Standalone" in
+   * the component doc) — nothing above it contributes one.
+   */
   mainLabel: string;
   /** Tabs of the narrow-screen bar, each declaring which pane it shows. */
   mobileTabs: WorkspaceMobileTab[];
@@ -158,6 +161,20 @@ const MOBILE_PANE_STYLE: React.CSSProperties = {
  * below `lg` exactly one area at a time plus a `BottomTabBar`. Composes
  * `SidePanel` + `ResizeHandle` + `BottomTabBar`; the app injects content and
  * the controlled pane state and never rebuilds the frame.
+ *
+ * **Standalone — never inside `AppShellLayout`.** This template *is* the
+ * chrome of its screen: its panes are the app's vertical chrome columns (the
+ * source implementation frames both of them with its own `SidebarShell`, which
+ * `SidePanel` replaces here), and it fills the whole viewport. Hung into
+ * `AppShellLayout` as `children` it therefore puts a second sidebar next to
+ * the shell's nav column — two vertical chrome columns on one screen, which is
+ * what the `InAppShell` story showed before it was removed. That is also why
+ * the main area is a `<main>` and not a `<section>`: no shell above it
+ * contributes the page's `main` landmark, so this template has to. Contrast
+ * `SectionedGridLayout`, which is page *content* and genuinely is an
+ * `AppShellLayout` child — it stays a `<section aria-label>` inside the
+ * shell's `<main>`. Two templates in this library, opposite answers; the
+ * dividing question is „does this template own the viewport or fill a slot".
  *
  * **Composition only.** No data fetching, no derivation, no state of its own
  * beyond „is this a desktop viewport". Pane open/width state and the current
@@ -246,9 +263,18 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
               {pane.content}
             </aside>
           ) : (
-            <section aria-label={mainLabel} className={PANE_FILL} style={MOBILE_PANE_STYLE}>
+            // The same `<main>` as the desktop branch — one per arrangement,
+            // never two. When a *side* pane is the shown area there is no
+            // `<main>` on screen at all: the main area is not in the tree, and
+            // wrapping a `complementary` in `main` would be a worse lie than
+            // its absence. The source implementation swaps the whole screen
+            // the same way.
+            // TODO: that a narrow screen showing a side pane has no `main`
+            // landmark is a consequence, not a confirmed decision with the
+            // design-system owner.
+            <main aria-label={mainLabel} className={PANE_FILL} style={MOBILE_PANE_STYLE}>
               {children}
-            </section>
+            </main>
           )}
           <BottomTabBar
             items={mobileTabs}
@@ -296,9 +322,11 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
           </>
         )}
 
-        <section aria-label={mainLabel} className={PANE_FILL}>
+        {/* The page's one `main` landmark. This template is standalone (see
+            the component doc), so nothing above it provides one. */}
+        <main aria-label={mainLabel} className={PANE_FILL}>
           {children}
-        </section>
+        </main>
 
         {right && showRight && (
           <>

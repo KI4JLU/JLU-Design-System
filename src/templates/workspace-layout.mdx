@@ -12,14 +12,44 @@ ziehen; unter `lg` zeigt dasselbe Template genau **einen** Bereich plus die
 befüllen Slots und liefern den Leisten-Zustand, das Gerüst wird **nie** in der
 App nachgebaut.
 
+**Das Template steht für sich und gehört *nicht* in `AppShellLayout`** — siehe
+„Eigenständig" unten. Es ist die ganze Seite, nicht ihr Inhalt.
+
 <Canvas of={WorkspaceLayoutStories.Workspace} />
+
+## Eigenständig — nie im `AppShellLayout`
+
+Dieses Template besetzt den **gesamten Viewport** und **ist** die Chrome seines
+Bildschirms: die beiden Leisten sind die vertikalen Chrome-Spalten der App (in
+der Vorlage rahmt `SidebarShell` genau diese beiden Panels — das ist die Rolle,
+die hier `SidePanel` übernimmt). Hängt man es als `children` in
+`AppShellLayout`, steht die Navigationsspalte der Shell **neben** der linken
+Leiste: **zwei Chrome-Spalten auf einem Bildschirm**. Genau das war in der
+früheren Story `InAppShell` zu sehen, weshalb sie entfernt wurde.
+
+Daraus folgt der Rest:
+
+- Der Hauptbereich ist ein **`<main>`** (nicht `<section>`): über dem Template
+  liegt keine Shell, die das `main`-Landmark der Seite beisteuert — also muss
+  es das Template selbst tun, sonst hat die Seite **kein** `main`.
+- Die Höhe kommt vom Seitenrahmen der App (`h-dvh`), nicht von einer Shell.
+- Eine App-Navigation, die daneben soll, gehört in die **linke Leiste** (die
+  Vorlage macht genau das: der Verlauf *ist* die Navigation) — nicht in eine
+  zweite Chrome-Spalte darüber.
+
+**Gegenstück im selben Haus: `SectionedGridLayout`.** Das ist Seiten-**Inhalt**
+und gehört als `children` in `AppShellLayout`; sein eigenes Landmark bleibt
+deshalb ein `<section aria-label>` im `<main>` der Shell. Die
+unterscheidende Frage ist nicht „welches Template ist größer", sondern: **bringt
+das Template die Chrome selbst mit (dann eigenständig) oder füllt es einen Slot
+(dann Kind der Shell)?**
 
 ## Slots & Props
 
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
 | `children` | `ReactNode` | ✅ | Hauptbereich — die Mittelspalte auf dem Desktop, unter `lg` einer der Bereiche. Wie bei den anderen Templates ist der Hauptinhalt `children`, nicht eine Prop namens `main`. |
-| `mainLabel` | `string` | ✅ | Zugänglicher Name des `region`-Landmarks um den Hauptbereich. |
+| `mainLabel` | `string` | ✅ | Zugänglicher Name des `main`-Landmarks um den Hauptbereich. Das Template rendert das `<main>` der Seite selbst — es ist die Seite. |
 | `left` / `right` | `WorkspacePane` | — | Je eine Leiste (siehe Tabelle unten). Weglassen = die Leiste existiert nicht. |
 | `showRight` | `boolean` | — | Default `true`. `false` nimmt die rechte Leiste aus der **Desktop**-Anordnung, ohne ihren Einklapp-Zustand zu berühren — siehe „Ausgeblendet ist nicht zugeklappt". |
 | `mobileTabs` | `WorkspaceMobileTab[]` | ✅ | Reiter der schmalen Ansicht: `BottomTabBarItem` (`id`, `icon`, `label`) **plus** `pane: 'left' \| 'main' \| 'right'` — welchen Bereich der Reiter zeigt. |
@@ -47,10 +77,15 @@ App nachgebaut.
 
 Das Template **füllt die Höhe seines Elternelements** (`h-full flex-1
 min-h-0`, innen `overflow-hidden`) und scrollt in jedem Bereich einzeln — wie
-`ChatLayout` bringt es keine eigene Höhe mit. Im `AppShellLayout` kommt sie von
-dort (dessen `<main>` ist eine Flex-Spalte); allein stehend braucht es einen
-Rahmen mit definierter Höhe (`h-dvh`, wie in den Stories), sonst fällt es auf
-Inhaltshöhe zusammen.
+`ChatLayout` bringt es keine eigene Höhe mit. Weil es eigenständig ist, kommt
+die Höhe vom Seitenrahmen der App: ein Element mit definierter Höhe darum
+(`h-dvh`, wie in den Stories), sonst fällt das Template auf Inhaltshöhe
+zusammen. Kein `h-dvh` **im** Template, damit eine App es auch unter einer
+eigenen schmalen Kopfzeile platzieren kann.
+
+TODO: dass die Höhe beim Konsumenten bleibt statt im Template (`h-dvh`) zu
+stehen, ist mit der Design-System-Verantwortlichen **noch nicht abgestimmt** —
+es ist der Zustand von vorher, nicht eine Entscheidung dieser Korrektur.
 
 ## Responsives Verhalten — und warum die Grenze dort liegt
 
@@ -136,18 +171,21 @@ ein totes Bedienelement. Die Vorlage macht es genauso (ihr Mobil-Zweig fragt
 
 ## Zugänglichkeit
 
-- Drei benannte Landmarks: `complementary` (linke Leiste), `region`
+- Drei benannte Landmarks: `complementary` (linke Leiste), `main`
   (Hauptbereich), `complementary` (rechte Leiste). Unter `lg` ist genau eines
   davon im Baum.
-- **Kein zweites `<main>`.** Das Template ist dafür gedacht, im `AppShellLayout`
-  zu stecken, dessen `children` schon in einem `<main>` liegen — der
-  Hauptbereich ist deshalb ein `<section aria-label>`.
+- **Genau ein `<main>`, und es kommt von hier.** Das Template ist eigenständig,
+  also steuert es das `main`-Landmark der Seite bei — auf dem Desktop und im
+  Mobil-Zweig dasselbe Element, **nie zwei**. Zeigt eine schmale Ansicht eine
+  **Leiste**, ist der Hauptbereich gar nicht im Baum: dann gibt es kein `main`
+  (die Leiste bleibt ein `complementary`, ein `<main>` darum wäre falsch
+  benannt). Beides ist in `workspace-layout.test.tsx` pro Zweig geprüft.
+  TODO: dass eine Leisten-Ansicht ohne `main`-Landmark auskommt, ist eine
+  Folge dieser Struktur und mit der Verantwortlichen **noch nicht bestätigt**.
 - Die Reiterleiste ist ein `navigation`-Landmark mit genau einem
   `aria-current="page"`.
 - Griffe sind bedienbare Trennlinien (`role="separator"`, „Window Splitter":
   ←/→ bzw. ↑/↓, Home/End) — Details in `ResizeHandle`.
-
-<Canvas of={WorkspaceLayoutStories.InAppShell} />
 
 ## Do's & Don'ts
 
@@ -155,8 +193,11 @@ ein totes Bedienelement. Die Vorlage macht es genauso (ihr Mobil-Zweig fragt
 - ✅ Grenzen (`minWidth`/`maxWidth`) pro Leiste setzen — sie sind eine
   App-Entscheidung.
 - ✅ Ausblenden über `showRight`, nie über `isOpen`.
-- ✅ Das Template als `children` des `AppShellLayout` einhängen — Templates
-  komponieren ineinander.
+- ✅ Das Template als **ganze Seite** rendern, in einem Rahmen mit Höhe
+  (`h-dvh`) — App-Navigation gehört in die linke Leiste.
+- ❌ **Nicht** in `AppShellLayout` hängen: dessen Navigationsspalte plus die
+  linke Leiste sind zwei Chrome-Spalten nebeneinander. (`SectionedGridLayout`
+  ist der umgekehrte Fall — Seiten-Inhalt, das gehört in die Shell.)
 - ❌ Keine Breakpoint-Leiter in der App und kein eigenes „ist mobil" für die
   Anordnung: der aktive Reiter ist eine Prop, mehr braucht es nicht.
 - ❌ Kein Nachbau von Leiste, Griff oder Reiterleiste in der App — fehlt etwas,
