@@ -1,0 +1,43 @@
+#!/bin/sh
+# Enforces the commit conventions in CLAUDE.md § Git conventions.
+#
+# Why a hook and not just prose: the prose said "one short lowercase summary
+# line" and never said bodies were out, so bodies grew to 7-11 lines restating
+# the diff. The rationale belongs on the kanban card, which is the durable
+# record and is where reviewers look; a commit message is a label.
+
+msg_file="$1"
+body="$(grep -v '^#' "$msg_file" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+summary="$(printf '%s\n' "$body" | head -1)"
+rest="$(printf '%s\n' "$body" | tail -n +2 | grep -c '[^[:space:]]')"
+
+fail() {
+  printf 'commit-msg: %s\n\n  %s\n\nSee CLAUDE.md, git conventions.\n' "$1" "$summary" >&2
+  exit 1
+}
+
+case "$summary" in
+  "Merge "*|"Revert "*|"fixup!"*|"squash!"*) exit 0 ;;
+esac
+
+# Summary starts lowercase, or with a PascalCase identifier: a design-system
+# commit legitimately begins with a component name ("feat(sidebar):
+# SidebarUserMenu ..."). Requiring a second capital distinguishes that from
+# sentence case ("Added stuff"), which stays rejected.
+if ! printf '%s' "$summary" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci)(\([a-z0-9./-]+\))?: ([a-z]|[A-Z][A-Za-z0-9]*[A-Z])'; then
+  fail 'summary must be "type(scope): summary", lowercase or a PascalCase component name'
+fi
+
+if [ "${#summary}" -gt 72 ]; then
+  fail "summary is ${#summary} chars, max 72"
+fi
+
+if [ "$rest" -gt 3 ]; then
+  fail "body is $rest lines, max 3 - put the reasoning on the card, not here"
+fi
+
+if grep -qi '^Co-Authored-By: Claude' "$msg_file"; then
+  fail 'no Co-Authored-By: Claude trailer - co-author trailers are for humans'
+fi
+
+exit 0
