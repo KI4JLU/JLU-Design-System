@@ -270,9 +270,17 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
 ```
 
 - **Use the templates** (`AppShellLayout`, `AuthLayout`, `DashboardLayout`,
-  `FormLayout`, `ChatLayout`, `TableLayout`) for their page category — never
-  rebuild a page skeleton in the app. Missing slot/variant? Extend the template
-  in the design system (owner review), don't fork the layout.
+  `FormLayout`, `ChatLayout`, `TableLayout`, `SectionedGridLayout`) for their
+  page category — never rebuild a page skeleton in the app. Missing
+  slot/variant? Extend the template in the design system (owner review), don't
+  fork the layout.
+- **Overview pages of grouped card collections** are `SectionedGridLayout`:
+  pass `sections` (each with `isOpen`/`onOpenChange` as controlled props) and
+  hang the template into `AppShellLayout` as `children`. Per section the body
+  is exactly one of `items` (+ optional `createCell` as the first grid cell),
+  `emptyState`, or a free-form `body` — the app decides which, the template
+  never derives „empty" from `items`. No hand-rolled accordion, no
+  `defaultOpen`, no breakpoint ladder: `Grid cols` already collapses.
 - **Spacing through primitives**: gaps/rhythm via `Stack`/`Grid` `gap`
   (`sm|md|lg|gutter` = spacing tokens), page margins via `Container` — no
   ad-hoc `gap-[13px]` or hand-rolled breakpoint ladders; `Grid cols` already
