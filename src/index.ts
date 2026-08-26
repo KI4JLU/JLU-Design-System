@@ -139,6 +139,13 @@ export {
   type DashboardLayoutProps,
 } from "./templates/dashboard-layout";
 export { FormLayout, type FormLayoutProps } from "./templates/form-layout";
+export {
+  SectionedGridLayout,
+  type SectionedGridLayoutProps,
+  type SectionedGridSection,
+  type SectionedGridSectionBase,
+  type SectionedGridSectionBody,
+} from "./templates/sectioned-grid-layout";
 export { TableLayout, type TableLayoutProps } from "./templates/table-layout";
 export {
   WorkspaceLayout,

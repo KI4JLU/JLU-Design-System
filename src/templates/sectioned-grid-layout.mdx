@@ -1,0 +1,159 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as SectionedGridLayoutStories from "./sectioned-grid-layout.stories";
+
+<Meta of={SectionedGridLayoutStories} />
+
+# SectionedGridLayout
+
+Die Übersichtsseite: ein **Stapel kollabierbarer Sektionen, jede mit einem
+Karten-Grid**. Optional eine Titelzeile (`PageHeader`) darüber, dann pro Gruppe
+eine Kopfzeile (Titel, Icon, Anzahl, Aktion) und ein Körper — entweder ein
+`Grid` aus Zellen, eine Leerzustands-Zeile oder ein freiformiger Knoten.
+
+Das Template ist **Seiteninhalt**, kein Seitengerüst: es wird als `children` in
+`AppShellLayout` gehängt, genau wie `DashboardLayout`. Marke, Seitenlabel,
+Theme-Umschalter und Nutzermenü gehören dem Shell.
+
+<Canvas of={SectionedGridLayoutStories.Standard} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `label` | `string` | ✅ | Zugänglicher Name des `region`-Landmarks um den gesamten Inhalt. Pflicht: ein `<section>` **ohne** Namen ist laut HTML-AAM `generic`, also gar kein Landmark. |
+| `sections` | `SectionedGridSection[]` | ✅ | Die Sektionen in Anzeigereihenfolge (siehe Tabellen unten). |
+| `title` | `ReactNode` | — | Seitentitel. Gesetzt ⇒ `PageHeader` (h1) über den Sektionen, wie in `DashboardLayout`. Weglassen, wenn der Titel nur in `AppShellLayout`s `pageLabel`-Zeile steht. |
+| `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel (braucht `title`). |
+| `actions` | `ReactNode` | — | Rechtsbündige Aktionen neben dem Titel (braucht `title`). |
+| `cols` | `1 \| 2 \| 3 \| 4` | — | Default `3`. Spaltenzahl **aller** Sektions-Grids auf dem Desktop; der Kollaps kommt von `Grid`. Ein Regler für die ganze Seite — Sektionen mit unterschiedlicher Spaltenzahl lesen sich wie verschiedene Seiten. |
+| `...rest` | `HTMLAttributes<HTMLElement>` | — | Landet auf dem Wurzel-`<section>`. |
+
+### `SectionedGridSection` — Kopfzeile
+
+| Feld | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `id` | `string` | ✅ | Stabile Id aus der App. React-Key **und** Suffix der Element-Ids der Disclosure; das Template stellt einen `useId()`-Präfix davor, damit zwei Instanzen auf einer Seite nicht kollidieren. |
+| `title` | `ReactNode` | ✅ | Sektions-Überschrift, gerendert in einer `<h2>`. |
+| `icon` | `ReactNode` | — | Führendes Icon in der Kopfzeile (lucide, `aria-hidden`). |
+| `count` | `number` | — | Anzahl als neutrales `Badge` neben dem Titel — **innerhalb** des Triggers, also Teil seines zugänglichen Namens („Favoriten 3"). |
+| `headerAction` | `ReactNode` | — | Bedienelement am Ende der Kopfzeile, bewusst **außerhalb** des Triggers: Klick darauf klappt die Sektion nicht um (verschachtelte Buttons wären außerdem ungültiges HTML). |
+| `isOpen` | `boolean` | ✅ | Auf/zu — **Konsumenten-Zustand**. |
+| `onOpenChange` | `(isOpen: boolean) => void` | ✅ | Trigger gedrückt; trägt den **gewünschten** Zustand, nie den alten. |
+
+### `SectionedGridSection` — Körper: genau eine von drei Formen
+
+Die Form ist eine TypeScript-Union (mit `never`-Sperren): die **falsche
+Kombination** ist damit ein Typfehler. Im Code bleibt es eine Vorrangkette
+(`emptyState` → `body` → `Grid`) — ein JS-Konsument ohne Typprüfung, der zwei
+Formen übergibt, bekommt diese Reihenfolge also stillschweigend. Grund für die
+Union: das Template darf **nicht ableiten**, ob eine Sektion leer ist.
+`React.Children.count` über ein gemapptes Array, ein Fragment oder ein `false`
+sind nicht vorhersagbar unterscheidbar — und die App verzweigt sowieso schon
+selbst (die Vorlage schreibt an jeder Sektion
+`list.length === 0 ? <leer/> : <grid/>`). Also wählt die App die Form, das
+Template rendert sie, und es gibt keinen dritten Zustand, der falsch sein kann.
+
+| Form | Felder | Ergebnis |
+|---|---|---|
+| Karten-Grid | `items: ReactNode`, optional `createCell: ReactNode` | `items` als Zellen eines `Grid cols={cols}`; `createCell` ist die **erste** Zelle desselben Grids (nicht eine eigene Zeile darüber). |
+| Leerzustand | `emptyState: ReactNode` | Statt eines Grids eine gedämpfte Zeile (`text-body-base text-on-surface-variant`) — einen String übergeben, Typo und Farbe gehören dem Template. |
+| Freiform | `body: ReactNode` | Roh gerendert, **ohne** `Grid` — für eine Sektion, deren Inhalt kein Karten-Grid ist, sondern ein ganzes Panel (Katalog/Entdecken, Tabelle, gefilterte Liste). |
+
+<Controls />
+
+## Kollaps: kontrolliert, und **kein** Accordion
+
+Das Design System hat kein `Accordion`-Primitive, und dieses Template schmuggelt
+keins ein. Jede Sektion ist eine **Disclosure** (ARIA/APG) aus Button + Panel:
+
+- `aria-expanded` am Button, `aria-controls` auf das Panel-Element.
+- Der Button steht **innerhalb** der `<h2>` (APGs Accordion-Markup), damit die
+  Sektion per Überschriften-Navigation erreichbar bleibt und trotzdem die ganze
+  Zeile Klickfläche ist.
+- Das Panel-`<div>` ist **immer** im DOM (mit `hidden`, wenn zu). Ein
+  `aria-controls` auf eine Id, die nur im offenen Zustand existiert, wäre eine
+  baumelnde Referenz: eine Prüfung „Attribut vorhanden" besteht sie, angekündigt
+  wird trotzdem nichts.
+- Die **Kinder** des Panels werden beim Zuklappen ausgehängt. Das ist
+  absichtlich und lastentragend: in der Vorlage (`KbAccordion`) hängt der Fetch
+  des Katalog-Panels am Mount, das Aufklappen ist also das Neulesen. Es ist
+  bewusst das Gegenteil von `SidePanel`, das Kinder montiert lässt, damit eine
+  halb getippte Eingabe einen Kollaps überlebt — ein Karten-Grid hat nichts zu
+  verlieren, ein Formular schon.
+- Das Panel bekommt **kein** `role="region"`: eine Disclosure braucht keins, und
+  APG warnt ab ~6 Panels ausdrücklich vor Landmark-Wucherung. Dieses Template
+  liefert genau **ein** Landmark, sein eigenes `<section aria-label>`.
+
+Der Zustand liegt bei der App — wie bei `SidePanel` und `WorkspaceLayout`. Es
+gibt **kein** `defaultOpen`: ein Template, das sich etwas merkt, wäre eine
+zweite Wahrheit neben dem App-Zustand. Wer die Sektionen persistieren will
+(die Vorlage tut das per `localStorage`), tut das in der App und gibt das
+Ergebnis herein.
+
+<Canvas of={SectionedGridLayoutStories.AllCollapsed} />
+
+## Responsives Verhalten
+
+Alles CSS, **kein** `matchMedia`:
+
+- **Karten-Grid**: `Grid cols={cols}` bringt den Kollaps mit (`3` ⇒ 1 Spalte,
+  ab `md` 2, ab `xl` 3). Die App schreibt keine Breakpoint-Leiter.
+- **Titelzeile**: `PageHeader` stapelt Titel und Aktionen unter `md`.
+- **Sektions-Kopfzeile**: `flex-wrap`, die `headerAction` rutscht bei Bedarf in
+  die nächste Zeile.
+
+Anders als `WorkspaceLayout` rendert dieses Template an keiner Stelle einen
+strukturell anderen Baum pro Viewport — es braucht deshalb keine
+Viewport-Kenntnis, und es gibt hier keinen zweiten Breakpoint.
+
+## Zugänglichkeit
+
+- Ein Landmark: `region`, benannt über `label`.
+- **Kein zweites `<main>`.** Das Template steckt in `AppShellLayout`, dessen
+  `children` schon in einem `<main>` liegen — die eigene Region ist ein
+  `<section aria-label>` (dieselbe Regel wie bei `WorkspaceLayout`).
+- Überschriften-Ordnung: `title` ⇒ genau eine `h1` (aus `PageHeader`), pro
+  Sektion genau eine `h2`. Ohne `title` beginnt die Seite bei `h2` — dann sollte
+  der Titel woanders stehen (z. B. in `AppShellLayout`s `pageLabel`).
+- Fokus: der Trigger trägt den `focus-ring`-Recipe des Systems
+  (`focus-visible:ring-2 ring-focus-ring` + Offset).
+- Der Chevron ist `aria-hidden` und dreht sich per `transition-transform` mit
+  `motion-reduce:transition-none`; die Zustandsansage macht `aria-expanded`,
+  nicht das Icon.
+
+<Canvas of={SectionedGridLayoutStories.InAppShell} />
+
+## Do's & Don'ts
+
+- ✅ Das Template als `children` des `AppShellLayout` einhängen — Templates
+  komponieren ineinander.
+- ✅ Auf/zu-Zustand in der App halten (URL-Parameter, Context, `localStorage`)
+  und hereingeben.
+- ✅ Gruppierung, Sortierung und die Aufteilung „eigene vs. geteilte" Elemente
+  in der App entscheiden; die Sektionen kommen fertig herein.
+- ✅ Die Create-Zelle als `createCell` übergeben — sie ist eine Zelle des Grids,
+  keine eigene Zeile.
+- ❌ Kein `defaultOpen`, kein „merkt sich das Template": genau ein Zustand,
+  und er liegt in der App.
+- ❌ Kein `Accordion`-Nachbau in der App und keine eigene Disclosure — fehlt
+  etwas, wird dieses Template hier erweitert.
+- ❌ Kein zweites Grid im Sektionskörper: Zellen gehören in `items`, damit alle
+  Sektionen dieselbe Spaltenlogik teilen. `body` ist für Inhalte, die *kein*
+  Karten-Grid sind.
+- ❌ Kein Seitengerüst hier hinein (Logo-Header, Impressum, FAB): das sind
+  Shell- bzw. App-Belange.
+
+## Offene Punkte
+
+- Der **Name** (`SectionedGridLayout` statt `IndexLayout`/`HomeLayout`) und die
+  Entscheidung, dass Zuklappen den Körper **aushängt**, brauchen noch die
+  Zustimmung des Design-System-Owners — beides ist im Code als `TODO`
+  markiert.
+- Die Zellen sind bewusst keine Liste (`<ul>`/`<li>`): `Card` rendert ein
+  `<div>`, und `Grid` müsste per `asChild` zur Liste gemacht werden. Wenn ein
+  Konsument Listensemantik braucht, ist das eine Erweiterung hier, kein
+  Nachbau in der App.
+- Für die `h2` der Sektionen gibt es **kein** eigenes Typo-Token: benutzt wird
+  `font-headline-md text-headline-md-mobile` (20px, ohne `md:`-Sprung), damit
+  die Sektions-Überschrift unter der `h1` (24px) bleibt. Ein `title-*`-Token
+  wäre ein Token-Vorschlag nach DESIGN_SYSTEM.md §6.
