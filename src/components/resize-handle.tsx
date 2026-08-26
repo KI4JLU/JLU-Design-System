@@ -18,17 +18,29 @@ import { resizeHandleVariants } from "./resize-handle-variants";
  * **`side` is the side of the pane being resized**, and it flips the key
  * direction: a left pane's edge is on its right, so ArrowRight/dragging right
  * makes it wider; a right pane's edge is on its left, so ArrowLeft/dragging
- * right makes it *narrower*. Home/End are side-independent — WAI-ARIA defines
- * them as "minimum"/"maximum" value, not as a direction.
+ * right makes it *narrower*. That is the splitter semantics: a key moves the
+ * *separator*, and `aria-valuenow` reports the *pane's* size, so the same key
+ * raises the value on one side and lowers it on the other. Home/End are
+ * side-independent — they are the advertised minimum resp. maximum *value*
+ * (`aria-valuemin`/`aria-valuemax`), not a direction.
  *
  * `aria-valuenow` is always inside `[min, max]`: both input paths clamp.
  *
- * TODO: role is `slider` with `aria-orientation="vertical"` (the orientation
- * of the *bar*, while the value moves horizontally), carried over from the
- * consumer implementation this generalizes. The WAI-ARIA APG "Window Splitter"
- * pattern uses `role="separator"` with `tabindex` for exactly this widget —
- * whether switching is an improvement or a breaking change for assistive tech
- * is not yet confirmed; decide before this API is depended on widely.
+ * **Role — decided (owner, 2026-08): `separator`**, the WAI-ARIA APG "Window
+ * Splitter" pattern, which is the pattern for exactly this widget; a focusable
+ * separator keeps `tabIndex` and `aria-valuemin`/`-valuemax`/`-valuenow`.
+ * `aria-orientation="vertical"` **stays**, and under `separator` it is finally
+ * coherent: the attribute describes the orientation of the separator *itself* —
+ * a vertical bar between two horizontally adjacent panes — and its default for
+ * this role is `horizontal`, so it has to be stated explicitly. Under the
+ * previous `slider` role the same attribute named the axis the *value* moves
+ * along, which is horizontal here; that mismatch was the original defect.
+ *
+ * TODO: the APG splitter additionally references its primary pane via
+ * `aria-controls`, which this handle cannot do — it is not told the pane's id.
+ * Adding an `aria-controls`/`controls` prop is a separate change; until then
+ * "follows the splitter pattern" is true of the role and the keys, and not yet
+ * confirmed as full APG conformance.
  */
 export interface ResizeHandleProps
   extends Omit<
@@ -100,12 +112,12 @@ const ResizeHandle = React.forwardRef<HTMLDivElement, ResizeHandleProps>(
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
       let next: number;
       switch (event.key) {
-        // ArrowUp/ArrowDown are aliases of ArrowRight/ArrowLeft, mirrored per
-        // side exactly like them: one widget, one behaviour, whichever axis the
-        // user reaches for. They exist because this handle declares
-        // `aria-orientation="vertical"` — leaving the declared axis inert means
-        // a screen-reader user is told „vertical slider" and then finds that no
-        // vertical key does anything.
+        // The splitter pattern assigns ArrowLeft/ArrowRight to a vertical
+        // separator — those are the axis this bar actually moves along.
+        // ArrowUp/ArrowDown are kept as aliases, mirrored per side exactly like
+        // them: one widget, one behaviour, whichever axis the user reaches for.
+        // The pattern gives the vertical keys no other meaning on a vertical
+        // splitter, so the alias is a superset of it, not a contradiction.
         case "ArrowRight":
         case "ArrowUp":
           next = value + grow * step;
@@ -173,7 +185,9 @@ const ResizeHandle = React.forwardRef<HTMLDivElement, ResizeHandleProps>(
         /* After the spread on purpose: the type-level Omit above states these
            are ours, and this makes it true at runtime too (a JS consumer, or a
            cast, cannot smuggle an out-of-range aria-valuenow past the clamp). */
-        role="slider"
+        role="separator"
+        /* Not the default for `separator` (that is `horizontal`) and not
+           redundant: this is the orientation of the bar itself. */
         aria-orientation="vertical"
         aria-label={label}
         aria-valuemin={min}
