@@ -1,0 +1,165 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as WorkspaceLayoutStories from "./workspace-layout.stories";
+
+<Meta of={WorkspaceLayoutStories} />
+
+# WorkspaceLayout
+
+Der dreispaltige Arbeitsbereich: linke Leiste | Griff | Hauptbereich | Griff |
+rechte Leiste. Jede Leiste klappt auf eine 60px-Schiene zu und lässt sich
+ziehen; unter `lg` zeigt dasselbe Template genau **einen** Bereich plus die
+`BottomTabBar`. Komponiert `SidePanel` + `ResizeHandle` + `BottomTabBar` — Apps
+befüllen Slots und liefern den Leisten-Zustand, das Gerüst wird **nie** in der
+App nachgebaut.
+
+<Canvas of={WorkspaceLayoutStories.Workspace} />
+
+## Slots & Props
+
+| Slot / Prop | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `children` | `ReactNode` | ✅ | Hauptbereich — die Mittelspalte auf dem Desktop, unter `lg` einer der Bereiche. Wie bei den anderen Templates ist der Hauptinhalt `children`, nicht eine Prop namens `main`. |
+| `mainLabel` | `string` | ✅ | Zugänglicher Name des `region`-Landmarks um den Hauptbereich. |
+| `left` / `right` | `WorkspacePane` | — | Je eine Leiste (siehe Tabelle unten). Weglassen = die Leiste existiert nicht. |
+| `showRight` | `boolean` | — | Default `true`. `false` nimmt die rechte Leiste aus der **Desktop**-Anordnung, ohne ihren Einklapp-Zustand zu berühren — siehe „Ausgeblendet ist nicht zugeklappt". |
+| `mobileTabs` | `WorkspaceMobileTab[]` | ✅ | Reiter der schmalen Ansicht: `BottomTabBarItem` (`id`, `icon`, `label`) **plus** `pane: 'left' \| 'main' \| 'right'` — welchen Bereich der Reiter zeigt. |
+| `activeMobileTab` | `string` | ✅ | Id des aktuellen Reiters. Der **einzige** Eingang, der entscheidet, welcher Bereich unter `lg` sichtbar ist. |
+| `onMobileTabChange` | `(id: string) => void` | ✅ | Ein Reiter wurde getippt. |
+| `mobileTabBarLabel` | `string` | ✅ | Zugänglicher Name des `navigation`-Landmarks der Reiterleiste. |
+| `...rest` | `HTMLAttributes<HTMLDivElement>` | — | Alles Weitere landet auf dem Wurzelelement — u. a. `onTouchStart`/`onTouchEnd` für Swipes (siehe unten). |
+
+### `WorkspacePane`
+
+| Feld | Typ | Pflicht | Inhalt |
+|---|---|---|---|
+| `content` | `ReactNode` | ✅ | Inhalt der Leiste. |
+| `label` | `string` | ✅ | Zugänglicher Name des `complementary`-Landmarks. Pflicht, weil zwei Leisten gleichzeitig auf dem Schirm sind und namenlose Landmarks nicht unterscheidbar wären. |
+| `isOpen` / `width` | `boolean` / `number` | ✅ | **Konsumenten-Zustand** (App-Context, persistiert). |
+| `minWidth` / `maxWidth` | `number` | ✅ | Grenzen des Griffs, in px. **Ohne Default** — die Zahlen sind eine App-Entscheidung (JustRAG: 150–600 links, 150–800 rechts) und werden hier nicht eingebacken. |
+| `onOpenChange` | `(isOpen: boolean) => void` | ✅ | Ein Callback statt `SidePanel`s Paar `onExpand`/`onCollapse`. |
+| `onWidthChange` | `(width: number) => void` | ✅ | Bereits geklemmte Breite vom Griff. |
+| `expandLabel` / `collapseLabel` / `resizeLabel` | `string` | ✅ | Zugängliche Namen der drei Bedienelemente (Konsumenten können zweisprachig sein). |
+| `collapsedPreview` | `ReactNode` | — | Icon-Streifen in der zugeklappten Schiene. |
+
+<Controls />
+
+## Höhe
+
+Das Template **füllt die Höhe seines Elternelements** (`h-full flex-1
+min-h-0`, innen `overflow-hidden`) und scrollt in jedem Bereich einzeln — wie
+`ChatLayout` bringt es keine eigene Höhe mit. Im `AppShellLayout` kommt sie von
+dort (dessen `<main>` ist eine Flex-Spalte); allein stehend braucht es einen
+Rahmen mit definierter Höhe (`h-dvh`, wie in den Stories), sonst fällt es auf
+Inhaltshöhe zusammen.
+
+## Responsives Verhalten — und warum die Grenze dort liegt
+
+- **ab `lg`**: drei Spalten. Breiten kommen aus `width` der Leisten, die Schiene
+  aus `SidePanel`, der Hauptbereich flext. Ein `ResizeHandle` erscheint **nur**
+  neben einer ausgeklappten Leiste — die Schiene hat eine feste Breite, ein
+  Schieber dort würde einen Wert melden, der nichts sichtbar bewegt. (JustRAG
+  zeigt den rechten Griff auch zugeklappt; das ist der Fehler, den diese Regel
+  schließt.)
+- **unter `lg`**: genau ein Bereich, formatfüllend, plus die `BottomTabBar`
+  (`fixed`, 60px + iOS-Safe-Area; der Bereich reserviert diese Höhe als
+  Padding, damit die letzte Zeile nicht hinter der Leiste liegt). Der gezeigte
+  Bereich ist **immer offen** und hat **kein** Einklapp-Bedienelement.
+
+Die Regel „Responsives Verhalten lebt im Template, Apps schreiben keine
+Breakpoint-Leitern" gilt hier unverändert — die Frage ist nur, *womit* das
+Template sie umsetzt. Innerhalb einer Anordnung ist alles CSS. Die **Wahl der
+Anordnung** ist es nicht, und zwar aus einem inhaltlichen Grund: unter `lg` ist
+eine Leiste keine schmalere Version von sich selbst. Sie füllt den Schirm, sie
+ignoriert den Einklapp-Zustand, und ihr Einklapp-Knopf muss **weg** sein — ein
+Knopf, der den einzigen sichtbaren Bereich zuklappt, hinterlässt einen leeren
+Schirm und zerstört dabei die Desktop-Vorliebe des Nutzers. Keine der drei
+Punkte ist als Klasse auf derselben Markup-Struktur ausdrückbar (`isOpen`
+steuert ein `hidden`-Attribut, kein Styling). Deshalb fragt das Template
+`matchMedia` **einmal** — `(min-width: 64rem)`, also genau Tailwinds
+`--breakpoint-lg` und dieselbe Grenze, an der `AppShell` seinen Drawer
+umschaltet — und rendert die Anordnung, die gilt. Genau das tut auch die
+Vorlage (JustRAG `useIsMobile`, 1024px).
+
+Der Konsument schreibt trotzdem keine Breakpoint-Leiter: welchen Bereich ein
+Reiter zeigt, ist Daten (`mobileTabs[].pane`), und welcher Reiter aktiv ist,
+ist eine kontrollierte Prop.
+
+Die verworfene Alternative — alle drei Bereiche immer rendern und per
+`hidden lg:flex` umschalten — scheitert an denselben drei Punkten (und würde
+den zugeklappten Zustand auf Mobil sichtbar machen), außerdem wäre der
+ARIA-Vertrag „genau ein Bereich" in jsdom nicht prüfbar, weil dort keine
+Tailwind-CSS gilt.
+
+## Ausgeblendet ist nicht zugeklappt
+
+Drei **verschiedene** Zustände der rechten Leiste:
+
+| Zustand | Wie | Desktop | unter `lg` |
+|---|---|---|---|
+| existiert nicht | `right` weglassen | nichts | nichts (ein Reiter darauf fällt auf den Hauptbereich zurück) |
+| ausgeblendet | `showRight={false}` | nichts, **`isOpen` unangetastet** | über den Reiter erreichbar |
+| zugeklappt | `isOpen: false` | 60px-Schiene, kein Griff | offen (Mobil kennt keine Schiene) |
+
+`showRight` existiert genau wegen der zweiten Zeile: die Vorlage hat die Leiste
+früher per `setIsRightSidebarOpen(false)` „ausgeblendet" — danach blieb sie
+zugeklappt, weil sie niemand wieder öffnete. Ausblenden darf also **nicht**
+durch den Einklapp-Zustand laufen.
+
+Unter `lg` wird `showRight` bewusst **nicht** ausgewertet: Ausblenden bringt
+horizontalen Platz, und wo nur ein Bereich auf dem Schirm ist, konkurriert
+niemand um Platz — ein Reiter, dessen Bereich sich weigert zu erscheinen, wäre
+ein totes Bedienelement. Die Vorlage macht es genauso (ihr Mobil-Zweig fragt
+`showSources` nicht ab). Wer die Leiste **überall** loswerden will, lässt
+`right` weg und nimmt den Reiter aus `mobileTabs`.
+
+<Canvas of={WorkspaceLayoutStories.RightPaneHidden} />
+
+## Zustand, Ableitung und Swipes bleiben in der App
+
+- **Kein eigener Zustand** außer „ist das ein Desktop-Viewport". `isOpen`,
+  `width` und der aktive Reiter liegen in der App (typischerweise ein Context,
+  persistiert) — eine Leiste, ihr Griff und dieses Template müssen dieselbe
+  Zahl lesen.
+- **Keine Ableitung des aktiven Reiters.** JustRAG leitet ihn aus *zwei*
+  Quellen ab (`mobileTab` und `kbView`, über einen gemeinsamen Helfer) — der
+  Dateikommentar dort hält einen echten Fehler fest, als die beiden
+  auseinanderliefen. Diese Ableitung bleibt in der App: das Template bekommt
+  **eine** Id und schlägt in der Tabelle des Konsumenten nach, welchen Bereich
+  sie zeigt. Zwei Reiter dürfen dabei denselben Bereich zeigen (JustRAG: „Chat"
+  und „Workspace" rendern beide den Hauptbereich).
+- **Keine Gesten.** `onTouchStart`/`onTouchEnd` (und jedes andere
+  Wurzel-Attribut) werden durchgereicht; die Swipe-Logik bleibt dort, wo ihr
+  Zustand schon liegt.
+- **Fällt eine Id auf nichts zurück** (Id in keinem Reiter, oder Reiter auf eine
+  nicht vorhandene Leiste), zeigt das Template den Hauptbereich — nie einen
+  leeren Schirm.
+
+## Zugänglichkeit
+
+- Drei benannte Landmarks: `complementary` (linke Leiste), `region`
+  (Hauptbereich), `complementary` (rechte Leiste). Unter `lg` ist genau eines
+  davon im Baum.
+- **Kein zweites `<main>`.** Das Template ist dafür gedacht, im `AppShellLayout`
+  zu stecken, dessen `children` schon in einem `<main>` liegen — der
+  Hauptbereich ist deshalb ein `<section aria-label>`.
+- Die Reiterleiste ist ein `navigation`-Landmark mit genau einem
+  `aria-current="page"`.
+- Griffe sind Tastatur-Schieber (`role="slider"`, ←/→, Home/End) — Details in
+  `ResizeHandle`.
+
+<Canvas of={WorkspaceLayoutStories.InAppShell} />
+
+## Do's & Don'ts
+
+- ✅ Leisten-Zustand in **einem** Context halten und hier hineingeben.
+- ✅ Grenzen (`minWidth`/`maxWidth`) pro Leiste setzen — sie sind eine
+  App-Entscheidung.
+- ✅ Ausblenden über `showRight`, nie über `isOpen`.
+- ✅ Das Template als `children` des `AppShellLayout` einhängen — Templates
+  komponieren ineinander.
+- ❌ Keine Breakpoint-Leiter in der App und kein eigenes „ist mobil" für die
+  Anordnung: der aktive Reiter ist eine Prop, mehr braucht es nicht.
+- ❌ Kein Nachbau von Leiste, Griff oder Reiterleiste in der App — fehlt etwas,
+  wird das Template hier erweitert.
+- ❌ Keine zweite Wahrheit für den aktiven Reiter: eine Id herein, die Ableitung
+  bleibt in der App.

@@ -9,4 +9,5 @@ export const templateChromaticModes = {
   "light desktop": { theme: "light", viewport: 1280 },
   "dark desktop": { theme: "dark", viewport: 1280 },
   "light mobile": { theme: "light", viewport: 390 },
+  "dark mobile": { theme: "dark", viewport: 390 },
 } as const;

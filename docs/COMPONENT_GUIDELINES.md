@@ -270,9 +270,15 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
 ```
 
 - **Use the templates** (`AppShellLayout`, `AuthLayout`, `DashboardLayout`,
-  `FormLayout`, `ChatLayout`, `TableLayout`) for their page category — never
-  rebuild a page skeleton in the app. Missing slot/variant? Extend the template
-  in the design system (owner review), don't fork the layout.
+  `FormLayout`, `ChatLayout`, `TableLayout`, `WorkspaceLayout`) for their page
+  category — never rebuild a page skeleton in the app. Missing slot/variant?
+  Extend the template in the design system (owner review), don't fork the
+  layout.
+- **Three-pane workspaces** (side pane | content | side pane, one pane at a
+  time on narrow screens) are `WorkspaceLayout`: pass the panes' `isOpen` /
+  `width` and the current mobile tab in as controlled props — never a
+  breakpoint check or a pane frame of your own. Hiding a pane goes through
+  `showRight`, never through its collapse state.
 - **Spacing through primitives**: gaps/rhythm via `Stack`/`Grid` `gap`
   (`sm|md|lg|gutter` = spacing tokens), page margins via `Container` — no
   ad-hoc `gap-[13px]` or hand-rolled breakpoint ladders; `Grid cols` already

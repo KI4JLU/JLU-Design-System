@@ -140,4 +140,11 @@ export {
 } from "./templates/dashboard-layout";
 export { FormLayout, type FormLayoutProps } from "./templates/form-layout";
 export { TableLayout, type TableLayoutProps } from "./templates/table-layout";
+export {
+  WorkspaceLayout,
+  type WorkspaceLayoutProps,
+  type WorkspacePane,
+  type WorkspacePaneId,
+  type WorkspaceMobileTab,
+} from "./templates/workspace-layout";
 export { cn } from "./lib/utils";

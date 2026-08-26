@@ -171,12 +171,21 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 ### Page templates (`src/templates/`)
 One template per page category of the migration order — real importable
 components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
-`ChatLayout`, `TableLayout`). Rules:
+`ChatLayout`, `TableLayout`, `WorkspaceLayout`). Rules:
 
 - Templates are **layout composition only**: slots (`ReactNode` props) for
   injected content, no business logic, no data fetching.
 - Responsive behavior lives **inside** the template (sidebar collapse, grid
   breaks, mobile action stacking) — consuming apps write no breakpoint ladders.
+  Which *mechanism* the template uses is its own choice: CSS wherever CSS can
+  do it, and a **single** JS media query where the arrangement genuinely
+  differs rather than merely narrowing. `WorkspaceLayout` is the one case so
+  far — below `lg` a pane fills the screen, ignores its collapse state and
+  loses its collapse control, and none of the three is expressible as a class
+  on the same markup. It queries Tailwind's own `--breakpoint-lg` (`64rem`),
+  i.e. the same boundary `AppShell` switches its drawer at; a second, differing
+  breakpoint anywhere in a template is a review FAIL. The consumer still writes
+  no ladder — it passes the current pane as a controlled prop.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
