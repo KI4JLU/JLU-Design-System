@@ -168,10 +168,29 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 ### Page templates (`src/templates/`)
 One template per page category of the migration order — real importable
 components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
-`ChatLayout`, `TableLayout`). Rules:
+`ChatLayout`, `TableLayout`, `SectionedGridLayout`). Rules:
 
 - Templates are **layout composition only**: slots (`ReactNode` props) for
-  injected content, no business logic, no data fetching.
+  injected content, no business logic, no data fetching. `SectionedGridLayout`
+  is the overview/browse page category — a stack of collapsible sections, each
+  holding a `Grid` of cards, with an optional `PageHeader` above. It is page
+  *content* (hung into `AppShellLayout` as `children`, like `DashboardLayout`),
+  and it takes its sections **as given**: grouping, sorting and „is this
+  section empty" stay in the app, which is why the section body is a
+  three-way union (`items` + optional `createCell` · `emptyState` · free-form
+  `body`) instead of a derivation over `items`.
+- **Collapsible sections are ARIA disclosures, not an `Accordion`.** There is
+  no `Accordion` primitive and `SectionedGridLayout` does not smuggle one in:
+  `isOpen`/`onOpenChange` per section are controlled by the app (as with
+  `SidePanel` and `WorkspaceLayout`, and deliberately without a `defaultOpen`),
+  the trigger sits inside the `<h2>` (APG's accordion markup) and carries
+  `aria-expanded` + `aria-controls`. The referenced panel element is **always**
+  in the DOM — an `aria-controls` that resolves only while open is a dangling
+  reference — while its children are unmounted on collapse (the source
+  implementation's data re-read hangs off that mount, the opposite trade-off to
+  `SidePanel`'s). The panel is deliberately no `region`: APG warns against
+  landmark proliferation, so the template contributes exactly one landmark,
+  its own `<section aria-label>`.
 - Responsive behavior lives **inside** the template (sidebar collapse, grid
   breaks, mobile action stacking) — consuming apps write no breakpoint ladders.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
