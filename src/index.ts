@@ -11,6 +11,16 @@ export { AppShell, type AppShellProps } from "./components/app-shell";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Badge, type BadgeProps } from "./components/badge";
 export { badgeVariants } from "./components/badge-variants";
+export {
+  BottomTabBar,
+  type BottomTabBarItem,
+  type BottomTabBarProps,
+} from "./components/bottom-tab-bar";
+export {
+  bottomTabBarVariants,
+  bottomTabBarTabVariants,
+  bottomTabBarIconVariants,
+} from "./components/bottom-tab-bar-variants";
 export { Button, type ButtonProps } from "./components/button";
 export { buttonVariants } from "./components/button-variants";
 export {
@@ -79,6 +89,8 @@ export {
   PopoverClose,
   PopoverContent,
 } from "./components/popover";
+export { ResizeHandle, type ResizeHandleProps } from "./components/resize-handle";
+export { resizeHandleVariants } from "./components/resize-handle-variants";
 export {
   Select,
   SelectGroup,
@@ -99,6 +111,11 @@ export {
   SidebarUserMenu,
   type SidebarUserMenuProps,
 } from "./components/sidebar-user-menu";
+export { SidePanel, type SidePanelProps } from "./components/side-panel";
+export {
+  SIDE_PANEL_RAIL_WIDTH,
+  sidePanelVariants,
+} from "./components/side-panel-variants";
 export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Stack, type StackProps } from "./components/stack";
 export { stackVariants } from "./components/stack-variants";

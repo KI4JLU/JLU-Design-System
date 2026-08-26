@@ -1,0 +1,58 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as BottomTabBarStories from "./bottom-tab-bar.stories";
+
+<Meta of={BottomTabBarStories} />
+
+# BottomTabBar
+
+Der mobile Bereichswechsel: eine am unteren Rand fixierte `<nav>`-Landmark mit
+N Reitern aus Icon + Label; der aktive trägt `aria-current="page"`.
+
+<Canvas of={BottomTabBarStories.Playground} />
+
+## Props
+
+| Prop | Typ | Pflicht | Bedeutung |
+|---|---|---|---|
+| `items` | `{ id, icon, label }[]` | ✅ | Reiter in Anzeigereihenfolge. `icon` ist ein `ReactNode` (z. B. ein lucide-Icon) und wird von der Komponente auf 20px gesetzt. |
+| `activeId` | `string` | ✅ | Id des aktuellen Reiters. Eine Id ohne passenden Eintrag markiert **keinen** Reiter. |
+| `onChange` | `(id: string) => void` | ✅ | Klick/Tastendruck auf einen Reiter. |
+| `label` | `string` | ✅ | Zugänglicher Name der `<nav>`-Landmark. |
+
+<Controls />
+
+## Kein SegmentedControl
+
+Geprüft, bevor diese Komponente entstand: `SegmentedControl` ist ein
+`role="group"` aus `aria-pressed`-Umschaltern für einen **Wert innerhalb** einer
+Seite (Zeitraum Tag/Woche/Monat), inline im Fluss, ohne Icons. Diese Leiste ist
+**App-Chrome**: eine Navigations-Landmark, die umschaltet, welche Ansicht der
+Viewport zeigt — und genau das bedeutet `aria-current="page"`. Andere Rolle,
+andere Landmark, andere Platzierung. Eine gemeinsame Komponente hätte zwei
+ARIA-Verträge.
+
+## Entscheidungen
+
+- **Generisch.** Keine festen Ids, Reihenfolgen oder Labels — der Konsument
+  liefert `items`. Ob und wie der aktive Reiter aus anderem Zustand abgeleitet
+  wird, bleibt beim Konsumenten; die Leiste rendert, was ihr gesagt wird.
+- **`aria-current="page"` statt `aria-selected`.** Kein `tablist`: es gibt keine
+  Tab-Panels im ARIA-Sinn, sondern gewechselte Ansichten. Reiter sind `<button>`
+  und werden deshalb ohne eigene Tastaturlogik mit Tab, Enter und Leertaste
+  bedient.
+- **Höhe 60px**, dieselbe Chrome-Einheit wie `SIDE_PANEL_RAIL_WIDTH`, plus
+  `env(safe-area-inset-bottom)` für die iOS-Home-Leiste. Touch-Ziel pro Reiter
+  mindestens 44px.
+- **`fixed` ist der Default.** Ein Konsument, der die Leiste im Fluss braucht,
+  überschreibt die Position per `className` (Layout, nicht Skin — `cn()` löst
+  den Konflikt auf).
+- **Das Icon ist dekorativ** (`aria-hidden`): der zugängliche Name eines Reiters
+  ist genau sein `label`.
+
+## Do's & Don'ts
+
+- ✅ Icons ohne Größenangabe übergeben — die Leiste setzt sie einheitlich.
+- ✅ `label` übersetzen; die Landmark braucht in jeder Sprache einen Namen.
+- ❌ Keine App-Logik hineinreichen (welche Ansicht zu welcher Id gehört).
+- ❌ Nicht als Ersatz für `SegmentedControl` in Formularen oder Werkzeugleisten
+  verwenden.

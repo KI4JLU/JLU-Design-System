@@ -1,0 +1,101 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as ResizeHandleStories from "./resize-handle.stories";
+
+<Meta of={ResizeHandleStories} />
+
+# ResizeHandle
+
+Der zugängliche Ziehgriff zwischen zwei Bereichen. Ersetzt inline gestylte
+`div`-Griffe mit eigener Tastaturlogik pro Einsatzort.
+
+<Canvas of={ResizeHandleStories.Playground} />
+
+## Props
+
+| Prop | Typ | Pflicht | Bedeutung |
+|---|---|---|---|
+| `side` | `'left' \| 'right'` | ✅ | Seite der Leiste, die verändert wird — dreht die Pfeilrichtung. |
+| `value` | `number` | ✅ | Aktuelle Breite in px (`aria-valuenow`). |
+| `min` / `max` | `number` | ✅ | Grenzen (`aria-valuemin` / `aria-valuemax`, Home / End). |
+| `step` | `number` | — | Schrittweite der Pfeiltasten, Default `10`. |
+| `label` | `string` | ✅ | Zugänglicher Name (`aria-label`). |
+| `onValueChange` | `(value: number) => void` | ✅ | Bekommt **jede** geklammerte Breite — Tastatur wie Maus. |
+| `onResizeStart` / `onResizeEnd` | `() => void` | — | Benachrichtigung über Beginn/Ende des Ziehens. |
+
+<Controls />
+
+## Zuständigkeit: der Griff besitzt die Interaktion, der Konsument den Wert
+
+**Entschieden, nicht aufteilbar.** Der Griff hängt beim `pointerdown` selbst die
+`pointermove`/`pointerup`-Listener ans `window`, rechnet aus der zurückgelegten
+Distanz die neue Breite, klammert sie auf `[min, max]` und meldet sie über
+`onValueChange`. Der Konsument speichert **eine** Zahl.
+
+- Der flüchtige „wird gerade gezogen"-Zustand bleibt intern — das ist
+  Interaktionszustand wie `:hover`, keine Daten. Deshalb gibt es keine
+  `active`-Prop: der Griff weiß es selbst und färbt sich mit `bg-primary`.
+- `onResizeStart` / `onResizeEnd` sind **Benachrichtigungen** (z. B. um eine
+  teure Neuberechnung während des Ziehens auszusetzen), kein Mechanismus. Eine
+  zusätzliche `pointermove`-Schleife beim Konsumenten ist genau der halb
+  geteilte Zustand, den diese Komponente abschafft.
+- Beim Unmount mitten im Ziehen werden die Listener entfernt.
+
+## Tastatur
+
+| Taste | Wirkung |
+|---|---|
+| `→` / `↑` | linke Leiste **breiter**, rechte Leiste **schmaler** |
+| `←` / `↓` | linke Leiste **schmaler**, rechte Leiste **breiter** |
+| `Home` | `min` |
+| `End` | `max` |
+
+`↑`/`↓` sind **Aliase** von `→`/`←` und spiegeln sich genauso pro Seite: ein
+Widget, ein Verhalten, egal zu welcher Achse der Nutzer greift. Sie existieren,
+weil dieses Handle `aria-orientation="vertical"` angibt — eine angekündigte
+Achse, auf der keine Taste etwas tut, ist ein Defekt.
+
+Die Pfeile folgen der **Richtung** und spiegeln sich deshalb mit `side`: die
+Kante einer linken Leiste liegt rechts, die einer rechten Leiste links.
+`Home`/`End` sind laut WAI-ARIA **Werte** (Minimum/Maximum), keine Richtungen —
+sie spiegeln sich nicht. Beide Richtungen sind pro Seite mit einem Test
+festgenagelt; das Vertauschen ist der naheliegende Fehler.
+
+`aria-valuenow` liegt immer innerhalb von `[min, max]` — beide Eingabewege
+klammern, und auch ein veralteter Wert aus dem Konsumenten wird geklammert
+angekündigt.
+
+## Aussehen
+
+Randlos und im Ruhezustand unsichtbar; `hover` tönt mit `bg-outline-variant`,
+während des Ziehens füllt `bg-primary`. Die Randlinie zwischen Bereich und
+Inhalt zeichnet das `SidePanel` (`side`), nicht der Griff — deshalb entstehen
+keine zwei benachbarten 1px-Linien und es braucht keine negativen Margins.
+
+Die Trefferfläche ist 6px breit: bewusst eine Zeiger- und Tastatur-Affordanz für
+breite Viewports. Auf schmalen Bildschirmen werden keine Breiten gezogen, dort
+wechselt die `BottomTabBar` die Ansicht — deshalb ist hier kein 44px-Touch-Ziel
+vorgesehen.
+
+Screenreader kündigen `aria-valuenow` als nackte Zahl an. Wer „320 Pixel" hören
+möchte, gibt zusätzlich ein übersetztes `aria-valuetext` mit — die Prop wird
+durchgereicht.
+
+<Canvas of={ResizeHandleStories.InAWorkspace} />
+
+## Offener Punkt
+
+Die Rolle ist `slider` mit `aria-orientation="vertical"` (die Orientierung des
+**Balkens**, während sich der Wert waagerecht bewegt) — so übernommen aus der
+App, die dieses Muster vorgemacht hat. Das WAI-ARIA-APG-Muster „Window
+Splitter" benutzt für genau dieses Widget `role="separator"` mit `tabindex`. Ob
+ein Wechsel für Hilfstechnik eine Verbesserung ist, ist **nicht bestätigt** —
+zu entscheiden, bevor viele Konsumenten daran hängen.
+
+An **einer** Stelle hängt an dieser offenen Entscheidung eine sichtbare Folge,
+die hier bewusst festgehalten statt versteckt wird: Weil `↑` ein Alias von `→`
+ist und `→` eine **rechte** Leiste schmaler macht, verkleinert `↑` dort
+`aria-valuenow`. Für `role="slider"` ist die verbreitete Erwartung, dass `↑` den
+Wert **vergrößert**; für `role="separator"` sind die Tasten dagegen
+richtungsbezogen und die Spiegelung ist richtig. Der Alias ist unter beiden
+Ausgängen bedienbar, die Spiegelung der Vertikaltasten sollte aber **zusammen
+mit** der Rollenfrage entschieden werden — nicht vorher und nicht einzeln.
