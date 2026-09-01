@@ -1,5 +1,13 @@
 # JLU Design System
 
+## Parallel work runs in a temporary worktree — always
+
+Any work that runs alongside other activity in this repo — subagent workers, parallel tasks,
+background jobs — happens in a **temporary git worktree** (Agent tool `isolation: "worktree"`,
+or `git worktree add`), never in the main working tree. The main checkout belongs to the
+interactive session (the PM): it stays on `main`, clean, and available at all times. A worker
+must be told it is in a worktree and must not cd into or modify the main checkout.
+
 ## Commit messages
 
 Conventional Commits, one short lowercase summary line:
