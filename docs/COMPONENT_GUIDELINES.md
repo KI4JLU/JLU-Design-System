@@ -275,6 +275,38 @@ reach it), never interactive elements (use `Popover`), and drop any leftover
 `title=` on the same control. Disabled triggers need a focusable wrapper —
 see the „DisabledTrigger" story.
 
+## Table
+
+```tsx
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@ki4jlu/design-system";
+
+<Table containerClassName="max-h-72">        {/* Höhe = vertikales Scrollen */}
+  <TableCaption>Zugriffsschlüssel</TableCaption>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Name</TableHead>
+      <TableHead className="text-right whitespace-nowrap">Erstellt</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>Ingest-Pipeline</TableCell>
+      <TableCell className="text-right whitespace-nowrap">01.02.2026</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+```
+Replaces hand-styled `<table style={{…}}>` blocks and the markdown-table
+overrides in the apps. **The scroll container belongs to `Table`** — never add
+another `overflow-x-auto` at the call site; `containerClassName` is the only
+handle on it. `TableHead` defaults to `scope="col"` (that is what makes it a
+column header); `TableCaption` is the table's accessible name and must be the
+first child of `<table>`. Cells wrap by default — put `whitespace-nowrap` on
+the individual cells that must not (dates, amounts, actions). Empty state is
+one row with `colSpan` across all columns, header kept. `Table` is the table,
+`TableLayout` is the page around it; the normal case is `Table` as
+`TableLayout`'s children.
+
 ## Layout & Templates
 
 Pages are **assembled, not laid out by hand**:
