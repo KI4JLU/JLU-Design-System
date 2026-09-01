@@ -74,7 +74,28 @@ Concretely, on every substantive task:
 - A card in `In Progress` that nobody is working on. Pausing mid-milestone is fine (it *is* in
   progress) — but a finished one must be moved.
 
-At the start of a session, `get_board` and reconcile before doing new work.
+## Who moves the card — the move is part of the step, never someone else's job
+
+Every role that finishes a stage moves the card **in the same session**, as part of finishing.
+"Card not moved between lists" is never correct for a stage you just completed — a comment
+describing the new state without the move is exactly how the board goes stale.
+
+| You just… | Move the card to |
+|---|---|
+| finished the work, gates green, ready for review | `Code Review` |
+| posted a review **PASS** | leave in `Code Review` (it awaits merge — see next row) |
+| posted a review **FAIL** | back to `In Progress` |
+| merged the PR (or observed that it merged) | `Done`, with a comment citing PR number + merge commit |
+
+The merge→`Done` move belongs to whoever merges; if the merge happens outside a session (e.g.
+the owner merges on GitHub), the **first session that notices the merge** makes the move. A PM
+delegating to worker/reviewer agents must either instruct them to move the card at their stage
+or do the moves itself — one of the two, decided up front, never neither.
+
+**Session-start reconciliation (mandatory):** `get_board`, and for every card in `In Progress`
+and `Code Review`, cross-check against git — is the card's branch/PR merged into `main`
+(`gh pr list --state merged`, `git log`)? If yes, move it to `Done` with the merge record
+before starting new work.
 
 ## When to create a card
 
