@@ -1,5 +1,12 @@
 # JLU Design System
 
+## Dev harness
+
+This repo runs an agent-loop port: **the main session is the project manager** — it plans, keeps
+the kanban board honest, and delegates carded implementation to subagents in temporary worktrees.
+See `.claude/README.md` (architecture, guard, deviations from upstream) and
+`.claude/skills/project-manager/` (the pipeline and the PM loop).
+
 ## Parallel work runs in a temporary worktree — always
 
 Any work that runs alongside other activity in this repo — subagent workers, parallel tasks,
