@@ -87,11 +87,19 @@ consuming repo** — new exceptions get the same scrutiny there.
 - The active theme lives on `<html data-theme="light|dark">`. The dark block in
   `tokens.css` (`[data-theme="dark"]`) overrides the *semantic* tokens only.
 - [`ThemeProvider`](../src/theme/ThemeContext.tsx) resolves the user's choice —
-  **light / dark / system** — persists it to `localStorage` ("theme"), and
-  tracks the OS setting while on "system". Consumers add the no-flash inline
-  script to their `index.html` **before first paint** (see Storybook
-  „Theming"; keep it in sync with the provider). Users switch via
-  [`ThemeToggle`](../src/components/theme-toggle.tsx).
+  **light / dark / system** — persists it to `localStorage` (key via
+  `storageKey`, default "theme"), and tracks the OS setting while on "system".
+  Consumers add the no-flash inline script to their `index.html` **before
+  first paint** (see Storybook „Theming"; keep it in sync with the provider —
+  without it the page flashes the light theme before React mounts). Users
+  switch via [`ThemeToggle`](../src/components/theme-toggle.tsx).
+- **Controlled mode**: a consumer that already owns theme state passes
+  `theme` + `onThemeChange` — the provider then reads/writes no
+  `localStorage` and keeps no internal choice; `setTheme` only calls
+  `onThemeChange`. It still resolves "system" and stays the single writer of
+  `<html data-theme>`. Uncontrolled (no `theme` prop) is unchanged. The two
+  migration paths for apps with their own theme context (keep ownership vs.
+  hand it to the provider) live in Storybook „Theming".
 - No `@media (prefers-color-scheme)` in our CSS — "system" is resolved in JS,
   so there is a single dark block (no duplication).
 - Every theme must define values for: default, **hover, active, focus,
@@ -139,14 +147,14 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
 | `Logo` (+ `logoVariants`) | `logo.tsx` / `logo-variants.ts` | platform wordmark „JLU [Produkt]" (CampusAgents/API/RAG): prefix + badge on the brand tokens (`brand`/`on-brand` theme-invariant, `brand-wordmark` inverts in dark), sizes sm/default/lg; real text (no aria needed) |
-| `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock |
+| `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock; built-in close button label overridable via `closeLabel` (default „Schließen") |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links |
 | `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
-| `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime |
+| `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime; all labels overridable (`themeLabel`, `lightLabel`, `systemLabel`, `darkLabel`; German defaults) |
 | `Tooltip` (+ Trigger/Content/Provider) | `tooltip.tsx` | Radix — APG tooltip: `role="tooltip"` + `aria-describedby` on the trigger, opens on hover **and** focus, Escape dismisses, never focusable; replaces `title=` hints. Each `Tooltip` mounts its own provider (shadcn shape, no app setup); style is the re-pointed shadcn look (`bg-primary`/`text-on-primary`, `shadow-overlay`, no animation/arrow like all floating surfaces) |
 
 *(Inventory above predates v0.9.0; Avatar, Badge dot, ChatBubble, Checkbox,
@@ -164,7 +172,7 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`, max `container-max`; `size="narrow"` for forms |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
 | `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
-| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer |
+| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both |
 | `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. No viewport awareness: which pane is rendered is the template's job |
 | `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: focusable `role="separator"` (WAI-ARIA APG „Window Splitter") with `aria-valuemin/max/now`, clamped, and `aria-orientation="vertical"` for the bar itself (not the role's default). Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Entschieden: `separator` statt `slider`" in the MDX — role **and** vertical mirroring were one decision and are both settled (owner, 08/2026). `controls` (→ `aria-controls`, the pane root whose width `aria-valuenow` reports) completes the pattern: every *required* APG piece is present; of the *optional* keys, Home/End are in, `Enter` (collapse — `SidePanel`'s visible button) and F6 are deliberately out. In `WorkspaceLayout` the id is minted by the template and always wired; see „Entschieden: `aria-controls` zeigt auf die Leisten-Wurzel" in the MDX |
 | `BottomTabBar` | `bottom-tab-bar.tsx` / `bottom-tab-bar-variants.ts` | fixed bottom `navigation` landmark for narrow-screen pane switching: `items` of icon + label, exactly one `aria-current="page"`. Deliberately **not** `SegmentedControl` — that is a `role="group"` of `aria-pressed` toggles, an inline control rather than a landmark whose active item is the displayed view |
@@ -326,6 +334,18 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **Unreleased** — Consumer-controllable theming + overridable a11y labels
+  (KI-562, unblocks the bilingual JustRAG). **ThemeProvider controlled mode:**
+  new optional props `theme` + `onThemeChange` (consumer owns the state; the
+  provider reads/writes no localStorage, still resolves "system" and stays the
+  single writer of `<html data-theme>`) and `storageKey` (uncontrolled
+  localStorage key, default `"theme"`). Uncontrolled behavior is unchanged.
+  **Label props** (defaults = previous hardcoded German strings, zero breaking
+  change, following the `navLabel` precedent): `AppShell` `menuLabel` /
+  `drawerLabel` (forwarded by `AppShellLayout`), `DialogContent` `closeLabel`,
+  `ThemeToggle` `themeLabel`/`lightLabel`/`systemLabel`/`darkLabel`, `Avatar`
+  `onlineLabel`. Migration paths + recommendation for apps with their own
+  theme context in Storybook „Theming".
 - **0.22.1** — Tooling and docs round, opening the JustRAG adoption. **No
   change to the published surface:** `dist/` components and `src/tokens.css`
   are untouched, which is why this is a patch — `components.json` and the
