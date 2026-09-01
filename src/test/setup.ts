@@ -11,6 +11,45 @@ class ResizeObserverStub {
 globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
 
 Element.prototype.scrollIntoView ??= () => {};
+
+// Node ≥22 exposes a global `localStorage` that shadows jsdom's Storage and
+// is unusable without `--localstorage-file`. Replace it with a working
+// in-memory implementation so the standard API behaves in tests.
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    get length() {
+      return store.size;
+    },
+    clear: () => store.clear(),
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    key: (index: number) => [...store.keys()][index] ?? null,
+    removeItem: (key: string) => void store.delete(key),
+    setItem: (key: string, value: string) => void store.set(key, String(value)),
+  } as Storage;
+}
+
+function storageWorks(): boolean {
+  try {
+    localStorage.setItem("__probe__", "1");
+    const ok = localStorage.getItem("__probe__") === "1";
+    localStorage.removeItem("__probe__");
+    return ok && typeof localStorage.clear === "function";
+  } catch {
+    return false;
+  }
+}
+
+if (!storageWorks()) {
+  const memoryStorage = createMemoryStorage();
+  for (const target of [globalThis, window]) {
+    Object.defineProperty(target, "localStorage", {
+      value: memoryStorage,
+      configurable: true,
+      writable: true,
+    });
+  }
+}
 Element.prototype.hasPointerCapture ??= () => false;
 Element.prototype.setPointerCapture ??= () => {};
 Element.prototype.releasePointerCapture ??= () => {};

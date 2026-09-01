@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AppShell } from "../components/app-shell";
+import { AppShell, type AppShellProps } from "../components/app-shell";
 import { Container } from "../components/container";
 import { Sidebar } from "../components/sidebar";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -11,7 +11,9 @@ import { ThemeToggle } from "../components/theme-toggle";
  * rebuild the frame. No business logic: routing/active state live in the
  * injected NavItems.
  */
-export interface AppShellLayoutProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface AppShellLayoutProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    Pick<AppShellProps, "menuLabel" | "drawerLabel"> {
   /** Brand block — shown in the sidebar header and the mobile top bar. */
   logo: React.ReactNode;
   /** Navigation content, typically a list of <NavItem>s. */
