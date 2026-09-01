@@ -74,23 +74,25 @@ Concretely, on every substantive task:
 - A card in `In Progress` that nobody is working on. Pausing mid-milestone is fine (it *is* in
   progress) — but a finished one must be moved.
 
-## Who moves the card — the move is part of the step, never someone else's job
+## The PM owns planning and every card move
 
-Every role that finishes a stage moves the card **in the same session**, as part of finishing.
-"Card not moved between lists" is never correct for a stage you just completed — a comment
-describing the new state without the move is exactly how the board goes stale.
+Card planning (creating cards, writing briefs, attaching labels) and **every list move** belong
+to the PM — the orchestrating session. Worker and reviewer agents never move cards; they record
+their result as a card comment, and the PM moves the card based on that report. The move is due
+**immediately when the stage completes**, in the same session — a comment describing the new
+state without the corresponding move is exactly how the board goes stale.
 
-| You just… | Move the card to |
+| Stage just completed | PM moves the card to |
 |---|---|
-| finished the work, gates green, ready for review | `Code Review` |
-| posted a review **PASS** | leave in `Code Review` (it awaits merge — see next row) |
-| posted a review **FAIL** | back to `In Progress` |
-| merged the PR (or observed that it merged) | `Done`, with a comment citing PR number + merge commit |
+| worker reports finished, gates green | `Code Review` |
+| reviewer reports **PASS** | stays in `Code Review` (awaits merge) |
+| reviewer reports **FAIL** | back to `In Progress` |
+| PR merged (or merge observed) | `Done`, with a comment citing PR number + merge commit |
 
-The merge→`Done` move belongs to whoever merges; if the merge happens outside a session (e.g.
-the owner merges on GitHub), the **first session that notices the merge** makes the move. A PM
-delegating to worker/reviewer agents must either instruct them to move the card at their stage
-or do the moves itself — one of the two, decided up front, never neither.
+If the merge happens outside a session (e.g. the owner merges on GitHub), the **first session
+that notices the merge** makes the `Done` move. A PM delegating work must fold each agent's
+report into the board before treating the delegation as finished — an unmoved card means the
+PM's job is not done yet.
 
 **Session-start reconciliation (mandatory):** `get_board`, and for every card in `In Progress`
 and `Code Review`, cross-check against git — is the card's branch/PR merged into `main`
