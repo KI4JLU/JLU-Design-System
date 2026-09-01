@@ -99,6 +99,26 @@ and `Code Review`, cross-check against git — is the card's branch/PR merged in
 (`gh pr list --state merged`, `git log`)? If yes, move it to `Done` with the merge record
 before starting new work.
 
+## The PM loop — run until no workable card remains
+
+When the session has a mandate to work the board, the PM does not stop between stages to ask
+what comes next. Finishing one stage **is** the trigger for dispatching the next:
+
+1. Pick the top workable card (`In Progress` first, then `To Do` top-down; respect
+   dependencies noted on cards). Move it to `In Progress`.
+2. Dispatch a **worker** agent (in a temporary worktree, per CLAUDE.md). Fold its report into
+   the card, move to `Code Review`.
+3. Dispatch an independent **reviewer** agent over the worker's diff.
+   - **FAIL** → card back to `In Progress`, re-dispatch the worker with the findings.
+   - **PASS** → commit on the feature branch, open the PR, merge it, card → `Done` with
+     PR number + merge commit.
+4. Go to 1.
+
+A card blocked on input only the user can give goes to `Needs Decision` (rule above) and the
+loop continues with the next card — a blocked card never stalls the loop. The loop ends only
+when `To Do` and `In Progress` are empty and nothing in `Code Review` is actionable; whatever
+sits in `Backlog`/`Needs Decision` is then reported to the user as the stopping state.
+
 ## When to create a card
 
 - A new milestone is started.
