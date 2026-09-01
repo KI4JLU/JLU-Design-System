@@ -19,6 +19,7 @@ Der zugängliche Ziehgriff zwischen zwei Bereichen. Ersetzt inline gestylte
 | `min` / `max` | `number` | ✅ | Grenzen (`aria-valuemin` / `aria-valuemax`, Home / End). |
 | `step` | `number` | — | Schrittweite der Pfeiltasten, Default `10`. |
 | `label` | `string` | ✅ | Zugänglicher Name (`aria-label`). |
+| `controls` | `string` | — | `id` der Leiste, die dieser Griff verändert (`aria-controls`). Für volle APG-Konformität nötig; optional, damit ein Griff auch ohne bekannte `id` einsetzbar bleibt. |
 | `onValueChange` | `(value: number) => void` | ✅ | Bekommt **jede** geklammerte Breite — Tastatur wie Maus. |
 | `onResizeStart` / `onResizeEnd` | `() => void` | — | Benachrichtigung über Beginn/Ende des Ziehens. |
 
@@ -54,16 +55,53 @@ Der Griff ist ein **fokussierbarer `separator`** — das WAI-ARIA-APG-Muster
 - Die Tasten sind **richtungsbezogen**: sie verschieben die Trennlinie, und
   `aria-valuenow` meldet die Breite des *Bereichs*. Deshalb vergrößert dieselbe
   Taste eine linke Leiste und verkleinert eine rechte.
+- **`aria-controls`** verweist über die Prop `controls` auf den Bereich, dessen
+  Größe gemeldet wird — im Muster der „primary pane". Der Verweis muss auf ein
+  **existierendes** Element zeigen: ein hängender `aria-controls` ist schlimmer
+  als keiner, deshalb rendert der Griff ohne `controls` gar kein
+  `aria-controls` (und ein per Spread eingeschmuggeltes wird verworfen — die
+  Prop ist der eine Weg hinein).
 
-Bewusste Abweichungen vom Muster:
+**Damit ist das Muster vollständig umgesetzt.** Gemessen an der
+WAI-ARIA-APG-Seite „Window Splitter": alle geforderten Eigenschaften —
+`role="separator"` fokussierbar (`tabindex`), `aria-valuenow` /
+`aria-valuemin` / `aria-valuemax`, zugänglicher Name, `aria-controls` auf die
+primäre Leiste, ausdrückliches `aria-orientation` — und die geforderten
+Richtungstasten (`←`/`→` für eine senkrechte Trennlinie). Von den im Muster
+**optionalen** Tasten sind `Home`/`End` umgesetzt; nicht umgesetzt sind:
 
-- **`aria-controls`** (Verweis auf den Bereich, dessen Größe gemeldet wird) fehlt
-  — der Griff kennt die `id` des Bereichs nicht. Eine entsprechende Prop wäre
-  eine eigene Änderung; bis dahin folgt der Griff dem Muster in Rolle und
-  Tastatur, aber **volle APG-Konformität ist nicht bestätigt**.
-- **`Enter`** (im Muster optional: Bereich einklappen / wiederherstellen) tut
-  hier nichts. Das Ein- und Ausklappen gehört dem `SidePanel` — dort ist es ein
-  sichtbarer Button, kein verstecktes Tastenkürzel auf dem Griff.
+- **`Enter`** (Bereich einklappen / wiederherstellen). Das Ein- und Ausklappen
+  gehört dem `SidePanel` — dort ist es ein sichtbarer Button, kein verstecktes
+  Tastenkürzel auf dem Griff.
+- **`F6`** (durch die Bereiche wandern) — das ist App-Chrome-Navigation, keine
+  Eigenschaft eines einzelnen Griffs.
+
+Beides sind Auslassungen *optionaler* Teile, keine Abweichungen von der
+Konformität.
+
+## Entschieden: `aria-controls` zeigt auf die Leisten-Wurzel
+
+Zwei Fragen standen offen (Karte KI-597): *welches* Element der Griff
+referenziert und *wer* die `id` prägt. Beide sind entschieden:
+
+**1. Das Ziel ist die Wurzel der Leiste** — im Workspace das `<aside>` des
+`SidePanel`, also das benannte `complementary`-Landmark — und **nicht** der
+innere Inhaltsbereich, auf den die Ein-/Ausklapp-Buttons des `SidePanel` mit
+ihrem eigenen `aria-controls` zeigen. Die beiden Verweise meinen Verschiedenes
+und bleiben getrennt: der Button steuert die **Sichtbarkeit** des Inhalts
+(Paar mit `aria-expanded`, Ziel ist das Element, das `hidden` bekommt), der
+Griff steuert die **Größe** der Leiste — und die Breite trägt die Wurzel
+(`style.width`), nicht der Inhaltsbereich. Außerdem landet ein Screenreader,
+der dem Verweis folgt, so auf einem **benannten** Landmark statt auf einem
+anonymen `div`.
+
+**2. Die `id` prägt das `WorkspaceLayout`** (per `useId`), nicht das
+`SidePanel`. Das Template ist die eine Stelle, die Leiste und Griff
+komponiert — also die eine Stelle, die beide Enden des Verweises kennt.
+`SidePanel` braucht dafür keine API-Änderung: die `id` läuft über das ohnehin
+durchgereichte Wurzel-Attribut, und die interne `id` des Inhaltsbereichs
+bleibt Sache des `SidePanel`. Ein eigenständiger Griff bekommt die `id`
+direkt über `controls`.
 
 ## Tastatur
 

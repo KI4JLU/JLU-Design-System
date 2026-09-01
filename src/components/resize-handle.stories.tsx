@@ -28,8 +28,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Pane = ({ label, width }: { label: string; width?: number }) => (
+const Pane = ({ label, width, id }: { label: string; width?: number; id?: string }) => (
   <div
+    id={id}
     style={width ? { width } : undefined}
     className="flex flex-1 shrink-0 items-center justify-center bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant"
   >
@@ -39,7 +40,11 @@ const Pane = ({ label, width }: { label: string; width?: number }) => (
 
 const SingleHandle = ({ side }: { side: "left" | "right" }) => {
   const [width, setWidth] = useState(320);
-  const pane = <Pane label={`${width}px`} width={width} />;
+  // `controls` points at the pane being resized — the APG splitter's
+  // `aria-controls`. Standalone the consumer provides the id; in the
+  // workspace template the wiring is built in.
+  const paneId = `resize-handle-story-${side}`;
+  const pane = <Pane id={paneId} label={`${width}px`} width={width} />;
   return (
     <div className="flex h-80 overflow-hidden rounded-xl border border-outline-variant bg-surface">
       {side === "left" ? pane : <Pane label="Inhalt" />}
@@ -49,6 +54,7 @@ const SingleHandle = ({ side }: { side: "left" | "right" }) => {
         min={MIN}
         max={MAX}
         label="Breite ändern"
+        controls={paneId}
         onValueChange={setWidth}
       />
       {side === "left" ? <Pane label="Inhalt" /> : pane}
@@ -80,6 +86,7 @@ const Workspace = () => {
   return (
     <div className="flex h-120 overflow-hidden rounded-xl border border-outline-variant bg-surface">
       <SidePanel
+        id="workspace-story-verlauf"
         side="left"
         isOpen={leftOpen}
         width={leftWidth}
@@ -100,6 +107,7 @@ const Workspace = () => {
           min={MIN}
           max={MAX}
           label="Breite der Verlaufsleiste ändern"
+          controls="workspace-story-verlauf"
           onValueChange={setLeftWidth}
         />
       )}
@@ -113,10 +121,12 @@ const Workspace = () => {
           min={MIN}
           max={MAX}
           label="Breite der Quellenleiste ändern"
+          controls="workspace-story-quellen"
           onValueChange={setRightWidth}
         />
       )}
       <SidePanel
+        id="workspace-story-quellen"
         side="right"
         isOpen={rightOpen}
         width={rightWidth}

@@ -36,11 +36,20 @@ import { resizeHandleVariants } from "./resize-handle-variants";
  * previous `slider` role the same attribute named the axis the *value* moves
  * along, which is horizontal here; that mismatch was the original defect.
  *
- * TODO: the APG splitter additionally references its primary pane via
- * `aria-controls`, which this handle cannot do — it is not told the pane's id.
- * Adding an `aria-controls`/`controls` prop is a separate change; until then
- * "follows the splitter pattern" is true of the role and the keys, and not yet
- * confirmed as full APG conformance.
+ * **`controls` — decided (owner card KI-597): the id of the pane root**, i.e.
+ * the element whose width `aria-valuenow` reports (in a workspace that is
+ * `SidePanel`'s `<aside>`, the named `complementary` landmark carrying the
+ * inline width — not the inner body region its collapse toggle points at:
+ * the toggle controls that region's *visibility*, this handle controls the
+ * pane's *size*, and the two references stay distinct). Rendered as
+ * `aria-controls`, which the APG splitter requires on the separator. The prop
+ * is optional so a standalone handle stays usable, but without it the widget
+ * is not fully APG-conformant — composed in `WorkspaceLayout` it is always
+ * set. With `controls`, the pattern is complete: role, focusability,
+ * `aria-valuemin`/`-max`/`-now`, label, stated orientation, the required
+ * directional arrow keys, plus optional Home/End; of the pattern's optional
+ * keys only Enter (collapse — `SidePanel`'s visible button owns that) and F6
+ * (pane cycling — app chrome) are deliberately not implemented.
  */
 export interface ResizeHandleProps
   extends Omit<
@@ -61,6 +70,9 @@ export interface ResizeHandleProps
     | "aria-valuemin"
     | "aria-valuemax"
     | "aria-valuenow"
+    // Withheld so `controls` is the one way in: a spread `aria-controls` could
+    // otherwise dangle (reference a nonexistent id), which is worse than none.
+    | "aria-controls"
   > {
   /** Which side the pane being resized sits on — flips the arrow-key direction. */
   side: "left" | "right";
@@ -74,6 +86,12 @@ export interface ResizeHandleProps
   step?: number;
   /** Accessible name, e.g. „Verlaufsleiste breiter oder schmaler ziehen". */
   label: string;
+  /**
+   * Id of the pane this handle resizes (`aria-controls`) — the element whose
+   * width `aria-valuenow` reports. Required for full APG splitter conformance;
+   * optional so a standalone handle stays usable without an id at hand.
+   */
+  controls?: string;
   /** Receives every clamped width — from keys and from the pointer drag. */
   onValueChange: (value: number) => void;
   /** Pointer drag started (e.g. to suspend an expensive re-layout). */
@@ -91,6 +109,7 @@ const ResizeHandle = React.forwardRef<HTMLDivElement, ResizeHandleProps>(
       max,
       step = 10,
       label,
+      controls,
       onValueChange,
       onResizeStart,
       onResizeEnd,
@@ -190,6 +209,9 @@ const ResizeHandle = React.forwardRef<HTMLDivElement, ResizeHandleProps>(
            redundant: this is the orientation of the bar itself. */
         aria-orientation="vertical"
         aria-label={label}
+        /* `undefined` renders no attribute — an absent reference, never a
+           dangling one; a spread `aria-controls` is overridden here too. */
+        aria-controls={controls}
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={clamp(value)}

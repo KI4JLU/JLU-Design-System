@@ -92,7 +92,7 @@ es ist der Zustand von vorher, nicht eine Entscheidung dieser Korrektur.
 - **ab `lg`**: drei Spalten. Breiten kommen aus `width` der Leisten, die Schiene
   aus `SidePanel`, der Hauptbereich flext. Ein `ResizeHandle` erscheint **nur**
   neben einer ausgeklappten Leiste — die Schiene hat eine feste Breite, ein
-  Schieber dort würde einen Wert melden, der nichts sichtbar bewegt. (JustRAG
+  Griff dort würde einen Wert melden, der nichts sichtbar bewegt. (JustRAG
   zeigt den rechten Griff auch zugeklappt; das ist der Fehler, den diese Regel
   schließt.)
 - **unter `lg`**: genau ein Bereich, formatfüllend, plus die `BottomTabBar`
@@ -185,7 +185,14 @@ ein totes Bedienelement. Die Vorlage macht es genauso (ihr Mobil-Zweig fragt
 - Die Reiterleiste ist ein `navigation`-Landmark mit genau einem
   `aria-current="page"`.
 - Griffe sind bedienbare Trennlinien (`role="separator"`, „Window Splitter":
-  ←/→ bzw. ↑/↓, Home/End) — Details in `ResizeHandle`.
+  ←/→ bzw. ↑/↓, Home/End) — Details in `ResizeHandle`. Das Template prägt pro
+  Leiste eine `id` (`useId`), setzt sie auf die **Wurzel** des `SidePanel`
+  (das `complementary`-Landmark, das die Breite trägt) und reicht sie dem
+  Griff als `controls` — dessen `aria-controls` zeigt damit auf genau die
+  Leiste, die er verändert. Damit ist das APG-Muster hier **vollständig**
+  verdrahtet; warum die Wurzel und nicht der innere Inhaltsbereich das Ziel
+  ist, steht in der `ResizeHandle`-Doku („Entschieden: `aria-controls` zeigt
+  auf die Leisten-Wurzel").
 
 ## Do's & Don'ts
 
