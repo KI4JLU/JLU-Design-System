@@ -1,0 +1,168 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as TableStories from "./table.stories";
+
+<Meta of={TableStories} />
+
+# Table
+
+Das Teile-Set für echte HTML-Tabellen: `Table`, `TableHeader`, `TableBody`,
+`TableFooter`, `TableRow`, `TableHead`, `TableCell`, `TableCaption`. Ersetzt
+die handgestylten `<table style={{…}}>`-Blöcke in den Admin-Ansichten und die
+Markdown-Tabellen-Overrides in den Chat-Oberflächen.
+
+Bewusst **ohne Radix** — Radix Primitives hat kein Table-Primitive, und die
+shadcn-Vorlage importiert selbst nur React und `cn` (am erzeugten
+`shadcn add table`-File geprüft). Native Tabellenauszeichnung trägt den
+Barrierefreiheits-Vertrag bereits; eine JS-Schicht darüber könnte ihn nur
+kaputt machen.
+
+<Canvas of={TableStories.DataTable} />
+
+## Props
+
+| Prop | Teil | Typ | Bedeutung |
+|---|---|---|---|
+| `containerClassName` | `Table` | `string` | Klassen für den Scroll-Container **um** die Tabelle (Layout, z. B. `max-h-72` für vertikales Scrollen). Der einzige Zugriff auf diesen Container. |
+| `className` | `Table` | `string` | Klassen für das `<table>` selbst (z. B. `table-fixed`). |
+| `scope` | `TableHead` | `'col' \| 'row' \| …` | Default `'col'`. Bestimmt, ob die Zelle als `columnheader` oder `rowheader` vorgelesen wird — nicht die Optik. |
+| `colSpan` / `rowSpan` | `TableCell`, `TableHead` | `number` | Native Attribute; für Leerzustands- und Summenzeilen. |
+| `data-state="selected"` | `TableRow` | `string` | Markiert eine ausgewählte Zeile (`bg-secondary-container`). shadcn-Konvention für Data-Table-Rezepte. |
+
+Alle Teile geben restliche Props und `ref` an das jeweilige native Element
+durch (`<table>`, `<thead>`, `<tr>`, `<th>`, `<td>`, `<caption>`).
+
+<Controls />
+
+## Überlauf: die Tabelle scrollt in ihrem eigenen Container
+
+`Table` bringt seinen Scroll-Container selbst mit
+(`relative w-full overflow-x-auto`) — am Aufrufort braucht es **kein**
+zusätzliches `overflow-x-auto`. Das ist zugleich die shadcn-Form und die
+Konvention dieses Repos: `TableLayout` und die Markdown-Overrides in den Apps
+machen es bereits genau so.
+
+<Canvas of={TableStories.WideScrolls} />
+
+Vertikales Scrollen ist eine Höhe am Container, nicht an der Tabelle:
+
+<Canvas of={TableStories.BoundedHeightScrolls} />
+
+## Entscheidungen
+
+- **Der Container hat kein `role` und kein `tabindex`.** Ein `<div>` ohne
+  Rolle ist für die Accessibility-Tree unsichtbar, die Struktur
+  `table → rowgroup → row → columnheader/cell` bleibt also unverändert. Ein
+  `role="region"` würde eine zusätzliche Landmarke erzeugen; die APG warnt vor
+  Landmarken-Wildwuchs (dieselbe Begründung wie beim Panel des
+  `SectionedGridLayout`), und eine **unbenannte** Region verwerfen die meisten
+  Screenreader ohnehin. Ein `tabindex={0}` wäre die WCAG-2.1.1-Antwort für
+  scrollbare Bereiche — es würde hier aber vor *jede* Tabelle einen namenlosen
+  Tabstopp setzen, während die Tabelleninhalte (Links, Buttons) bereits per
+  Tastatur erreichbar sind.
+- **Zellen umbrechen von Haus aus** — anders als die aktuelle shadcn-Vorlage,
+  die `whitespace-nowrap` auf jede Zelle legt. Grund ist der Bestand: keine
+  der acht gefundenen Tabellen in JustRAG und CampusAgents setzt `nowrap`
+  pauschal; das JustRAG-Dashboard setzt es gezielt pro Spalte, und beide
+  Markdown-Tabellen brechen bewusst um. `whitespace-nowrap` gehört daher an
+  die einzelne Zelle (Datum, Zahl), nicht in die Vorlage.
+- **`wrap-anywhere` auf Kopf- und Datenzellen.** Lange ungetrennte
+  Zeichenketten (Hashes, API-Schlüssel, URLs) brechen innerhalb der Zelle,
+  statt die Tabelle breiter zu machen als ihren Container. Entspricht dem
+  `overflow-wrap: anywhere`, das die CampusAgents-Markdown-Tabelle heute von
+  Hand setzt.
+- **Jede Trennlinie trägt eine Farbe (`border-outline-variant`).** Tailwinds
+  Preflight setzt `border: 0 solid` ohne Farbe, `border-b` allein rendert also
+  in `currentColor` — in diesem Repo gibt es (anders als bei shadcn) keinen
+  globalen `border-border`-Reset. Ein übernommenes nacktes `border-b` hätte
+  die Linien in Textfarbe gezeichnet.
+- **Kopfzeile ruhiger als der Inhalt** (`text-on-surface-variant`,
+  `font-medium`) — so machen es alle fünf Admin-Tabellen in JustRAG heute
+  schon (`var(--text-secondary)`).
+- **Ohne `data-slot`-Attribute und ohne die Checkbox-Helfer der Vorlage.**
+  `data-slot` benutzt sonst keine Komponente dieses Systems, und
+  `[&>[role=checkbox]]:translate-y-[2px]` ist ein arbiträrer Wert für ein
+  Rezept (Zeilenauswahl), das noch kein Aufrufort verwendet.
+
+## Bewusst nicht enthalten
+
+- **Mitlaufende Kopfzeile (sticky header).** Kein heutiger Aufrufort hat eine;
+  der eine Kandidat (vertikal scrollende „Low-Score-Queries" im
+  JustRAG-Dashboard) hat sie ebenfalls nicht. Sie ist außerdem nicht
+  gratis: Tailwinds Preflight setzt `border-collapse: collapse` auf `<table>`,
+  und bei kollabierten Rahmen wandert die untere Kante der Kopfzeile nicht mit
+  dem `position: sticky`-Element mit — es bräuchte zusätzlich
+  `border-separate border-spacing-0` oder einen Schatten. Das ist eine eigene
+  Entscheidung (Owner) und eine eigene Karte, kein Nebenprodukt dieser.
+- **Sortieren, Filtern, Paginieren, Zeilenauswahl.** Das ist Logik und bleibt
+  bei der App; `TableLayout` hat dafür die Slots `toolbar` und `footer`.
+- **Zebrastreifen.** Der Zeilen-Hover (`bg-surface-container-high`) übernimmt
+  die Zeilenführung; ein zweiter Flächenwechsel würde mit ihm konkurrieren.
+
+## Abgrenzung: `Table` vs. `TableLayout`
+
+- **`Table` ist die Tabelle**, `TableLayout` ist die **Seite**: PageHeader,
+  Card, Toolbar-Slot, Footer-Slot. Sie schließen einander nicht aus — der
+  Normalfall ist `Table` als `children` von `TableLayout`.
+- `TableLayout` bringt um seine `children` ein eigenes `overflow-x-auto` mit,
+  weil dort auch Nicht-Tabellen hängen können. Zusammen mit dem Container von
+  `Table` ergibt das zwei ineinander liegende Scroll-Container; wirksam ist
+  der innere. Kein Fehler, aber der Grund, warum am Aufrufort **nie** ein
+  drittes `overflow-x-auto` dazukommen sollte.
+- Eine Tabelle ohne Seitenrahmen (Markdown-Antwort im Chat, Tabelle in einem
+  Dialog) benutzt `Table` **ohne** `TableLayout`.
+
+## Markdown-Tabellen
+
+`react-markdown` reicht seinen AST-Knoten als `node`-Prop an
+Komponenten-Overrides durch; das darf nicht auf ein DOM-Element gespreizt
+werden. Der Aufrufort filtert es weg:
+
+```tsx
+<ReactMarkdown
+  components={{
+    table: ({ node, ...p }) => <Table {...p} />,
+    thead: ({ node, ...p }) => <TableHeader {...p} />,
+    tbody: ({ node, ...p }) => <TableBody {...p} />,
+    tr: ({ node, ...p }) => <TableRow {...p} />,
+    th: ({ node, ...p }) => <TableHead {...p} />,
+    td: ({ node, ...p }) => <TableCell {...p} />,
+  }}
+/>
+```
+
+<Canvas of={TableStories.ArbitraryContent} />
+
+## Do's & Don'ts
+
+- ✅ `TableCaption` für jede Tabelle, die nicht direkt unter ihrer eigenen
+  Überschrift steht — sie ist der zugängliche Name der Tabelle.
+- ✅ Leerzustand als **eine Zeile mit `colSpan`** über alle Spalten, Kopfzeile
+  bleibt stehen (Story „Empty").
+- ✅ `whitespace-nowrap` gezielt an Zellen, die nie umbrechen sollen (Datum,
+  Betrag, Aktionen).
+- ✅ Höhe für vertikales Scrollen über `containerClassName`.
+- ❌ Kein zusätzliches `overflow-x-auto` am Aufrufort — der Container gehört
+  zur Komponente.
+- ❌ Keine Tabelle für Layout. Wer nur Spalten will, nimmt `Grid` oder
+  `Stack`; eine `<table>` wird als Datentabelle vorgelesen.
+- ❌ Kein leeres `<tbody>` als Leerzustand — eine Tabelle ohne Zeilen sagt
+  Screenreader-Nutzenden nichts.
+- ❌ Keine Farben oder Schriftgrößen am Aufrufort (Regel 4 der
+  COMPONENT_GUIDELINES); Ausrichtung (`text-right`) und Umbruchverhalten sind
+  Layout und bleiben erlaubt.
+
+## Barrierefreiheit
+
+- Native Semantik bleibt vollständig erhalten. Nach HTML-AAM bilden ab:
+  `<table>` → `table`, `<thead>`/`<tbody>`/`<tfoot>` → `rowgroup`, `<tr>` →
+  `row`, `<th scope="col">` → `columnheader`, `<td>` → `cell`.
+- `TableHead` setzt `scope="col"` als Default — das ist es, was aus der Zelle
+  einen Spaltenkopf macht. Für eine Zeilenüberschrift `scope="row"` setzen.
+- `TableCaption` liefert den zugänglichen Namen: eine Tabelle mit Caption ist
+  über `getByRole("table", { name })` auffindbar. Das `<caption>` muss im DOM
+  das erste Kind des `<table>` sein (HTML-Inhaltsmodell); dargestellt wird es
+  durch `caption-bottom` unten.
+- Der Scroll-Container fügt der Accessibility-Tree nichts hinzu (kein `role`,
+  kein `tabindex`) — siehe „Entscheidungen".
+- Geprüft in `table.test.tsx` gegen die HTML-AAM-Rollenabbildung und die
+  Accname-Berechnung, nicht gegen die Implementierung.
