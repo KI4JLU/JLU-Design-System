@@ -307,6 +307,33 @@ one row with `colSpan` across all columns, header kept. `Table` is the table,
 `TableLayout` is the page around it; the normal case is `Table` as
 `TableLayout`'s children.
 
+## Tabs
+
+```tsx
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@ki4jlu/design-system";
+
+<Tabs defaultValue="einzeln">                 {/* oder value + onValueChange */}
+  <TabsList aria-label="Freigabe">
+    <TabsTrigger value="einzeln">Einzeln</TabsTrigger>
+    <TabsTrigger value="link">Einladungslink</TabsTrigger>
+  </TabsList>
+  <TabsContent value="einzeln">…</TabsContent>
+  <TabsContent value="link">…</TabsContent>
+</Tabs>
+```
+Replaces hand-rolled tab strips — rows of `<button>` carrying `role="tab"`
+without a `tabpanel`, or panel switches that never announce themselves as tabs.
+**Choose by one question: does the strip name a region of content?** Yes → `Tabs`
+(one `TabsContent` per trigger; the panel's accessible name is its tab). No, it
+only sets a *value* and what changes is data in a region the strip does not name
+(a filtered list, a chart range) → `SegmentedControl`. Switching which view the
+viewport shows → `BottomTabBar` (`aria-current="page"`). A `role="tab"` without a
+panel is wrong either way. `value` lands in the generated ids — use a slug, not
+the label. Inactive panels are **unmounted**, so panel-local state (a half-typed
+form) must live at the call site. Arrow keys select as they move; use
+`activationMode="manual"` when a panel costs a request. `orientation="vertical"`
+turns the strip and swaps the arrow keys.
+
 ## Layout & Templates
 
 Pages are **assembled, not laid out by hand**:
