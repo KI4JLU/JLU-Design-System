@@ -1,0 +1,185 @@
+import { Meta, Canvas, Controls } from "@storybook/addon-docs/blocks";
+import * as TabsStories from "./tabs.stories";
+
+<Meta of={TabsStories} />
+
+# Tabs
+
+Reiterleiste plus Panels: `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`.
+Ersetzt die handgebauten Reiterleisten in den Apps — Reihen aus `<button>`, die
+`role="tab"` tragen, aber kein `tabpanel` benennen, oder umgekehrt Panels
+tauschen, ohne sich als Reiter auszuweisen.
+
+Auf Radix (`@radix-ui/react-tabs`) gebaut. Damit kommt das APG-Muster
+„Tabs" fertig mit: `role="tablist"`, `role="tab"` + `aria-selected` +
+`aria-controls` je Reiter, `role="tabpanel"` + `aria-labelledby` je Panel, ein
+einziger Tabstopp für die ganze Leiste und Pfeiltasten-/Pos1-/Ende-Navigation
+darin.
+
+<Canvas of={TabsStories.Basic} />
+
+## Props
+
+| Prop | Teil | Typ | Bedeutung |
+|---|---|---|---|
+| `value` / `onValueChange` | `Tabs` | `string` / `(v: string) => void` | Kontrollierter aktiver Reiter. |
+| `defaultValue` | `Tabs` | `string` | Unkontrollierter Startwert. Ohne beides ist zunächst **kein** Reiter aktiv und es wird kein Panel gerendert. |
+| `orientation` | `Tabs` | `'horizontal' \| 'vertical'` | Default `horizontal`. Dreht die Leiste, setzt `aria-orientation` und tauscht die Navigationstasten (←/→ ↔ ↑/↓). |
+| `activationMode` | `Tabs` | `'automatic' \| 'manual'` | Default `automatic`: Fokus wählt aus. `manual`: Pfeiltasten bewegen nur den Fokus, Enter/Leertaste wählen. |
+| `dir` | `Tabs` | `'ltr' \| 'rtl'` | Leserichtung für die Pfeiltasten. **Die Optik ist nicht gespiegelt** — siehe „Bewusst nicht enthalten". |
+| `aria-label` | `TabsList` | `string` | Name der Leiste. Pflicht, sobald mehr als eine Leiste auf der Seite steht. |
+| `loop` | `TabsList` | `boolean` | Default `true` — die Pfeiltasten laufen vom letzten Reiter auf den ersten um. |
+| `value` | `TabsTrigger`, `TabsContent` | `string` | Verbindet Reiter und Panel. Landet in den erzeugten ids (`…-trigger-<value>`), also einen **Slug ohne Leerzeichen** nehmen, nicht das Label. |
+| `disabled` | `TabsTrigger` | `boolean` | Nativ deaktivierter Button; Radix nimmt ihn ganz aus der Pfeiltasten-Navigation. |
+
+Alle Teile reichen restliche Props und `ref` an das jeweilige Radix-Primitive
+durch.
+
+<Controls />
+
+## Abgrenzung: Tabs, SegmentedControl oder BottomTabBar?
+
+Die entscheidende Frage ist nicht die Optik, sondern: **benennt die Leiste einen
+Inhaltsbereich?**
+
+- **`Tabs`** — es gibt je Reiter ein Panel, und der zugängliche Name des Panels
+  *ist* sein Reiter (`aria-labelledby`). Der Reiter „Evals" benennt den Bereich
+  „Evals".
+- **`SegmentedControl`** — die Leiste setzt einen **Wert**, und was sich ändert,
+  sind Daten in einem Bereich, den die Leiste nicht benennt: ein gefilterter
+  Katalog, der Zeitraum eines Diagramms (Tag/Woche/Monat). ARIA dafür ist
+  `role="group"` aus `aria-pressed`-Umschaltern — kein `tablist`, weil es kein
+  `tabpanel` gibt.
+- **`BottomTabBar`** — App-Chrome: eine `navigation`-Landmark, die umschaltet,
+  welche Ansicht der Viewport zeigt, mit `aria-current="page"`. Kein
+  `tablist`, weil es keine Panels im ARIA-Sinn gibt, sondern gewechselte
+  Ansichten (dieselbe Begründung steht in der BottomTabBar-Doku).
+
+Ein `role="tab"` **ohne** zugehöriges `tabpanel` ist in jedem Fall falsch — das
+ist der häufigste Bestandsfehler in den Apps. Wer sich für Tabs entscheidet,
+braucht ein `TabsContent` je Reiter; wer keins hat, wollte eigentlich
+`SegmentedControl`.
+
+## Entscheidungen
+
+- **Aktiv = Unterstrich + `text-primary`, nicht gefüllte Pille.** Der Kontrast
+  zu `SegmentedControl` (`bg-primary text-on-primary`) ist beabsichtigt: die
+  beiden Muster sollen auch **optisch** unterscheidbar sein, nicht nur in ARIA.
+  Der Unterstrich ist außerdem die Form, die die Bestandsleisten in JustRAG
+  heute schon haben.
+- **Der aktive Reiter wird nur umgefärbt, nie vergrößert** — dieselbe Regel wie
+  bei `BottomTabBar`, sonst springt die Leiste beim Wechsel.
+- **Reiter werden nicht gestaucht** (`shrink-0`, `whitespace-nowrap`) — Regel 5
+  der COMPONENT_GUIDELINES. Passt die Reihe nicht, läuft sie über; der
+  Scroll-Container ist eine Layout-Entscheidung des Aufruforts
+  (`className="overflow-x-auto overflow-y-hidden"`, Story „ManyTabs"), anders
+  als bei `Table`, wo alle Aufruforte ihn brauchen.
+- **Die Trennlinie liegt auf der `TabsList`**, der Unterstrich auf dem Reiter
+  (`-mb-px`), damit er genau auf der Linie sitzt. Jede Linie trägt
+  `border-outline-variant`: ein nacktes `border-b` würde in `currentColor`
+  rendern, weil dieses Repo keinen globalen `border-border`-Reset hat.
+- **Das Panel behält seinen sichtbaren Fokusring.** Radix setzt
+  `tabIndex={0}` auf `TabsContent` (die APG verlangt das, wenn der Panelinhalt
+  nicht selbst fokussierbar ist). Die shadcn-Vorlage setzt darauf `outline-none`
+  ohne Ersatz — auf einem fokussierbaren Element wäre das ein Verstoß gegen
+  WCAG 2.4.7, deshalb hier `ring-focus-ring` statt gar nichts.
+- **Keine eigene `orientation`-Prop und keine cva-Varianten.** Radix spiegelt
+  die Ausrichtung als `data-orientation` auf **alle vier** Teile (Root, List,
+  Trigger, Content — beim Trigger über die Roving-Focus-Gruppe, am gebauten
+  Markup geprüft), also genügt ein `data-[orientation=vertical]:`-Schalter in
+  den Klassen.
+
+## Verhalten, das man am Aufrufort kennen muss
+
+- **Inaktive Panels sind nicht versteckt, sondern ausgehängt.** Radix rendert
+  nur das aktive `TabsContent`; Zustand darin (ein halb ausgefülltes Formular,
+  eine Scrollposition) überlebt den Wechsel **nicht**. Wer ihn braucht, hebt ihn
+  in den Aufrufort. `forceMount` ist dafür **kein** Ausweg: es macht alle Panels
+  gleichzeitig sichtbar, nicht „gemountet, aber versteckt". Das ist die
+  umgekehrte Abwägung zu `SidePanel` (bleibt gemountet) und dieselbe wie beim
+  Panel des `SectionedGridLayout`.
+- **Ohne `value`/`defaultValue` ist kein Reiter aktiv** und es erscheint gar
+  kein Panel. Das ist selten gewollt.
+- `aria-controls` eines **inaktiven** Reiters zeigt auf die id seines
+  ausgehängten Panels, geht also ins Leere. Das ist Radix-Verhalten; axe-core
+  4.12 beanstandet es nicht (mit dem Storybook-a11y-Addon nachgemessen: null
+  Violations, null Incomplete an einer Leiste mit aktivem, inaktivem und
+  deaktiviertem Reiter).
+
+<Canvas of={TabsStories.Controlled} />
+
+## Aktivierungsmodus
+
+Standard ist `automatic`: der Fokuswechsel per Pfeiltaste **wählt** den Reiter
+gleich aus. Das ist die APG-Empfehlung, solange das Anzeigen eines Panels
+billig ist. Kostet ein Panel einen Netzwerkaufruf, würde Durchpfeilen jeden
+Bereich laden — dann `activationMode="manual"`.
+
+<Canvas of={TabsStories.ManualActivation} />
+
+## Senkrecht und lang
+
+<Canvas of={TabsStories.Vertical} />
+
+<Canvas of={TabsStories.ManyTabs} />
+
+## Bewusst nicht enthalten
+
+- **Kein eingebauter Scroll-Container** und keine „Weiter"-Pfeile an den
+  Enden der Leiste. Kein heutiger Aufrufort hat mehr als vier Reiter; ab etwa
+  acht ist die senkrechte Leiste oder ein `Select` die bessere Antwort als eine
+  scrollende Reihe, in der die Hälfte der Reiter unsichtbar ist.
+- **Keine gespiegelte Optik für RTL.** Radix dreht mit `dir="rtl"` die
+  Pfeiltasten, die Klassen hier sind aber physisch (`border-r`, `-mr-px`), weil
+  dieses Repo bisher durchgehend physische Utilities benutzt. Für eine
+  RTL-Oberfläche wäre das eine eigene, systemweite Entscheidung.
+- **Kein Lazy-Loading, kein Vorladen benachbarter Panels.** Das ist Logik und
+  bleibt beim Aufrufort.
+
+## Do's & Don'ts
+
+- ✅ Je Reiter ein `TabsContent` — sonst ist es kein Tab.
+- ✅ `aria-label` an die `TabsList`, sobald mehr als eine Leiste auf der Seite
+  steht.
+- ✅ Slugs als `value` (`"globale-kbs"`), nicht das Label — der Wert landet in
+  den erzeugten ids.
+- ✅ Panel-Zustand im Aufrufort halten, nicht im Panel.
+- ✅ Icons im Reiter mit `aria-hidden`; der Name des Reiters ist sein Text.
+- ❌ Kein `role="tab"` an einer Filter- oder Umschaltreihe ohne Panels — das ist
+  `SegmentedControl`.
+- ❌ Keine Tabs für Seitennavigation (Route wechseln) — das ist `NavItem` /
+  `BottomTabBar` mit `aria-current="page"`.
+- ❌ Kein Tooltip auf einem deaktivierten Reiter — der ist gar nicht
+  fokussierbar. Den Grund der Sperre sichtbar danebenschreiben.
+- ❌ Keine Farben, Schriftgrößen oder Paddings am Aufrufort (Regel 4 der
+  COMPONENT_GUIDELINES); Breite, Überlauf und Grid-Platzierung sind Layout und
+  bleiben erlaubt.
+
+<Canvas of={TabsStories.DisabledTab} />
+
+## Barrierefreiheit
+
+- `TabsList` ist `role="tablist"` mit `aria-orientation`; jeder Reiter ist ein
+  `role="tab"` mit `aria-selected` und einem `aria-controls` auf sein Panel.
+- `TabsContent` ist `role="tabpanel"` und trägt `aria-labelledby` auf **seinen**
+  Reiter — der zugängliche Name des Panels ist also die Reiterbeschriftung.
+- **Ein Tabstopp für die ganze Leiste.** Die Umsetzung ist nicht das reine
+  Roving-Tabindex-Rezept der APG: solange der Fokus nie in der Leiste war,
+  steht `tabindex="0"` auf dem `tablist`-Container und **alle** Reiter stehen
+  auf `-1`; der Container leitet den Fokus beim Betreten auf den aktiven Reiter
+  weiter, ab dann wandert die `0` mit dem Fokus. Nach außen gilt genau das, was
+  die APG verlangt: einmal Tab führt auf den aktiven Reiter, das nächste Tab
+  verlässt die Leiste. (Am gebauten Markup geprüft, nicht angenommen —
+  `tabs.test.tsx`.)
+- Pfeiltasten bewegen den Fokus innerhalb der Leiste und laufen um; Pos1/Ende
+  springen auf den ersten/letzten Reiter. Waagerecht wirken ←/→, senkrecht
+  ↑/↓ — die jeweils andere Achse ist bewusst wirkungslos.
+- Deaktivierte Reiter sind nativ `disabled` und damit vollständig aus der
+  Tastaturnavigation heraus (die APG nennt auch die `aria-disabled`-Variante,
+  die fokussierbar bleibt; Radix implementiert die native).
+- Das Panel ist selbst fokussierbar (`tabIndex={0}`) und hat einen sichtbaren
+  Fokusring.
+- Geprüft in `tabs.test.tsx` gegen das APG-Muster: Rollen- und
+  Namensauflösung (`aria-labelledby` muss auf **den ausgewählten** Reiter
+  zeigen, `aria-controls` zurück auf **dieses** Panel), Tastaturnavigation in
+  beiden Ausrichtungen, beide Aktivierungsmodi, deaktivierte Reiter.

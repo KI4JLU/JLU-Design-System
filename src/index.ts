@@ -132,6 +132,12 @@ export {
   TableCell,
   TableCaption,
 } from "./components/table";
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
 export {
