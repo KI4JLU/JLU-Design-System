@@ -27,12 +27,17 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** 1–2 characters, e.g. "SK". Longer strings are not truncated — keep them short. */
   initials: string;
   size?: keyof typeof avatarSizes;
-  /** Shows a success-colored presence dot (with sr-only "online"). */
+  /** Shows a success-colored presence dot (with an sr-only status text). */
   online?: boolean;
+  /** Screen-reader text of the presence dot. Default "online". */
+  onlineLabel?: string;
 }
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
-  ({ className, initials, size = "default", online = false, ...props }, ref) => (
+  (
+    { className, initials, size = "default", online = false, onlineLabel = "online", ...props },
+    ref,
+  ) => (
     <span
       ref={ref}
       role={props["aria-label"] || props["aria-labelledby"] ? "img" : undefined}
@@ -57,7 +62,7 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
               dotSizes[size],
             )}
           />
-          <span className="sr-only">online</span>
+          <span className="sr-only">{onlineLabel}</span>
         </>
       )}
     </span>

@@ -49,6 +49,7 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  type DialogContentProps,
 } from "./components/dialog";
 export {
   DropdownMenu,
@@ -121,12 +122,13 @@ export { Stack, type StackProps } from "./components/stack";
 export { stackVariants } from "./components/stack-variants";
 export { Switch } from "./components/switch";
 export { Textarea, type TextareaProps } from "./components/textarea";
-export { ThemeToggle } from "./components/theme-toggle";
+export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
 export {
   ThemeProvider,
   useTheme,
   type Theme,
   type ResolvedTheme,
+  type ThemeProviderProps,
 } from "./theme/ThemeContext";
 export {
   AppShellLayout,

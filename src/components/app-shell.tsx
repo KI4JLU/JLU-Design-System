@@ -22,10 +22,25 @@ export interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
   sidebar: React.ReactNode;
   /** Content of the mobile top bar next to the menu button (logo/brand). */
   topBar?: React.ReactNode;
+  /** Accessible name of the mobile menu button. Default "Navigation öffnen". */
+  menuLabel?: string;
+  /** Screen-reader title of the mobile drawer dialog. Default "Navigation". */
+  drawerLabel?: string;
 }
 
 const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
-  ({ className, sidebar, topBar, children, ...props }, ref) => {
+  (
+    {
+      className,
+      sidebar,
+      topBar,
+      menuLabel = "Navigation öffnen",
+      drawerLabel = "Navigation",
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     return (
       <div
@@ -40,7 +55,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
           <header className="sticky top-0 z-10 flex items-center gap-stack-sm border-b border-outline-variant bg-surface-container-lowest px-gutter py-stack-sm lg:hidden">
             <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Navigation öffnen">
+                <Button variant="ghost" size="icon" aria-label={menuLabel}>
                   <Menu className="h-5 w-5" aria-hidden />
                 </Button>
               </DialogTrigger>
@@ -56,7 +71,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
                   }}
                 >
                   <DialogPrimitive.Title className="sr-only">
-                    Navigation
+                    {drawerLabel}
                   </DialogPrimitive.Title>
                   {sidebar}
                 </DialogPrimitive.Content>

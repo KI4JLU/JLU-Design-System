@@ -15,6 +15,12 @@ describe("Avatar", () => {
     expect(screen.getByText("online")).toHaveClass("sr-only");
   });
 
+  it("onlineLabel overrides the sr-only presence text", () => {
+    render(<Avatar initials="SK" online onlineLabel="active now" />);
+    expect(screen.getByText("active now")).toHaveClass("sr-only");
+    expect(screen.queryByText("online")).not.toBeInTheDocument();
+  });
+
   it("applies the requested size", () => {
     render(<Avatar initials="SK" size="lg" data-testid="avatar" />);
     const circle = screen.getByTestId("avatar").firstElementChild;

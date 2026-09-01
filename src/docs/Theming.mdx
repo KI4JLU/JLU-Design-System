@@ -12,11 +12,82 @@ import { Meta } from "@storybook/addon-docs/blocks";
   mit Tokens stylen, und beide Themes funktionieren. Neue Screens in **beiden**
   Themes prüfen.
 
+## ThemeProvider: unkontrolliert vs. kontrolliert
+
+Der `ThemeProvider` läuft in zwei Modi:
+
+**Unkontrolliert (Default, unverändert).** Ohne `theme`-Prop besitzt der
+Provider den Zustand selbst: Er liest die Wahl aus `localStorage` (Key per
+`storageKey`, Default `"theme"`), persistiert jede Änderung dorthin und
+schreibt `data-theme` auf `<html>`. Bestehende Consumer (CampusAgents)
+brauchen nichts zu ändern.
+
+```tsx
+<ThemeProvider>{/* wie bisher */}</ThemeProvider>
+<ThemeProvider storageKey="campus-theme">{/* eigener Storage-Key */}</ThemeProvider>
+```
+
+**Kontrolliert.** Mit `theme` + `onThemeChange` besitzt die App den Zustand:
+Der Provider liest und schreibt **kein** `localStorage`, hält keine eigene
+Wahl, und `setTheme` (z. B. aus dem `ThemeToggle`) ruft nur `onThemeChange` —
+die App speist den neuen Wert wieder ein. Aufgelöst („system“ → hell/dunkel)
+und auf `<html data-theme>` geschrieben wird weiterhin vom Provider: Er bleibt
+der einzige Schreiber dieses Attributs — die App darf `data-theme` nicht
+zusätzlich selbst setzen.
+
+```tsx
+const [theme, setTheme] = useAppTheme(); // App-eigener Zustand (Context, Store, …)
+
+<ThemeProvider theme={theme} onThemeChange={setTheme}>
+  <App />
+</ThemeProvider>
+```
+
+| Prop | Typ | Default | Wirkung |
+|---|---|---|---|
+| `theme` | `"light" \| "dark" \| "system"` | — | Gesetzt = kontrollierter Modus: Provider folgt diesem Wert, ignoriert `localStorage`. |
+| `onThemeChange` | `(theme: Theme) => void` | — | Wird bei jedem `setTheme` gerufen; im kontrollierten Modus der einzige Effekt. |
+| `storageKey` | `string` | `"theme"` | Nur unkontrolliert: `localStorage`-Key. Muss zum No-Flash-Skript passen. |
+
+Nicht unterstützt: während der Lebenszeit des Providers zwischen kontrolliert
+und unkontrolliert wechseln.
+
+## Migration für Apps mit eigenem Theme-Context (z. B. JustRAG)
+
+Eine App, deren eigener Context bereits `data-theme` auf `<html>` schreibt und
+denselben `localStorage`-Key nutzt, darf nicht einfach beide Provider mounten —
+zwei Schreiber auf demselben Attribut und Key. Zwei Wege:
+
+**(a) App behält die Hoheit — kontrollierter Modus.** Der App-Context bleibt
+Owner von Theme (und ggf. Sprache); der DS-Provider bekommt `theme` +
+`onThemeChange` und übernimmt nur Auflösung + DOM-Schreiben. Der App-Context
+entfernt sein eigenes `data-theme`-Schreiben; Persistenz bleibt bei der App
+(eigener Key, eigenes Format — z. B. nur `light|dark`).
+
+**(b) App gibt die Hoheit ab — unkontrollierter DS-Provider.** Der DS-Provider
+besitzt das Theme (inkl. „system“ und Persistenz, Key per `storageKey`
+wählbar); die App trennt i18n/Sprache in einen eigenen Context und löscht ihren
+Theme-Anteil.
+
+**Empfehlung (Vorschlag, Owner-Sign-off ausstehend): Weg (b).** Begründung:
+Der DS-Provider ist die vollständigere Implementierung („system“ mit
+Live-OS-Folge, No-Flash-Skript-Kontrakt, ein dokumentierter Storage-Kontrakt),
+und Weg (a) lässt dauerhaft zwei Theme-Zustandsmaschinen im Projekt, die
+synchron gehalten werden müssen. Theme und Sprache in einem Context zu bündeln
+war ohnehin eine Verlegenheitslösung — die Trennung ist ein einmaliger, kleiner
+Refactor, danach gibt es genau einen Owner pro Belang. Weg (a) bleibt der
+richtige, wenn eine App Theme wirklich serverseitig oder pro Nutzerprofil
+verwaltet (dann ist die App legitimer Owner).
+
 ## No-Flash-Skript
 
 Damit die Seite nicht hell aufblitzt, bevor React lädt, gehört dieses Skript in
 den `<head>` der `index.html` (identisch zur Logik des ThemeProviders — beide
-synchron halten):
+synchron halten). **Ohne dieses Skript blitzt bei dunklem Theme das helle
+Theme auf** (Flash), bis der Provider mountet — JustRAGs `web/index.html` hat
+es heute z. B. nicht. Bei abweichendem `storageKey` (oder kontrolliertem Modus
+mit eigener Persistenz) das Skript entsprechend anpassen — es muss denselben
+Key und dieselben Werte lesen wie der tatsächliche Theme-Owner:
 
 ```html
 <script>

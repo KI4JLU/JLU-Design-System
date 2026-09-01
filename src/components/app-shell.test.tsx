@@ -58,4 +58,23 @@ describe("AppShell", () => {
     render(shell);
     expect(screen.getByRole("main")).toHaveTextContent("Inhalt");
   });
+
+  it("menuLabel and drawerLabel override the German defaults", async () => {
+    render(
+      <AppShell
+        sidebar={<Sidebar>x</Sidebar>}
+        menuLabel="Open navigation"
+        drawerLabel="Main navigation"
+      >
+        <p>Inhalt</p>
+      </AppShell>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Navigation öffnen" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Main navigation" }),
+    ).toBeInTheDocument();
+  });
 });

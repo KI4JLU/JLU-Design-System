@@ -21,9 +21,9 @@ interface ThemeContextValue {
 // Must match the storage key + values used by the no-flash script in index.html.
 const THEME_STORAGE_KEY = "theme";
 
-function readStoredTheme(): Theme {
+function readStoredTheme(storageKey: string): Theme {
   try {
-    const t = localStorage.getItem(THEME_STORAGE_KEY);
+    const t = localStorage.getItem(storageKey);
     if (t === "light" || t === "dark" || t === "system") return t;
   } catch {
     /* storage unavailable */
@@ -43,20 +43,60 @@ function resolve(theme: Theme): ResolvedTheme {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+export interface ThemeProviderProps {
+  children: React.ReactNode;
+  /**
+   * Controlled mode: the current theme, owned by the consumer. When set, the
+   * provider reads/writes NO localStorage and keeps no internal choice —
+   * `setTheme` only calls `onThemeChange`, and the consumer feeds the new
+   * value back in. The provider still resolves "system" and applies
+   * `data-theme` to `<html>` (it stays the single writer of that attribute).
+   * Do not switch between controlled and uncontrolled during the lifetime of
+   * the provider.
+   */
+  theme?: Theme;
+  /**
+   * Called with the requested theme whenever `setTheme` is invoked (e.g. by
+   * `ThemeToggle`) — in controlled mode this is the only effect of `setTheme`;
+   * in uncontrolled mode it fires in addition to the internal update.
+   */
+  onThemeChange?: (theme: Theme) => void;
+  /**
+   * Uncontrolled mode only: the localStorage key for persisting the choice.
+   * Default "theme". Keep it in sync with the no-flash script in index.html.
+   */
+  storageKey?: string;
+}
+
+export function ThemeProvider({
+  children,
+  theme: controlledTheme,
+  onThemeChange,
+  storageKey = THEME_STORAGE_KEY,
+}: ThemeProviderProps) {
+  const isControlled = controlledTheme !== undefined;
+  const [uncontrolledTheme, setUncontrolledTheme] = useState<Theme>(() =>
+    isControlled ? "system" : readStoredTheme(storageKey),
+  );
+  const theme = isControlled ? controlledTheme : uncontrolledTheme;
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
-    resolve(readStoredTheme()),
+    resolve(theme),
   );
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, next);
-    } catch {
-      /* storage unavailable */
-    }
-  }, []);
+  const setTheme = useCallback(
+    (next: Theme) => {
+      if (!isControlled) {
+        setUncontrolledTheme(next);
+        try {
+          localStorage.setItem(storageKey, next);
+        } catch {
+          /* storage unavailable */
+        }
+      }
+      onThemeChange?.(next);
+    },
+    [isControlled, onThemeChange, storageKey],
+  );
 
   // Apply the resolved theme to <html data-theme> and, while on "system", keep
   // it in sync with OS changes.
