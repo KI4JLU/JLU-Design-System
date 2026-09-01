@@ -124,6 +124,12 @@ export { Switch } from "./components/switch";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
 export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "./components/tooltip";
+export {
   ThemeProvider,
   useTheme,
   type Theme,

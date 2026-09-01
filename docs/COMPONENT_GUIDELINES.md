@@ -255,6 +255,26 @@ Radix gives focus trap, Escape-to-close, scroll lock, and ARIA roles for free �
 **always** use this instead of a hand-rolled modal. Every dialog needs a
 `DialogTitle` (screen-reader requirement); a close "X" is included automatically.
 
+## Tooltip
+
+```tsx
+import { Tooltip, TooltipTrigger, TooltipContent } from "@ki4jlu/design-system";
+
+<Tooltip>
+  <TooltipTrigger asChild>
+    <Button variant="ghost" size="icon" aria-label="Aktualisieren"><RefreshCw aria-hidden /></Button>
+  </TooltipTrigger>
+  <TooltipContent>Daten neu laden</TooltipContent>
+</Tooltip>
+```
+Replaces `title=` attributes and hand-rolled hover hints — `title` is invisible
+to keyboard and touch users. No app-level setup: each `Tooltip` mounts its own
+provider. The trigger keeps its accessible name (`aria-label`); the tooltip only
+*describes* it. Never put essential content or actions in a tooltip (touch can't
+reach it), never interactive elements (use `Popover`), and drop any leftover
+`title=` on the same control. Disabled triggers need a focusable wrapper —
+see the „DisabledTrigger" story.
+
 ## Layout & Templates
 
 Pages are **assembled, not laid out by hand**:
