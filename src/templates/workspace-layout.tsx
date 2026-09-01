@@ -235,6 +235,17 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
     ref,
   ) => {
     const isDesktop = useIsDesktop();
+    // Ids for the panes, so each handle's `aria-controls` can reference the
+    // pane it resizes (APG splitter). Minted HERE, not exposed by `SidePanel`:
+    // this template is the one place that composes pane and handle, so it is
+    // the one place that has to know both ends of the reference. The id goes
+    // on the pane ROOT (`SidePanel`'s `<aside>`, via the pass-through `id`) —
+    // the element whose width the handle actually changes and whose size
+    // `aria-valuenow` reports — not on the inner body region the collapse
+    // toggle points at (that reference is about visibility, this one is about
+    // size; see resize-handle.tsx).
+    const leftPaneId = React.useId();
+    const rightPaneId = React.useId();
 
     if (!isDesktop) {
       // One lookup in the consumer's own table — not a derivation: the app
@@ -295,6 +306,7 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
         {left && (
           <>
             <SidePanel
+              id={leftPaneId}
               side="left"
               isOpen={left.isOpen}
               width={left.width}
@@ -308,7 +320,8 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
               {left.content}
             </SidePanel>
             {/* No handle next to a collapsed pane: the rail is a fixed width,
-                so a slider there would report a value with no visible effect. */}
+                so a separator there would report a value with no visible
+                effect. */}
             {left.isOpen && (
               <ResizeHandle
                 side="left"
@@ -316,6 +329,7 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
                 min={left.minWidth}
                 max={left.maxWidth}
                 label={left.resizeLabel}
+                controls={leftPaneId}
                 onValueChange={left.onWidthChange}
               />
             )}
@@ -337,10 +351,12 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
                 min={right.minWidth}
                 max={right.maxWidth}
                 label={right.resizeLabel}
+                controls={rightPaneId}
                 onValueChange={right.onWidthChange}
               />
             )}
             <SidePanel
+              id={rightPaneId}
               side="right"
               isOpen={right.isOpen}
               width={right.width}

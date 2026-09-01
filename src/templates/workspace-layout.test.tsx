@@ -199,6 +199,37 @@ describe("WorkspaceLayout — desktop arrangement", () => {
     expect(rightHandle).toHaveAttribute("aria-valuenow", "280");
   });
 
+  it("points each handle's aria-controls at the pane it resizes, resolved and distinct", () => {
+    stubViewport(true);
+    renderWorkspace();
+
+    // Oracle 2 + WAI-ARIA's id-reference contract: the APG splitter carries
+    // `aria-controls` naming its primary pane — the pane whose size the
+    // handle's `aria-valuenow` reports — and an id reference must resolve to
+    // an element that exists (a dangling reference is worse than none). So
+    // each assertion RESOLVES the attribute through the document and pins the
+    // resolved element to that handle's own `complementary` landmark and its
+    // content; attribute presence alone proves nothing. The two panes are
+    // distinct elements, so the two references must differ — the wiring bug
+    // this pins is both handles pointing at one pane.
+    const cases = [
+      ["Breite des Verlaufs ändern", "Verlauf", "Verlaufs-Inhalt"],
+      ["Breite der Quellen ändern", "Quellen", "Quellen-Inhalt"],
+    ] as const;
+    const resolved: HTMLElement[] = [];
+    for (const [handleName, paneName, contentText] of cases) {
+      const handle = screen.getByRole("separator", { name: handleName });
+      const controls = handle.getAttribute("aria-controls");
+      expect(controls).toBeTruthy();
+      const pane = document.getElementById(controls as string);
+      expect(pane).not.toBeNull();
+      expect(pane).toBe(screen.getByRole("complementary", { name: paneName }));
+      expect(pane).toContainElement(screen.getByText(contentText));
+      resolved.push(pane as HTMLElement);
+    }
+    expect(resolved[0]).not.toBe(resolved[1]);
+  });
+
   it("renders no resize handle next to a collapsed pane", () => {
     stubViewport(true);
     renderWorkspace({ left: leftPane({ isOpen: false }) });

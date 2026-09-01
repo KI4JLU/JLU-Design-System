@@ -98,6 +98,54 @@ describe("ResizeHandle", () => {
     expect(handle).toHaveAttribute("aria-orientation", "vertical");
   });
 
+  it("references the pane it resizes via aria-controls, and the reference resolves", () => {
+    // Oracle 1: the APG splitter sets `aria-controls` to the id of its primary
+    // pane — the pane whose size `aria-valuenow` reports. And per WAI-ARIA,
+    // an id reference must name an element that exists in the document: a
+    // dangling `aria-controls` is worse than none. So this test does NOT
+    // check attribute presence — it resolves the reference through the
+    // document and asserts the resolved element holds the pane's content.
+    render(
+      <>
+        <div id="verlauf-pane">
+          <p>Verlaufs-Inhalt</p>
+        </div>
+        <ResizeHandle
+          side="left"
+          value={320}
+          min={MIN}
+          max={MAX}
+          label="Breite ändern"
+          controls="verlauf-pane"
+          onValueChange={() => {}}
+        />
+      </>,
+    );
+    const handle = screen.getByRole("separator", { name: "Breite ändern" });
+    const controls = handle.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    const pane = document.getElementById(controls as string);
+    expect(pane).not.toBeNull();
+    expect(pane).toContainElement(screen.getByText("Verlaufs-Inhalt"));
+  });
+
+  it("renders no aria-controls at all when `controls` is not given", () => {
+    // The standalone case: without an id the attribute must be ABSENT, never
+    // present-but-dangling — WAI-ARIA id references must resolve (see above),
+    // and an empty/broken reference would be an active false claim.
+    render(
+      <ResizeHandle
+        side="left"
+        value={320}
+        min={MIN}
+        max={MAX}
+        label="Breite ändern"
+        onValueChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole("separator")).not.toHaveAttribute("aria-controls");
+  });
+
   it("answers to both key axes: ↑/↓ are aliases of →/←", async () => {
     // Oracle: the documented alias contract (resize-handle.tsx +
     // resize-handle.mdx). The splitter pattern assigns ←/→ to a vertical
@@ -134,6 +182,7 @@ describe("ResizeHandle", () => {
     const smuggled = {
       "aria-valuenow": 9999,
       "aria-valuemax": 9999,
+      "aria-controls": "does-not-exist",
       tabIndex: -1,
       role: "presentation",
     } as unknown as Record<string, unknown>;
@@ -152,6 +201,10 @@ describe("ResizeHandle", () => {
     expect(handle).toHaveAttribute("aria-valuenow", "320");
     expect(handle).toHaveAttribute("aria-valuemax", String(MAX));
     expect(handle).toHaveAttribute("tabindex", "0");
+    // A spread `aria-controls` would point at whatever the consumer typed —
+    // here a nonexistent id, i.e. a dangling reference. `controls` is the one
+    // way in, so the smuggled attribute must not survive either.
+    expect(handle).not.toHaveAttribute("aria-controls");
   });
 
   it("never reports aria-valuenow outside [min, max]", () => {
