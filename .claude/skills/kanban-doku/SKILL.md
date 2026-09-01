@@ -40,6 +40,15 @@ and record the decision (with date) in the description.
 | `Enhancement` | `05bxdlmccgto` |
 | `Critical` | `cvmyaopg0mgl` |
 | `Documentation` | `cgwfopxy1xt1` |
+| `review: approved` | `yfcmdkvnhmgf` |
+| `review: changes requested` | `87vv36kmidv9` |
+| `review: comments` | `9ftpe8ba6nqh` |
+
+The three `review:` labels are the reviewer's verdict on the board: **the code-reviewer stamps its
+own verdict label (`toggle_card_label`), never the PM** — a verdict transmitted by the PM is a
+verdict the PM could shade. `approved` and `changes requested` are mutually exclusive;
+`review: comments` is **additive** (non-blocking findings, legal next to `approved`). A card wearing
+both `approved` and `changes requested` is a broken state to report, not to tidy up.
 
 > If a call fails with a stale-id error (board recreated, lists renamed, etc.), re-resolve:
 > `list_workspaces` → the workspace → `get_board` with the board publicId → read the current

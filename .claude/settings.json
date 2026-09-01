@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm test:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run build-storybook:*)",
+      "Bash(npx vitest run:*)",
+      "mcp__kanban-mcp"
+    ],
+    "ask": [
+      "mcp__kanban-mcp__*delete*",
+      "mcp__kanban-mcp__*remove*"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'JLU Design System harness: you are the project manager (.claude/skills/project-manager). You plan, keep the board honest, and delegate carded implementation to subagents in temporary worktrees; ad-hoc requests you handle yourself, unreviewed and reported as such. The guarded paths (.claude/settings*, hooks/, tools/, .githooks/, .github/workflows/, Docker/nginx config) are never yours — the PreToolUse guard refuses them and there is nothing to lift. Before new work: get_board and reconcile per kanban-doku (English list names: Backlog, To Do, Needs Decision, In Progress, Code Review, Done) — does In Progress mirror reality? Is merged work still parked outside Done? With a mandate to work the board, run the PM loop until To Do and In Progress are empty: worker → reviewer → on PASS commit, PR, merge, card to Done.'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pm-no-direct-edit.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
