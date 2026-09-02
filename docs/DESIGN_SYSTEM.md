@@ -336,7 +336,13 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
-- **0.23.0** — The release JustRAG's adoption waits on: six new exports plus
+- **0.23.0** — *Skipped.* The tag was pushed at the commit before the release
+  commit (the version bump had been rejected by the commit-msg hook), so
+  `v0.23.0` points at a tree whose `package.json` still reads `0.22.1`. Tags
+  that are already public are not moved; the release went out as 0.23.1
+  instead. `v0.23.0` carries the same component code and is safe but
+  mislabelled — do not pin it.
+- **0.23.1** — The release JustRAG's adoption waits on: six new exports plus
   consumer-controllable theming. **New primitives:** `Tabs` (APG tabs pattern),
   `Table` (shadcn shape, deliberately no sticky header), `Tooltip` (APG tooltip
   pattern), and the three pane primitives `SidePanel`, `ResizeHandle`,
