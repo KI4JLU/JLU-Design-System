@@ -336,9 +336,19 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
-- **Unreleased** — Consumer-controllable theming + overridable a11y labels
-  (KI-562, unblocks the bilingual JustRAG). **ThemeProvider controlled mode:**
-  new optional props `theme` + `onThemeChange` (consumer owns the state; the
+- **0.23.0** — The release JustRAG's adoption waits on: six new exports plus
+  consumer-controllable theming. **New primitives:** `Tabs` (APG tabs pattern),
+  `Table` (shadcn shape, deliberately no sticky header), `Tooltip` (APG tooltip
+  pattern), and the three pane primitives `SidePanel`, `ResizeHandle`,
+  `BottomTabBar` — the parts JustRAG hand-built as `SidebarShell`, two inline
+  resize handles and `MobileTabBar`. `ResizeHandle` carries
+  `role="separator"` + `aria-controls`, completing the APG Window Splitter
+  pattern. **New templates:** `WorkspaceLayout` (3-pane workspace with mobile
+  pane switching; **standalone by design** — never nested in `AppShellLayout`,
+  where two chrome columns would collide) and `SectionedGridLayout` for grouped
+  collapsible card grids. Consumer-controllable theming + overridable a11y
+  labels (KI-562, unblocks the bilingual JustRAG). **ThemeProvider controlled
+  mode:** new optional props `theme` + `onThemeChange` (consumer owns the state; the
   provider reads/writes no localStorage, still resolves "system" and stays the
   single writer of `<html data-theme>`) and `storageKey` (uncontrolled
   localStorage key, default `"theme"`). Uncontrolled behavior is unchanged.
