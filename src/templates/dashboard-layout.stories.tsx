@@ -20,13 +20,12 @@ import { FilterMenu } from "../components/filter-menu";
 import { Grid } from "../components/grid";
 import { Input } from "../components/input";
 import { ListToolbar } from "../components/list-toolbar";
-import { templateChromaticModes } from "./chromatic-modes";
 
 const meta = {
   title: "Templates/DashboardLayout",
   component: DashboardLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof DashboardLayout>;
 
 export default meta;

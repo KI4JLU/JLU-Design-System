@@ -256,14 +256,25 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   props tables, a11y addon, MDX pages (Einführung / Tokens / Theming), theme
   toolbar switching light/dark/system live via the real ThemeProvider.
 - **Review gate** — [`.github/CODEOWNERS`](../.github/CODEOWNERS).
-- **Visual regression** — Chromatic
-  ([`.github/workflows/chromatic.yml`](../.github/workflows/chromatic.yml)):
-  snapshots every story on each PR; template stories additionally in a mode
-  matrix (light/dark × desktop/mobile, `src/templates/chromatic-modes.ts`), so
-  layout regressions are caught at the **composition** level, not only per
-  component. Changed snapshots fail the check until the owner accepts them in
-  the Chromatic UI. One-time setup: add the repo secret
-  `CHROMATIC_PROJECT_TOKEN` (job skips while it's missing).
+- **Visual regression** — **not automated yet.** The only check on rendering is
+  manual both-theme QA (§3), performed by the reviewer before a PR is approved.
+  Chromatic was wired up but never activated (no project token), which meant a
+  green check that had never rendered a pixel; it was removed rather than left
+  as a false gate.
+
+  The planned replacement is self-hosted and needs no third-party service: the
+  Storybook stories already run in real Chromium via
+  [`@storybook/addon-vitest`](https://storybook.js.org/docs/writing-tests/integrations/vitest-addon)
+  and `@vitest/browser-playwright`, and CI already installs that browser — so
+  Vitest 4's `toMatchScreenshot()` can diff against baseline PNGs committed to
+  the repo. Baselines must be generated in CI (or a container matching it), not
+  on a developer machine: font rendering differs between macOS and Ubuntu and
+  would make every local baseline fail in CI.
+
+  When it lands, template stories must keep being snapshotted in the mode
+  matrix that Chromatic covered — **light/dark × 1280 px/390 px** — so layout
+  regressions are caught at the **composition** level, not only per component.
+  390 px is below the `lg` breakpoint where sidebars collapse into the drawer.
 
 ---
 
@@ -306,12 +317,12 @@ Minimum bar for every shared component:
 2. Responsive behavior (breakpoints, collapse) belongs inside the template.
 3. Add a story under `Templates/` — reuse existing component stories via
    portable stories (`composeStories`) instead of re-mocking content — plus an
-   MDX page (slots/props, responsive behavior, do's/don'ts). Set
-   `chromatic: { modes: templateChromaticModes }` so the template is
-   snapshotted in both themes and at mobile width.
+   MDX page (slots/props, responsive behavior, do's/don'ts).
 4. **No template is used in an app before its PR is reviewed** (CODEOWNERS
-   requests the owner) **and its Chromatic snapshots are accepted.** Both-theme
-   visual QA (§3) applies.
+   requests the owner). Check it by hand in **both themes and at both widths**
+   (desktop and below `lg`, where the sidebars collapse) — until the snapshot
+   suite in §4 exists, that manual pass is the only thing standing between a
+   layout regression and a release. Both-theme visual QA (§3) applies.
 
 ---
 

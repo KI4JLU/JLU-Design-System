@@ -6,7 +6,6 @@ import { DropdownMenuItem } from "../components/dropdown-menu";
 import { Logo } from "../components/logo";
 import { NavItem } from "../components/nav-item";
 import { SidebarUserMenu } from "../components/sidebar-user-menu";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as dashboardStories from "./dashboard-layout.stories";
 
 // Portable Stories: die Dashboard-Template-Story ist der Seiteninhalt —
@@ -30,7 +29,7 @@ const meta = {
   title: "Templates/AppShellLayout",
   component: AppShellLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof AppShellLayout>;
 
 export default meta;

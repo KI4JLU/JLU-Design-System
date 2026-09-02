@@ -7,7 +7,6 @@ import {
   type WorkspaceMobileTab,
   type WorkspacePane,
 } from "./workspace-layout";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as chatBubbleStories from "../components/chat-bubble.stories";
 import * as checkboxStories from "../components/checkbox.stories";
 import * as menuItemStories from "../components/menu-item.stories";
@@ -37,7 +36,7 @@ const meta = {
   title: "Templates/WorkspaceLayout",
   component: WorkspaceLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
   // Basis-Args nur für die Props-Tabelle: jede Story rendert über `render`
   // mit eigenem Zustand, weil Breite und Einklapp-Zustand beim Konsumenten
   // liegen und in Storybook nur als lokaler State existieren können.
@@ -144,8 +143,8 @@ const Interactive = ({
  * Drei Bereiche: `left` | Griff | Hauptbereich | Griff | `right`. Beide
  * Leisten lassen sich einklappen (Schiene) und ziehen (Maus **und**
  * ←/→ auf dem Griff). Unter `lg` zeigt dasselbe Template genau **einen**
- * Bereich plus die `BottomTabBar` — im Chromatic-Modus „light mobile" bzw.
- * indem man das Browser-Fenster schmaler zieht.
+ * Bereich plus die `BottomTabBar` — sichtbar, indem man das Browser-Fenster
+ * schmaler als 1024 px zieht.
  *
  * Das Template steht **für sich**: die Leisten *sind* die Chrome der Seite,
  * es füllt den Viewport (hier `h-dvh` um die Story) und wird **nicht** in die

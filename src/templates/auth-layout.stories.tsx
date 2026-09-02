@@ -7,7 +7,6 @@ import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { Stack } from "../components/stack";
 import { FormItem, FormLabel, FormControl } from "../components/form";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as formStories from "../components/form.stories";
 
 // Portable Stories: das Fehlerzustands-Beispiel der Form-Stories dient als
@@ -18,7 +17,7 @@ const meta = {
   title: "Templates/AuthLayout",
   component: AuthLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof AuthLayout>;
 
 export default meta;

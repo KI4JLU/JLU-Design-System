@@ -4,7 +4,6 @@ import { FormLayout } from "./form-layout";
 import { Button } from "../components/button";
 import { Card } from "../components/card";
 import { Stack } from "../components/stack";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as formStories from "../components/form.stories";
 import * as selectStories from "../components/select.stories";
 
@@ -17,7 +16,7 @@ const meta = {
   title: "Templates/FormLayout",
   component: FormLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof FormLayout>;
 
 export default meta;

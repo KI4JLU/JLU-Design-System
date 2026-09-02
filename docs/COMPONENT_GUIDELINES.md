@@ -165,8 +165,9 @@ Run these in order on every file `shadcn add` produced, before the PR:
 6. **Both-theme visual QA.** Switch the Storybook theme toolbar to light **and**
    dark and look at the component in each — including hover, active, focus and
    disabled. This is a required pass, not code review (DESIGN_SYSTEM.md §3);
-   missing interaction states are the most common theme bug. New variants also
-   need owner review, and Chromatic snapshots must be accepted.
+   missing interaction states are the most common theme bug. There is no
+   automated visual-regression gate behind it (DESIGN_SYSTEM.md §4), so this
+   pass is the only check on rendering. New variants also need owner review.
 
 ## Button
 
