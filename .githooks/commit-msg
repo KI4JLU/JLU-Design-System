@@ -24,8 +24,14 @@ esac
 # commit legitimately begins with a component name ("feat(sidebar):
 # SidebarUserMenu ..."). Requiring a second capital distinguishes that from
 # sentence case ("Added stuff"), which stays rejected.
-if ! printf '%s' "$summary" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci)(\([a-z0-9./-]+\))?: ([a-z]|[A-Z][A-Za-z0-9]*[A-Z])'; then
-  fail 'summary must be "type(scope): summary", lowercase or a PascalCase component name'
+#
+# A bare semver is allowed too, because this repo's own release convention is
+# "chore(release): 0.23.0" (see the changelog in docs/DESIGN_SYSTEM.md § 7).
+# Without it the hook rejected the very commit that cuts a release: 0.23.0 was
+# skipped and its tag landed on the wrong commit before this was noticed. Only
+# a version shape is accepted, not any digit, so "fix(x): 2 bugs" stays out.
+if ! printf '%s' "$summary" | grep -Eq '^(feat|fix|chore|docs|refactor|test|ci)(\([a-z0-9./-]+\))?: ([a-z]|v?[0-9]+\.[0-9]+\.[0-9]+|[A-Z][A-Za-z0-9]*[A-Z])'; then
+  fail 'summary must be "type(scope): summary" — lowercase, a PascalCase component name, or a version'
 fi
 
 if [ "${#summary}" -gt 72 ]; then
