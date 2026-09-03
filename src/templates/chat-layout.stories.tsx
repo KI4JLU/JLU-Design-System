@@ -5,7 +5,6 @@ import { ChatLayout } from "./chat-layout";
 import { Avatar } from "../components/avatar";
 import { Button } from "../components/button";
 import { Textarea } from "../components/textarea";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as chatBubbleStories from "../components/chat-bubble.stories";
 
 // Portable Stories: der Gesprächsverlauf kommt 1:1 aus den ChatBubble-Stories.
@@ -15,7 +14,6 @@ const meta = {
   title: "Templates/ChatLayout",
   component: ChatLayout,
   tags: ["!autodocs"],
-  parameters: { chromatic: { modes: templateChromaticModes } },
 } satisfies Meta<typeof ChatLayout>;
 
 export default meta;

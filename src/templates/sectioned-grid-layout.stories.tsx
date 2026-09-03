@@ -24,7 +24,6 @@ import { DropdownMenuItem } from "../components/dropdown-menu";
 import { Logo } from "../components/logo";
 import { NavItem } from "../components/nav-item";
 import { SidebarUserMenu } from "../components/sidebar-user-menu";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as menuItemStories from "../components/menu-item.stories";
 
 // Portable Story: der freiformige Sektions-Body (`body`) ist eine bestehende
@@ -85,7 +84,7 @@ const meta = {
   title: "Templates/SectionedGridLayout",
   component: SectionedGridLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
   // Basis-Args nur für die Props-Tabelle: jede Story rendert über `render` mit
   // eigenem Zustand, weil der Auf-/Zu-Zustand beim Konsumenten liegt und in
   // Storybook nur als lokaler State existieren kann.

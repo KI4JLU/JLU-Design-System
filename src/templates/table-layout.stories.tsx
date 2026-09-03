@@ -5,7 +5,6 @@ import { TableLayout } from "./table-layout";
 import { Badge } from "../components/badge";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
-import { templateChromaticModes } from "./chromatic-modes";
 import * as selectStories from "../components/select.stories";
 
 // Portable Stories: der Modell-Filter der Toolbar ist die Basic-Story des
@@ -16,7 +15,7 @@ const meta = {
   title: "Templates/TableLayout",
   component: TableLayout,
   tags: ["!autodocs"],
-  parameters: { layout: "fullscreen", chromatic: { modes: templateChromaticModes } },
+  parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof TableLayout>;
 
 export default meta;
