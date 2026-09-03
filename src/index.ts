@@ -141,6 +141,20 @@ export {
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
 export {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+  type ToastProps,
+} from "./components/toast";
+export {
+  TOAST_DURATIONS,
+  type ToastVariant,
+} from "./components/toast-variants";
+export {
   Tooltip,
   TooltipTrigger,
   TooltipContent,

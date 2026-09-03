@@ -334,6 +334,38 @@ form) must live at the call site. Arrow keys select as they move; use
 `activationMode="manual"` when a panel costs a request. `orientation="vertical"`
 turns the strip and swaps the arrow keys.
 
+## Toast
+
+```tsx
+import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastAction, ToastClose } from "@ki4jlu/design-system";
+
+<ToastProvider>
+  <App />
+  {toasts.map((t) => (                      {/* die Liste gehört der App */}
+    <Toast key={t.id} variant={t.variant} onOpenChange={(o) => !o && remove(t.id)}>
+      <ToastTitle>{t.message}</ToastTitle>
+      <ToastClose />
+    </Toast>
+  ))}
+  <ToastViewport />                          {/* genau einer, App-Wurzel */}
+</ToastProvider>
+```
+Ersetzt handgebaute Meldungsstapel (JustRAGs `ToastContainer.tsx` + `Toast.css`).
+**Drei Teile müssen stehen** — Provider, *ein* Viewport, ein `Toast` je Meldung;
+ohne gemounteten Viewport rendert ein `Toast` still gar nichts. `variant`
+(`neutral` · `success` · `error` · `warning` · `info`) steuert Akzentkante, Icon,
+Standarddauer **und** Dringlichkeit der Screenreader-Ansage (`error` assertiv,
+sonst höflich; `type` übersteuert). Der Toast **stiehlt keinen Fokus**; der Timer
+pausiert bei Hover und bei Fokus (F8 springt in den Viewport) — das ist die
+Antwort auf WCAG 2.2.1, zusammen mit `ToastClose` und `duration={Infinity}`.
+`duration={0}` schaltet Auto-Dismiss **nicht** ab (Radix behandelt `0` als „nicht
+gesetzt"). Ein Toast mit `ToastAction` bekommt immer `duration={Infinity}` — eine
+Aktion, die sich nach vier Sekunden wegräumt, ist unbenutzbar; `altText` an der
+Aktion ist Pflicht und ersetzt die Beschriftung in der Ansage. Warteschlange,
+Obergrenze und Entdopplung bleiben in der App; das Paket liefert keinen
+`toast()`-Singleton. Nichts Essenzielles nur im Toast — er verschwindet und ist
+danach nicht mehr auffindbar.
+
 ## Layout & Templates
 
 Pages are **assembled, not laid out by hand**:
