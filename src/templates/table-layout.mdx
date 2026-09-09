@@ -16,7 +16,8 @@ Paginierungs-Logik bleibt in der App.
 
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
-| `title` | `ReactNode` | ✅ | Seitentitel (`<h1>`). |
+| `title` | `ReactNode` | ✅ | Seitentitel — echte Überschrift, Stufe über `headingLevel`. |
+| `headingLevel` | `1`–`6` | — | Stufe des Titels im Dokument-Outline. Standard `1` (also `<h1>`) — unverändert für jede bestehende Aufrufstelle. `2` oder tiefer für eine Seite, deren `<h1>` schon der Rahmen trägt (Admin-Shell, CMS). Die Typografie hängt **nicht** an der Stufe. |
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
 | `actions` | `ReactNode` | — | Rechte Header-Aktionen (z. B. „Neu anlegen"). |
 | `toolbar` | `ReactNode` | — | Such-/Filterzeile in der Karte, über der Tabelle. |
@@ -38,6 +39,7 @@ Paginierungs-Logik bleibt in der App.
   `DropdownMenu`.
 - ✅ Tabellenfarben nur über Token (`border-outline-variant`,
   `text-on-surface-variant`).
+- ❌ Kein zweites `<h1>`: sitzt das Template in einer Seite, die schon eine Überschrift trägt, gehört `headingLevel={2}` dazu — sonst hat die Seite zwei Stufe-1-Überschriften (WCAG 1.3.1).
 - ❌ Tabellenspalten nicht per Schrift-Verkleinerung „passend machen" — breite
   Tabellen scrollen horizontal.
 - ❌ Keine Filter-/Sortierlogik ins Template; die Toolbar ist ein Slot, keine

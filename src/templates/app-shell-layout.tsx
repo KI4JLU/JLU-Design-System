@@ -40,7 +40,15 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
     >
       <div className="flex h-16 items-center bg-surface-container-lowest">
         <Container className="flex items-center justify-between">
-          <p className="font-headline-md text-headline-md-mobile font-bold text-on-surface md:text-headline-md">
+          {/* A `<p>`, deliberately, and not a heading: this bar is chrome —
+              it names the current location, while the page's heading belongs
+              to the content template hung in as `children` (see
+              `docs/COMPONENT_GUIDELINES.md` → „Page headings: who owns
+              them"). An `<h1>` here would collide with the one every content
+              template already renders. `m-0` pins the `<p>`'s user-agent
+              margin (1em, measured in Chromium) against a consumer's
+              `@layer base` revert. */}
+          <p className="m-0 font-headline-md text-headline-md-mobile font-bold text-on-surface md:text-headline-md">
             {pageLabel}
           </p>
           <ThemeToggle />

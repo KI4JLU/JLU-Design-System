@@ -28,6 +28,7 @@ export {
   type CardProps,
   CardHeader,
   CardTitle,
+  type CardTitleProps,
   CardDescription,
   CardContent,
   CardFooter,
@@ -195,3 +196,9 @@ export {
   type WorkspaceMobileTab,
 } from "./templates/workspace-layout";
 export { cn } from "./lib/utils";
+/**
+ * The level type behind every template's `headingLevel` prop — exported so a
+ * consumer wrapping a template can pass the prop through without restating
+ * the union.
+ */
+export { type HeadingLevel } from "./lib/heading-level";

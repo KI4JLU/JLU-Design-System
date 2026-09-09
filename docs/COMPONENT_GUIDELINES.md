@@ -413,11 +413,118 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   (`sm|md|lg|gutter` = spacing tokens), page margins via `Container` — no
   ad-hoc `gap-[13px]` or hand-rolled breakpoint ladders; `Grid cols` already
   collapses responsively.
+- **Who renders the page heading is one rule, not a per-template habit** — see
+  "Page headings: who owns them" below. Short version: the template renders the
+  `title` as a real heading, `headingLevel` picks its level (default `1`), and a
+  template nested in a page that already has an `<h1>` passes `headingLevel={2}`.
 - Templates carry **no business logic**: routing lives in the injected
   `NavItem`s, form state in the app (`FormLayout` renders no `<form>` — wrap
   your own around it), chat state in the widget.
 - Storybook group `Templates/` documents each template's slots, responsive
   behavior, and do's/don'ts.
+
+## Page headings: who owns them
+
+**The rule, one sentence: a template renders the `title` it is given as a real
+heading element, and the call site owns that heading's *level* through one prop,
+`headingLevel`.** A template never decides where in the outline it sits, because
+it cannot know what is above it.
+
+This was the third boundary question this system had to settle only after a
+consumer hit it (Tabs vs. SegmentedControl on KI-560, Checkbox vs. Switch on
+KI-698), and the state it replaced was **four different behaviours in eight
+templates**: one rendered the title as a `div` (no heading at all), three forced
+an unreachable `<h1>`, one rendered a forced `<h1>` *and* a hardcoded `<h2>`,
+and three rendered no heading. No consumer could form an expectation, and one
+did the reasonable thing and shipped a defect: two admin pages that used to
+carry `<h2>` (they render inside a frame whose own `<h1>` is the page title)
+came out with **two `<h1>`s** after adopting `DashboardLayout` correctly — a
+fresh WCAG 1.3.1 failure created by using the library as documented.
+
+### The four parts of the rule
+
+1. **A `title` prop is rendered as a heading element, never as styled text.**
+   `PageHeader` does this for the content templates; `CardTitle asChild` does it
+   for `AuthLayout`. A visually obvious heading that is a `div` is a 1.3.1
+   defect, and it silently pushes the work back to every call site.
+2. **The level is the call site's, through `headingLevel: 1 | 2 | 3 | 4 | 5 | 6`**
+   (exported as `HeadingLevel`). One prop name, one type, everywhere. It is a
+   *number* and not `as="h2"` on purpose: a number cannot express "render this
+   as a `div`", so the prop can never re-open the defect it was added to close,
+   and levels compose arithmetically (see 3).
+3. **A template with two heading roles derives the inner one — it never
+   hardcodes a second level.** `SectionedGridLayout`'s page title sits at
+   `headingLevel` and every section heading one step inside it
+   (`headingLevel + 1`, clamped at 6). One dial moves both, so they cannot
+   contradict each other. Two independent hardcoded levels was the bug.
+4. **A template with no `title` prop contributes no heading, and its text slots
+   are not the page heading.** `AppShellLayout.pageLabel` is a chrome location
+   label and stays a `<p>`; `ChatLayout.header` and `WorkspaceLayout`'s panes
+   are free-form slots. The page heading belongs to the content template hung
+   inside the shell, or to the call site. An `<h1>` in the shell's page-label
+   bar would sit next to the one every content template already renders.
+
+**A template nested in a page that already has an `<h1>` is normal, not an edge
+case.** An admin frame, a CMS page or a portal owns the page title and the
+template is a section of it: that is `headingLevel={2}`. Only the element
+changes — the type tokens do not depend on the level, so the heading looks
+identical wherever it sits.
+
+**A card title is not a page heading.** `CardTitle` renders a `div` and keeps
+doing so by default: cards appear in grids, and a grid of headings that name
+nothing in the outline is worse than a grid of styled text. Where a card really
+is a titled section of the page, `<CardTitle asChild><h2>…</h2></CardTitle>`
+gives it a level without copying the typography to the call site. Inside a
+template whose page heading is an `<h1>`, that level is `2` — a jump to `h4` is
+an axe `heading-order` violation (measured, and it was one in this repo's own
+`DashboardLayout` story).
+
+### What a consumer passing no new prop gets — frozen, per template
+
+Two apps ship against these defaults, so none of them moved. The prop is
+additive everywhere.
+
+| Template | Default outline contribution | `headingLevel` |
+|---|---|---|
+| `PageHeader` | `<h1>` title (+ `<p>` description) | default `1` |
+| `DashboardLayout` | `<h1>` via `PageHeader` | forwarded, default `1` |
+| `FormLayout` | `<h1>` via `PageHeader` | forwarded, default `1` |
+| `TableLayout` | `<h1>` via `PageHeader` | forwarded, default `1` |
+| `SectionedGridLayout` | `<h1>` title (when `title` is set) + one `<h2>` per section | default `1`; sections are `+1` |
+| `AuthLayout` | **no heading** — `title` is styled text in `CardTitle` | **omitted** by default; set it to opt in |
+| `AppShellLayout` | no heading (`pageLabel` is a `<p>`) | none — no `title` prop |
+| `ChatLayout` | no heading | none — no `title` prop |
+| `WorkspaceLayout` | no heading | none — no `title` prop |
+
+`AuthLayout` is the one template whose default looks like it contradicts part 1
+of the rule, and the reason is a real call site rather than a preference: a
+shipping consumer passes its own `<h1>` **element** into the `title` slot,
+precisely because the slot never was a heading. A heading added here by default
+would nest an `<h1>` inside an `<h1>`. So the template offers `headingLevel` and
+documents the default loudly; that consumer can pass plain text and drop its
+wrapper whenever it bumps the pin. Whether the default should later flip to `1`
+as a breaking change is an owner decision, not a worker's.
+
+### Margins: a DS component never leans on the consumer's reset
+
+Related, and the second half of the same card. Every element this library
+renders that has a **non-zero user-agent margin** carries an explicit margin
+utility (`m-0`) — headings, `<p>`, `<pre>`, and Radix's `<ol>` viewport. It is
+not cosmetic: an app that keeps its own prose styling next to Tailwind Preflight
+reverts element margins in `@layer base`, and without a utility that `revert`
+wins the cascade and the user-agent margin lands *inside* the component. One
+consumer measured **16.08 px** on `PageHeader`'s heading in production and
+patched it from the outside with `[&>header_h1]:m-0` — a call-site selector
+reaching into a template, which is exactly what this package exists to make
+unnecessary.
+
+`m-0` sits in Tailwind's `utilities` layer, which outranks `base`, so it wins
+against that revert and changes nothing where Preflight is intact. The invariant
+is pinned by the `Foundations/UA-Margin-Reset` story, which sets the reset up the
+way a consuming app does and measures the computed margins in Chromium — with
+two control elements that must move, so a green run cannot mean "the reset never
+arrived". Adding a raw element with a user-agent margin to a component means
+adding the utility in the same commit.
 
 ## Theming
 

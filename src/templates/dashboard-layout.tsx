@@ -3,6 +3,7 @@ import { Container } from "../components/container";
 import { Grid } from "../components/grid";
 import { PageHeader } from "../components/page-header";
 import { cn } from "../lib/utils";
+import { type HeadingLevel } from "../lib/heading-level";
 
 /**
  * Template „Dashboard": an optional `toolbar` row (search/filter, e.g.
@@ -14,8 +15,16 @@ import { cn } from "../lib/utils";
  */
 export interface DashboardLayoutProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
-  /** Page title. */
+  /** Page title. Rendered as a real heading by `PageHeader`. */
   title: React.ReactNode;
+  /**
+   * Level of `title` in the document outline, `1`–`6`. Defaults to
+   * `PageHeader`'s `1`, i.e. an `<h1>` — unchanged for every existing call
+   * site. Pass `2` when this page is nested in a frame that already owns the
+   * `<h1>` (an admin shell, a CMS page); see
+   * `docs/COMPONENT_GUIDELINES.md` → „Page headings: who owns them".
+   */
+  headingLevel?: HeadingLevel;
   /** Muted line under the title. */
   description?: React.ReactNode;
   /** Right-aligned header actions (e.g. time-range SegmentedControl). */
@@ -27,14 +36,34 @@ export interface DashboardLayoutProps
 }
 
 const DashboardLayout = React.forwardRef<HTMLDivElement, DashboardLayoutProps>(
-  ({ className, title, description, actions, toolbar, stats, children, ...props }, ref) => (
+  (
+    {
+      className,
+      title,
+      headingLevel,
+      description,
+      actions,
+      toolbar,
+      stats,
+      children,
+      ...props
+    },
+    ref,
+  ) => (
     <Container
       ref={ref}
       className={cn("flex flex-col gap-stack-lg py-gutter md:py-margin-page", className)}
       {...props}
     >
       {toolbar}
-      <PageHeader title={title} description={description} actions={actions} />
+      {/* `headingLevel` is forwarded, not defaulted here: `PageHeader` owns
+          the default (1) so there is one place to read it off. */}
+      <PageHeader
+        title={title}
+        headingLevel={headingLevel}
+        description={description}
+        actions={actions}
+      />
       {stats && <Grid cols={4}>{stats}</Grid>}
       {children}
     </Container>

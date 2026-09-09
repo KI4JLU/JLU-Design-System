@@ -21,7 +21,7 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 | `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
 | `menuLabel` | `string` | — | Zugänglicher Name des mobilen Menü-Buttons (Default „Navigation öffnen") — überschreibbar für mehrsprachige Apps. |
 | `drawerLabel` | `string` | — | Screenreader-Titel des mobilen Drawer-Dialogs (Default „Navigation"). |
-| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-groß und fett, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt; rechts daneben sitzt der `ThemeToggle`. |
+| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt; rechts daneben sitzt der `ThemeToggle`. |
 | `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
 
 <Controls />
@@ -41,6 +41,12 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 - ❌ **Nicht** jedes Template passt hinein: `WorkspaceLayout` ist eigenständig
   und besitzt den ganzen Viewport — verschachtelt zeigt der Bildschirm zwei
   Sidebars. Maßgeblich ist die Inventarliste in DESIGN_SYSTEM.md §4.
+- ❌ `pageLabel` ist **nicht** die Seitenüberschrift. Es ist Chrome: eine
+  Standortanzeige, deshalb ein `<p>`. Die Überschrift der Seite gehört dem
+  Inhalts-Template, das hier als `children` hängt (`DashboardLayout` &
+  Verwandte, über `PageHeader`) — eine `h1` in dieser Zeile stünde neben der
+  des Inhalts und die Seite hätte zwei. Regel und Standardwerte je Template:
+  COMPONENT_GUIDELINES.md → „Page headings: who owns them".
 - ❌ Keine eigene Sidebar/Top-Bar in der App bauen oder das Template per
   `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
 - ❌ Keine Business-Logik hinein reichen: Routing und Active-State leben in den

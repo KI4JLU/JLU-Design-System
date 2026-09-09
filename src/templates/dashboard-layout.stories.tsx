@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
+import { expect } from "storybook/test";
 import {
   ArrowUpDown,
   Box,
@@ -156,7 +157,12 @@ const StandardExample = () => {
               </div>
 
               <div className="mb-3">
-                <h4 className="font-headline-md text-base font-bold">{item.name}</h4>
+                {/* `h2`, nicht `h4`: die Seitenüberschrift des Templates ist
+                    ein `h1`, also ist die nächste erlaubte Stufe 2 — ein
+                    Sprung auf 4 ist ein `heading-order`-Verstoß (axe-core,
+                    gemessen). Die Schriftgröße kommt weiter aus `text-base`,
+                    die Stufe sagt nichts über die Optik. */}
+                <h2 className="font-headline-md text-base font-bold">{item.name}</h2>
                 <div className="mt-1 flex items-center gap-2 text-on-surface-variant">
                   <Link2 className="text-sm" width="1em" height="1em" aria-hidden />
                   <span className="font-label-sm text-xs truncate">{item.group}</span>
@@ -215,4 +221,47 @@ const StandardExample = () => {
 export const Standard: Story = {
   args: { title: "Elemente" },
   render: () => <StandardExample />,
+};
+
+/**
+ * **Das Template in einer Seite, die schon ein `<h1>` hat** — der Regelfall,
+ * nicht der Sonderfall: ein Admin-Rahmen, eine CMS-Seite oder ein
+ * Redaktionssystem trägt die Seitenüberschrift, das Template ist ein
+ * Abschnitt darin. Genau diese Situation hat in JustRAG **zwei `<h1>`** und
+ * damit einen WCAG-1.3.1-Fehler erzeugt, weil `PageHeader` die Stufe erzwang.
+ *
+ * `headingLevel={2}` gibt die Stufe an den Aufrufer zurück. Optisch ändert
+ * sich nichts — die Typo-Tokens hängen nicht an der Stufe.
+ */
+export const NestedInPageWithOwnHeading: Story = {
+  args: { title: "Systemzustand" },
+  render: () => (
+    // Der Rahmen steht für die Seite des Konsumenten (in JustRAG: `AdminUI`,
+    // dessen eigenes <h1> in Zeile 497 steht).
+    <div className="flex flex-col gap-stack-md p-8">
+      <h1 className="m-0 font-headline-md text-display-lg text-on-surface">Administration</h1>
+      <p className="m-0 text-body-base text-on-surface-variant">
+        Rahmen der konsumierenden Seite — die Seitenüberschrift gehört ihr.
+      </p>
+      <DashboardLayout
+        title="Systemzustand"
+        headingLevel={2}
+        description="Das Template ist hier ein Abschnitt der Seite, nicht die Seite."
+      >
+        <Grid cols={2}>
+          <Card className="p-4">Inhalt A</Card>
+          <Card className="p-4">Inhalt B</Card>
+        </Grid>
+      </DashboardLayout>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    // Orakel: der Dokument-Outline über die Rollen-Ebene (ARIA in HTML bildet
+    // h1–h6 auf `heading` + `aria-level` ab) — keine Klassennamen, kein
+    // Tag-Name. Vor `headingLevel` waren hier zwei Elemente mit Stufe 1.
+    const levels = [...canvasElement.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(
+      (heading) => `${heading.tagName}:${heading.textContent}`,
+    );
+    await expect(levels).toEqual(["H1:Administration", "H2:Systemzustand"]);
+  },
 };

@@ -249,3 +249,46 @@ export const DefaultWidthDark: Story = {
     await expect(getComputedStyle(readColumn(canvasElement)).maxWidth).toBe("448px");
   },
 };
+
+/**
+ * **`headingLevel` — der Titel als echte Überschrift.** Ohne die Prop landet
+ * `title` in `CardTitle` und ist damit *keine* Überschrift: die Seite hat
+ * keinen `<h1>`, es sei denn der Aufrufer bringt einen mit. Das ist der
+ * Standard und bleibt es, weil ein Konsument genau deshalb sein eigenes
+ * `<h1>`-Element **in** den Slot gibt — ein hier automatisch erzeugtes `<h1>`
+ * würde eines im anderen verschachteln.
+ *
+ * Mit `headingLevel={1}` übernimmt das Template die Überschrift (über
+ * `CardTitle asChild`, die Typografie bleibt also dieselbe), und der Aufrufer
+ * gibt nur noch Text.
+ */
+export const TitleAsHeading: Story = {
+  args: {
+    title: "Anmelden",
+    headingLevel: 1,
+    description: "Mit Ihrem JLU-Account über Single Sign-on.",
+  },
+  render: (args) => (
+    <AuthLayout {...args} logo={brand}>
+      <Button className="w-full">
+        <KeyRound width="1em" height="1em" aria-hidden />
+        Mit JLU-Account anmelden
+      </Button>
+    </AuthLayout>
+  ),
+  play: async ({ canvasElement }) => {
+    const heading = canvasElement.querySelector("h1");
+    await expect(heading).not.toBeNull();
+    await expect(heading!.textContent).toBe("Anmelden");
+    // Orakel: die Schriftgröße aus tokens.css (`--text-headline-md: 24px`) —
+    // sie kommt weiter aus `CardTitle`, nicht aus einer Kopie am Aufrufort.
+    await expect(getComputedStyle(heading!).fontSize).toBe("24px");
+    await expect(getComputedStyle(heading!).marginTop).toBe("0px");
+    // Und die Überschrift ist das Element, das `CardTitle` gestylt hat — nicht
+    // ein nacktes `<h1>` in einem zusätzlichen `<div>`. Eine reine
+    // Größenmessung kann das nicht unterscheiden (die Größe würde vererbt),
+    // deshalb hier ausnahmsweise die Klasse: nur `asChild` bringt sie auf das
+    // Überschriften-Element selbst.
+    await expect(heading!.className).toContain("font-headline-md");
+  },
+};

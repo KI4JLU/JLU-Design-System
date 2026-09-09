@@ -26,7 +26,8 @@ aus den Form-Primitives:
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
 | `logo` | `ReactNode` | — | Markenblock, zentriert über der Karte. |
-| `title` | `ReactNode` | ✅ | Kartenüberschrift (z. B. „Anmelden"). |
+| `title` | `ReactNode` | ✅ | Kartenüberschrift (z. B. „Anmelden"). Ohne `headingLevel` **keine** Überschrift, sondern gestylter Text in `CardTitle`. |
+| `headingLevel` | `1`–`6` | — | Gesetzt ⇒ `title` wird eine echte Überschrift dieser Stufe (über `CardTitle asChild`, Typografie unverändert). Weggelassen ⇒ heutiges Verhalten, unverändert. |
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
 | `children` | `ReactNode` | ✅ | Der Anmelde-Inhalt: SSO-Button (Standard) oder Felder aus `FormItem`/`Input`/`Button`. |
 | `footer` | `ReactNode` | — | Zentrierte, gedämpfte Zone unter der Karte („Passwort vergessen?"). |
@@ -90,6 +91,16 @@ nicht — sie bräuchte einen Zweck, der sich heute nicht benennen lässt.
 - ✅ Lange Seitentexte mit `width="prose"` rendern, nicht mit einer
   `max-w-*`-Klasse am Aufrufort — die greift auf das Wurzelelement und ändert
   die Spaltenbreite nicht.
+- ✅ `headingLevel={1}` setzen, wenn die Anmeldeseite ihre Überschrift vom
+  Template bekommen soll — und dann reinen Text als `title` übergeben. Ohne die
+  Prop trägt die Seite **keine** Überschrift, und die `h1` bleibt Sache der
+  Aufrufstelle. Warum der Standard so bleibt: ein Konsument gibt sein eigenes
+  `<h1>`-Element in den Slot, genau weil er dort nie eine Überschrift bekam —
+  eine automatisch erzeugte würde eines im anderen verschachteln. Regel und
+  Standardwerte je Template: COMPONENT_GUIDELINES.md → „Page headings: who
+  owns them".
+- ❌ Kein eigenes `<h1>`-Element **in** den `title`-Slot geben, wenn
+  `headingLevel` gesetzt ist — das verschachtelt zwei Überschriften.
 - ❌ Kein zweispaltiges Hero-Layout hier hineinzwängen — das wäre ein neues
   Template, kein `className`-Umbau.
 - ❌ Keine Navigation/Sidebar: Auth-Seiten stehen außerhalb der AppShell.

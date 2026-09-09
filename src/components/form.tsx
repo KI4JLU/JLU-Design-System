@@ -84,7 +84,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       id={descriptionId}
-      className={cn("text-sm text-on-surface-variant", className)}
+      className={cn("m-0 text-sm text-on-surface-variant", className)}
       {...props}
     />
   );
@@ -98,7 +98,7 @@ function FormMessage({ className, children, ...props }: React.ComponentProps<"p"
     <p
       id={messageId}
       role="alert"
-      className={cn("text-sm text-error", className)}
+      className={cn("m-0 text-sm text-error", className)}
       {...props}
     >
       {body}

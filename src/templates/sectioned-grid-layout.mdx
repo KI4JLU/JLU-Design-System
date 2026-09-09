@@ -22,7 +22,8 @@ Theme-Umschalter und Nutzermenü gehören dem Shell.
 |---|---|---|---|
 | `label` | `string` | ✅ | Zugänglicher Name des `region`-Landmarks um den gesamten Inhalt. Pflicht: ein `<section>` **ohne** Namen ist laut HTML-AAM `generic`, also gar kein Landmark. |
 | `sections` | `SectionedGridSection[]` | ✅ | Die Sektionen in Anzeigereihenfolge (siehe Tabellen unten). |
-| `title` | `ReactNode` | — | Seitentitel. Gesetzt ⇒ `PageHeader` (h1) über den Sektionen, wie in `DashboardLayout`. Weglassen, wenn der Titel nur in `AppShellLayout`s `pageLabel`-Zeile steht. |
+| `headingLevel` | `1`–`6` | — | **Eine** Zahl für beide Überschriften-Rollen: der Seitentitel sitzt auf dieser Stufe, jede Sektions-Überschrift eine Stufe darunter. Standard `1` ⇒ `h1` + `h2`, genau wie vorher. Gilt auch **ohne** `title` — die Prop sagt, *wo* der Seitentitel steht, nicht nur, ob dieses Template ihn zeichnet. Über Stufe 6 wird geklemmt. |
+| `title` | `ReactNode` | — | Seitentitel. Gesetzt ⇒ `PageHeader` auf `headingLevel` über den Sektionen, wie in `DashboardLayout`. Weglassen, wenn der Titel nur in `AppShellLayout`s `pageLabel`-Zeile steht. |
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel (braucht `title`). |
 | `actions` | `ReactNode` | — | Rechtsbündige Aktionen neben dem Titel (braucht `title`). |
 | `cols` | `1 \| 2 \| 3 \| 4` | — | Default `3`. Spaltenzahl **aller** Sektions-Grids auf dem Desktop; der Kollaps kommt von `Grid`. Ein Regler für die ganze Seite — Sektionen mit unterschiedlicher Spaltenzahl lesen sich wie verschiedene Seiten. |
@@ -33,7 +34,7 @@ Theme-Umschalter und Nutzermenü gehören dem Shell.
 | Feld | Typ | Pflicht | Inhalt |
 |---|---|---|---|
 | `id` | `string` | ✅ | Stabile Id aus der App. React-Key **und** Suffix der Element-Ids der Disclosure; das Template stellt einen `useId()`-Präfix davor, damit zwei Instanzen auf einer Seite nicht kollidieren. |
-| `title` | `ReactNode` | ✅ | Sektions-Überschrift, gerendert in einer `<h2>`. |
+| `title` | `ReactNode` | ✅ | Sektions-Überschrift. Gerendert **eine Stufe unter** `headingLevel` — beim Standard also `<h2>`. |
 | `icon` | `ReactNode` | — | Führendes Icon in der Kopfzeile (lucide, `aria-hidden`). |
 | `count` | `number` | — | Anzahl als neutrales `Badge` neben dem Titel — **innerhalb** des Triggers, also Teil seines zugänglichen Namens („Favoriten 3"). |
 | `headerAction` | `ReactNode` | — | Bedienelement am Ende der Kopfzeile, bewusst **außerhalb** des Triggers: Klick darauf klappt die Sektion nicht um (verschachtelte Buttons wären außerdem ungültiges HTML). |
@@ -115,9 +116,15 @@ Viewport-Kenntnis, und es gibt hier keinen zweiten Breakpoint.
   Seite (es bringt seine Chrome selbst mit und rendert deshalb ein eigenes
   `<main>`), dieses Template hier ist Seiten-*Inhalt* und füllt einen Slot der
   Shell.
-- Überschriften-Ordnung: `title` ⇒ genau eine `h1` (aus `PageHeader`), pro
-  Sektion genau eine `h2`. Ohne `title` beginnt die Seite bei `h2` — dann sollte
-  der Titel woanders stehen (z. B. in `AppShellLayout`s `pageLabel`).
+- Überschriften-Ordnung: eine Zahl, zwei Stufen. `headingLevel` (Standard `1`)
+  ist die Stufe des Seitentitels, die Sektionen liegen eine Stufe darunter —
+  standardmäßig also genau eine `h1` (aus `PageHeader`) und pro Sektion eine
+  `h2`. Ohne `title` beginnt die Seite bei `h2`, weil der Titel dann woanders
+  steht (z. B. in `AppShellLayout`s `pageLabel`). Sitzt die Seite in einem
+  Rahmen, der die `h1` schon trägt, verschiebt `headingLevel={2}` **beide**
+  Stufen gemeinsam (`h2` + `h3`) — vorher waren es zwei fest verdrahtete
+  Stufen, die sich nicht zusammen bewegen konnten. Über Stufe 6 hinaus wird
+  geklemmt: HTML hat keine `h7`.
 - Fokus: der Trigger trägt den `focus-ring`-Recipe des Systems
   (`focus-visible:ring-2 ring-focus-ring` + Offset).
 - Der Chevron ist `aria-hidden` und dreht sich per `transition-transform` mit

@@ -46,7 +46,11 @@ const CodeBlock = React.forwardRef<HTMLDivElement, CodeBlockProps>(
 
     return (
       <div ref={ref} className={cn("relative", className)} {...props}>
-        <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-code-surface p-4 pr-24 font-label-sm text-xs text-on-code-surface">
+        {/* `m-0`: `<pre>` carries a non-zero user-agent margin (1em,
+            measured in Chromium), and a consuming app that reverts element
+            margins in `@layer base` would otherwise push this block away from
+            its copy button's positioning context. */}
+        <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-code-surface p-4 pr-24 font-label-sm text-xs text-on-code-surface">
           {code}
         </pre>
         <Button
