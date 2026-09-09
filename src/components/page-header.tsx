@@ -21,8 +21,12 @@ import { headingTag, type HeadingLevel } from "../lib/heading-level";
  * to Tailwind Preflight does — otherwise leaks that margin into this
  * component. One consumer measured 16.08 px on the heading and patched it from
  * the outside with `[&>header_h1]:m-0`. The utility sits in Tailwind's
- * `utilities` layer, which outranks `base`, so it wins against that revert
- * while changing nothing where Preflight is intact.
+ * `utilities` layer, so it changes nothing where Preflight is intact and it
+ * wins against that revert as long as the revert is **layered**. Being layered
+ * is the condition, not the `base` name: an unlayered declaration outranks
+ * every layered one of equal importance, so a reset outside any `@layer`
+ * defeats `m-0`. Long form in `docs/COMPONENT_GUIDELINES.md` → „Margins: a DS
+ * component never leans on the consumer's reset".
  */
 export interface PageHeaderProps
   extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {

@@ -37,9 +37,13 @@ import {
  * Der Reset wird hier **so eingerichtet, wie eine App ihn hat** — in
  * `@layer base`, nicht als Inline-Style: nur dann steht er in derselben
  * Kaskadenschicht, und nur dann sagt ein grüner Lauf etwas aus. Eine
- * Rand-Utility (`m-0`) liegt in Tailwinds `utilities`-Schicht, die `base`
- * überstimmt — deshalb gewinnt sie gegen das `revert`, ohne irgendetwas zu
- * ändern, solange Preflight intakt ist.
+ * Rand-Utility (`m-0`) liegt in Tailwinds `utilities`-Schicht: sie ändert
+ * nichts, solange Preflight intakt ist, und sie gewinnt gegen das `revert`,
+ * **solange dieses in einer Schicht steht**. Bedingung ist die Schicht selbst,
+ * nicht der Name `base`: eine Deklaration außerhalb jeder Schicht überstimmt
+ * jede geschichtete gleicher Wichtigkeit, ein Reset ohne `@layer` schlägt
+ * `m-0` also. Langform in `docs/COMPONENT_GUIDELINES.md` → „Margins: a DS
+ * component never leans on the consumer's reset".
  */
 const meta = {
   title: "Foundations/UA-Margin-Reset",

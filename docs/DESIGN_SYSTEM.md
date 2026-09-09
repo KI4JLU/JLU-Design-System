@@ -123,8 +123,15 @@ consuming repo** — new exceptions get the same scrutiny there.
   keeping its own prose styling next to Tailwind Preflight has — wins the
   cascade and the user-agent margin lands *inside* the component (measured:
   16.08 px on `PageHeader`'s heading in production). A utility sits in the
-  `utilities` layer, which outranks `base`, so it changes nothing where
-  Preflight is intact. Pinned by the `Foundations/UA-Margin-Reset` story;
+  `utilities` layer, so it changes nothing where Preflight is intact and it
+  beats a **layered** consumer reset — the `@layer base` shape a Preflight app
+  has. Being layered is the condition, not the `base` name: an **unlayered**
+  declaration outranks every layered one of equal importance whatever its
+  specificity, so a reset written outside any `@layer` defeats `m-0` (measured
+  in Chromium: unlayered `p { margin: revert }` leaves 14 px on a `text-sm`
+  `<p>`, exactly as if the utility were absent). Pinned — for the layered case,
+  the only one a consumer is known to have — by the
+  `Foundations/UA-Margin-Reset` story;
   rationale in [COMPONENT_GUIDELINES.md → „Page headings: who owns
   them"](./COMPONENT_GUIDELINES.md#page-headings-who-owns-them).
 - New component **variants require review** by the design system owner before
@@ -424,6 +431,18 @@ Until then the git path carries us; keep the README's git section first.
   default should flip to `1` in a future major is an owner decision and is open
   on the card.
 
+  *Upgrading does not close the double-`<h1>` by itself — the fix is opt-in.*
+  Frozen defaults are the paragraph above; this is their consequence. A
+  template nested in a frame that already owns the page `<h1>` keeps emitting a
+  second one after the pin bump, so the WCAG 1.3.1 failure described above
+  stays live until the **call site** passes `headingLevel={2}` on the nested
+  template. That one prop per nested page is the entire required action, and
+  nothing in this release performs it. Pages that legitimately own their `<h1>`
+  need no change — that is the trade the frozen defaults buy. The consumer that
+  reported the defect has not adopted the prop (verified at the time of
+  writing: zero `headingLevel` occurrences in its source), so on this release
+  its two nested admin pages still carry two `<h1>`s.
+
   *The missing margin utilities.* `PageHeader`'s `<h1>` and `<p>` carried size,
   weight and colour but **no margin**, so an app that reverts element margins in
   `@layer base` (any app keeping its own prose styling next to Tailwind
@@ -438,17 +457,44 @@ Until then the git path carries us; keep the README's git section first.
   `<h2>`) and `DialogDescription` (a `<p>`), `ToastViewport` (Radix renders an
   `<ol>`, whose margin offsets a `bottom-0` fixed bar by 16 px),
   `AppShellLayout`'s page label, and `SectionedGridLayout`'s section heading.
-  All ten now carry `m-0`, which sits in the `utilities` layer and therefore
-  outranks a `base`-layer revert while changing nothing where Preflight is
-  intact. Everything else was measured clean: `TableCaption` already carried
-  `mt-4`, and `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>`/`<li>` plus
-  every `div`/`span`/`button`/`input`/`label`/landmark element have a
-  user-agent margin of zero. The invariant is now pinned by a
+  All ten now carry `m-0`, which sits in the `utilities` layer: it changes
+  nothing where Preflight is intact, and it wins against a consumer's revert
+  **as long as that revert is layered**. Being layered is the condition, not
+  the `base` name — an unlayered declaration outranks every layered one of
+  equal importance, so a reset written outside any `@layer` still defeats `m-0`
+  (measured; only an `!important` utility would win there, and this package
+  ships none). `@layer base` is the shape the measured consumer has, and the
+  shape this release fixes. Everything else was measured clean: `TableCaption`
+  already carried `mt-4`, and
+  `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>`/`<li>` plus every
+  `div`/`span`/`button`/`input`/`label`/landmark element have a user-agent
+  margin of zero. The invariant is now pinned by a
   `Foundations/UA-Margin-Reset` story that installs the reset the way a
   consuming app does (an `@layer base` `margin: revert`) and measures the
   computed margins in Chromium, with two **control** elements that must move —
   so a green run cannot mean the reset never arrived. The consumer can drop its
   `[&>header_h1]:m-0` workaround once it bumps the pin.
+
+  *What a consumer actually sees on upgrade.* Exactly one of the ten moves
+  visibly today, and it is not the one the 16.08 px figure points at:
+  **`FormDescription` and `FormMessage`**. Both are `<p>` at `text-sm`, the
+  measured consumer's field row renders both with no local margin workaround,
+  and its `@layer base` revert reaches them — so help and error text loses
+  1 em (**14 px**, measured in Chromium) above and below and tightens toward
+  its field: the gap between an input and its help text goes 18 px → 4 px, and
+  because `FormItem` is a flex column those margins never collapsed, so a row
+  carrying both help and error text loses about 56 px of height. A wanted
+  correction, but a visible one — re-check field spacing after the bump.
+  `PageHeader`'s heading and description, where the 16.08 px was measured, will
+  **not** move there: all three `DashboardLayout` call sites already carry
+  `[&>header_h1]:m-0 [&>header_p]:m-0`, so this only makes those workarounds
+  redundant. And `CodeBlock`'s `<pre>`, `DialogTitle`/`DialogDescription`,
+  `ToastViewport`, `AppShellLayout`'s page label and `SectionedGridLayout`'s
+  section heading have **no consumer today that reverts element margins** —
+  their fix is prospective, right for the next adopter and a no-op now, which
+  includes the concern that `ToastViewport`'s `m-0` would shift a fixed
+  `bottom-0` toast stack by 16 px. That asymmetry is why one pair is named here
+  instead of a list of ten.
 
   Also fixed: this repo's own `DashboardLayout` story jumped from the
   template's `<h1>` straight to `<h4>` on its card titles, which axe-core

@@ -518,13 +518,23 @@ patched it from the outside with `[&>header_h1]:m-0` — a call-site selector
 reaching into a template, which is exactly what this package exists to make
 unnecessary.
 
-`m-0` sits in Tailwind's `utilities` layer, which outranks `base`, so it wins
-against that revert and changes nothing where Preflight is intact. The invariant
-is pinned by the `Foundations/UA-Margin-Reset` story, which sets the reset up the
-way a consuming app does and measures the computed margins in Chromium — with
-two control elements that must move, so a green run cannot mean "the reset never
-arrived". Adding a raw element with a user-agent margin to a component means
-adding the utility in the same commit.
+`m-0` sits in Tailwind's `utilities` layer, so it changes nothing where
+Preflight is intact and it wins against that revert — **as long as the revert is
+layered.** That condition is the whole guarantee, and it is narrower than
+"`utilities` outranks `base`" sounds: in the cascade an **unlayered**
+declaration outranks every layered one of equal importance, whatever its
+specificity. A consumer whose reset sits outside any `@layer` therefore defeats
+`m-0` and the user-agent margin lands inside the component again — measured in
+Chromium, an unlayered `p { margin: revert }` leaves 14 px on a `text-sm` `<p>`,
+exactly as if the utility were absent. Only an `!important` utility would win
+that (measured: `margin: 0 !important` in `utilities` does beat it), and this
+package deliberately ships none — the answer for such a consumer is to layer its
+reset, which is what every Preflight app does anyway. The invariant — for the
+layered case — is pinned by the `Foundations/UA-Margin-Reset` story, which sets
+the reset up the way a consuming app does and measures the computed margins in
+Chromium — with two control elements that must move, so a green run cannot mean
+"the reset never arrived". Adding a raw element with a user-agent margin to a
+component means adding the utility in the same commit.
 
 ## Theming
 
