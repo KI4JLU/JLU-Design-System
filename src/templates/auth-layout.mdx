@@ -30,15 +30,52 @@ aus den Form-Primitives:
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel. |
 | `children` | `ReactNode` | ✅ | Der Anmelde-Inhalt: SSO-Button (Standard) oder Felder aus `FormItem`/`Input`/`Button`. |
 | `footer` | `ReactNode` | — | Zentrierte, gedämpfte Zone unter der Karte („Passwort vergessen?"). |
+| `width` | `"default" \| "prose"` | — | Breite der zentrierten Spalte. `default` (Standard) = 448px, `prose` = 672px. Siehe „Breite" unten. |
 
 <Controls />
+
+## Breite
+
+Die Spalte ist standardmäßig `max-w-md` (28rem / **448px**) — die Breite eines
+Anmeldeformulars: wenige kurze Felder, die eine breitere Spalte nur
+auseinanderziehen würde.
+
+Für **lange Seitentexte in der Karte** — Nutzungsbedingungen,
+Barrierefreiheitserklärung, Datenschutzerklärung — ist das zu schmal. Dafür
+gibt es `width="prose"`: `max-w-2xl` (42rem / **672px**).
+
+<Canvas of={AuthLayoutStories.LegalPage} />
+
+**Warum eine Prop und keine `className`.** Die Breiten-Einschränkung sitzt auf
+der *inneren* Spalte, das `className` des Aufrufers fließt aber in das
+*Wurzelelement* — vom Aufrufort aus war die Breite also gar nicht erreichbar.
+Ein Rechtstext, der dieses Template übernahm, ist dadurch unbemerkt von 720px
+auf 448px geschrumpft. `width` ist der Weg dorthin; ein
+`className`-Durchgriff auf die innere Spalte wäre der falsche, weil er die
+Klassenfläche wieder öffnet, die `layout-only-classname` schließen soll.
+
+**Warum `max-w-2xl` und nicht `max-w-3xl`.** Zwei Gründe, beide unabhängig
+voneinander:
+
+1. `max-w-2xl` ist die Stufe, die dieses System **bereits** für eine
+   Lesespalte benannt hat — `Container size="narrow"` *ist* `max-w-2xl`. Eine
+   breite `AuthLayout`-Spalte entspricht damit einer `FormLayout`-Spalte,
+   statt eine zweite, konkurrierende Lesebreite einzuführen.
+2. WCAG 1.4.8 (AAA) begrenzt eine Zeile auf 80 Zeichen. Abzüglich des `p-6`
+   der Karte (48px auf dieser Achse) ergibt `2xl` ein Textmaß von 624px,
+   `3xl` dagegen 720px — `3xl` ist also die Stufe, die die Grenze reißt.
+
+Beide Breiten sind Tailwind-Stufen, keine willkürlichen Werte: das System
+bleibt auf seinen eigenen Schritten. Eine dritte Stufe gibt es absichtlich
+nicht — sie bräuchte einen Zweck, der sich heute nicht benennen lässt.
 
 ## Responsives Verhalten
 
 - Füllt die Viewport-Höhe (`min-h-dvh`) und zentriert die Karte vertikal
   und horizontal.
-- Die Karte ist `max-w-md`; auf schmalen Screens halten die Token-Ränder
-  (`gutter`) den Abstand zum Rand.
+- Die Spalte ist so breit, wie `width` sagt (`max-w-md` bzw. `max-w-2xl`);
+  auf schmalen Screens halten die Token-Ränder (`gutter`) den Abstand zum
+  Rand, und `w-full` lässt beide Breiten unterhalb ihres Maximums mitlaufen.
 
 ## Do's & Don'ts
 
@@ -50,6 +87,9 @@ aus den Form-Primitives:
   `FormItem error=` (siehe Story „WithFieldError").
 - ✅ Auth-Fehler vom Identity Provider (abgelehnt, Session abgelaufen) als
   Inhalt über dem Button rendern — z. B. Text in `text-error`.
+- ✅ Lange Seitentexte mit `width="prose"` rendern, nicht mit einer
+  `max-w-*`-Klasse am Aufrufort — die greift auf das Wurzelelement und ändert
+  die Spaltenbreite nicht.
 - ❌ Kein zweispaltiges Hero-Layout hier hineinzwängen — das wäre ein neues
   Template, kein `className`-Umbau.
 - ❌ Keine Navigation/Sidebar: Auth-Seiten stehen außerhalb der AppShell.

@@ -229,6 +229,20 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   Tailwind's own `--breakpoint-lg`, read from `theme.css` rather than restated; a second, differing
   breakpoint anywhere in a template is a review FAIL. The consumer still writes
   no ladder — it passes the current pane as a controlled prop.
+- **A dimension a template constrains on an *inner* element needs a prop.** A
+  consumer's `className` merges into the template's **root**, so any `max-w-*`,
+  height or gap that sits deeper is unreachable from every call site — and it
+  fails *silently*, as a layout that simply looks wrong. `AuthLayout` had
+  exactly this (`max-w-md` on the inner column) and legal pages adopting it
+  dropped from 720px to 448px unnoticed; it is now the `width` prop
+  (`auth-layout-variants.ts`). Prefer the named prop over a
+  `stackClassName`-style passthrough: a second class surface re-opens what
+  `layout-only-classname` exists to close, and that rule cannot see arbitrary
+  values on composition components, so the passthrough would be unpoliced. The
+  check for a new template: does `className` reach every dimension the template
+  fixes? Where it doesn't, name the choices as variants. Templates whose width
+  comes from `Container` (`FormLayout`, `TableLayout`, `DashboardLayout`) are
+  fine — `className` merges onto the same element that carries the `max-w-*`.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
@@ -348,6 +362,28 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **Unreleased** — `AuthLayout` gets a **`width` prop**, because its column
+  width was unreachable from every call site: the `max-w-md` sat on the inner
+  column while a consumer's `className` merges into the root element. A
+  consumer's legal pages (terms of use, accessibility statement, privacy
+  statement) silently went 720px → 448px on adopting the template, and the
+  width was rejected at visual QA. Two named steps on `authLayoutVariants`
+  (new export), both Tailwind steps rather than arbitrary values:
+  `default` = `max-w-md` (448px, **unchanged** — no existing login page moves)
+  and `prose` = `max-w-2xl` (672px) for long-form copy inside the card.
+  `max-w-2xl` and not `max-w-3xl` for two independent reasons: it is the step
+  this system already names for a reading column (`Container size="narrow"`
+  *is* `max-w-2xl`, so a wide `AuthLayout` matches a `FormLayout` column
+  instead of inventing a second reading width), and WCAG 1.4.8 (AAA) caps a
+  line at 80 characters — minus the Card's `p-6` the text measure is 624px at
+  `2xl` against 720px at `3xl`. So `prose` is deliberately 48px *narrower*
+  than the 720px it replaces. Purely additive: no existing prop, class or
+  export changes. Four new stories (both widths × both themes, the long-prose
+  legal case included, plus the rejected 448px state kept for comparison)
+  measure the **computed** `max-width` through the CSSOM in Chromium rather
+  than asserting a class string. `AuthLayout` is the **only** template with
+  this defect — the other five take their width from `Container`, where
+  `className` reaches it. The version bump and tag are a separate step.
 - **0.23.0** — *Skipped.* The tag was pushed at the commit before the release
   commit (the version bump had been rejected by the commit-msg hook), so
   `v0.23.0` points at a tree whose `package.json` still reads `0.22.1`. Tags

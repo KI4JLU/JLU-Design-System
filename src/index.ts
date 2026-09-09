@@ -172,6 +172,7 @@ export {
   type AppShellLayoutProps,
 } from "./templates/app-shell-layout";
 export { AuthLayout, type AuthLayoutProps } from "./templates/auth-layout";
+export { authLayoutVariants } from "./templates/auth-layout-variants";
 export { ChatLayout, type ChatLayoutProps } from "./templates/chat-layout";
 export {
   DashboardLayout,

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
 import { KeyRound } from "lucide-react";
+import { expect } from "storybook/test";
 import { AuthLayout } from "./auth-layout";
 import { Logo } from "../components/logo";
 import { Button } from "../components/button";
@@ -102,4 +103,149 @@ export const WithFieldError: Story = {
       </Stack>
     </AuthLayout>
   ),
+};
+
+/**
+ * Rechtstext für die `width="prose"`-Stories — bewusst lang, weil genau die
+ * Länge der Fall ist, an dem `max-w-md` gescheitert ist. Eine Zahl im Test
+ * belegt die Breite; ob der Text darin *lesbar* ist, entscheidet das Auge.
+ */
+const legalProse = (
+  <Stack gap="md">
+    <p className="text-on-surface">
+      Diese Nutzungsbedingungen regeln die Verwendung der Plattform durch
+      Angehörige der Justus-Liebig-Universität Gießen. Mit der Anmeldung über
+      den JLU-Account erkennen Sie die nachstehenden Bedingungen an. Sie gelten
+      für alle Dienste, die über diese Oberfläche erreichbar sind, unabhängig
+      davon, ob der Zugriff über die Weboberfläche, eine Programmierschnittstelle
+      oder ein eingebettetes Widget erfolgt.
+    </p>
+    <p className="text-on-surface">
+      Die Nutzung ist ausschließlich für Zwecke der Forschung, der Lehre und der
+      Verwaltung zulässig. Eine Weitergabe der Zugangsdaten an Dritte ist
+      untersagt; dies gilt auch für Angehörige derselben Einrichtung. Für
+      Inhalte, die Sie in die Plattform einstellen, bleiben Sie verantwortlich.
+      Personenbezogene Daten dürfen nur in dem Umfang verarbeitet werden, der
+      für den jeweiligen Zweck erforderlich ist.
+    </p>
+    <p className="text-on-surface">
+      Die Verfügbarkeit der Dienste wird nicht zugesichert. Wartungsfenster
+      werden, soweit planbar, vorab angekündigt. Ein Anspruch auf dauerhafte
+      Speicherung eingestellter Inhalte besteht nicht; für die Sicherung Ihrer
+      Arbeitsergebnisse sind Sie selbst verantwortlich.
+    </p>
+    <p className="text-on-surface">
+      Bei Verstößen gegen diese Bedingungen kann der Zugang ohne Vorankündigung
+      gesperrt werden. Änderungen dieser Bedingungen werden auf dieser Seite
+      veröffentlicht; die weitere Nutzung nach einer Änderung gilt als
+      Zustimmung. Es gilt das Recht der Bundesrepublik Deutschland.
+    </p>
+  </Stack>
+);
+
+/**
+ * Die Breiten-Einschränkung sitzt auf der **inneren** Spalte von
+ * `AuthLayout` — das Wurzelelement, in das ein `className` des Aufrufers
+ * hineinfließt, trägt keine. Genau deshalb existiert die `width`-Prop. Die
+ * Messung muss also dieses eine Element erreichen: das einzige Kind der
+ * Wurzel. Die Kopplung an den inneren Aufbau ist hier Absicht — sie ist der
+ * Grund für die Prop und wäre von außen nicht messbar.
+ */
+function readColumn(canvasElement: HTMLElement): Element {
+  const root = canvasElement.querySelector("[data-testid='auth-root']");
+  const column = root?.firstElementChild;
+  if (!column) throw new Error("AuthLayout-Spalte nicht gefunden");
+  return column;
+}
+
+/**
+ * Der Fall, der diese Prop nötig gemacht hat: eine Rechtstext-Seite
+ * (Nutzungsbedingungen, Barrierefreiheitserklärung, Datenschutzerklärung) im
+ * Auth-Template. `width="prose"` gibt der Spalte 672px statt der 448px eines
+ * Anmeldeformulars.
+ */
+export const LegalPage: Story = {
+  args: {
+    width: "prose",
+    title: "Nutzungsbedingungen",
+    description: "Stand: 1. September 2026",
+  },
+  render: (args) => (
+    <AuthLayout
+      {...args}
+      data-testid="auth-root"
+      footer={
+        <a href="#impressum" className="underline underline-offset-4 hover:text-on-surface">
+          Impressum
+        </a>
+      }
+    >
+      {legalProse}
+    </AuthLayout>
+  ),
+  play: async ({ canvasElement }) => {
+    // Oracle: Tailwinds veröffentlichte Skala, nicht diese Komponente.
+    // `max-w-2xl` ist 42rem, bei der 16px-Wurzelgröße also 672px — die
+    // Chromium-CSS-Engine löst das auf, hier wird nur das Ergebnis abgefragt.
+    await expect(getComputedStyle(readColumn(canvasElement)).maxWidth).toBe("672px");
+  },
+};
+
+/**
+ * Derselbe Rechtstext im dunklen Theme — die Prop darf am Farbschema nichts
+ * ändern, und beide Themes gehören zur Sichtprüfung.
+ */
+export const LegalPageDark: Story = {
+  ...LegalPage,
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    // Belegt zuerst, dass die Story wirklich im dunklen Theme läuft
+    // (`ThemeProvider` ist der einzige Schreiber von `<html data-theme>`) —
+    // sonst würde eine grüne Messung ein Theme behaupten, das nie aktiv war.
+    await expect(document.documentElement.dataset.theme).toBe("dark");
+    await expect(getComputedStyle(readColumn(canvasElement)).maxWidth).toBe("672px");
+  },
+};
+
+/**
+ * Derselbe Rechtstext in der Standardbreite — **der abgelehnte Zustand**,
+ * absichtlich als Story erhalten, damit die beiden Breiten nebeneinander
+ * beurteilbar sind. Pinnt gleichzeitig die Standardbreite auf 448px, damit
+ * bestehende Anmeldeseiten sich nicht verschieben.
+ */
+export const LegalPageAtDefaultWidth: Story = {
+  args: {
+    title: "Nutzungsbedingungen",
+    description: "Zum Vergleich: dieselbe Seite ohne width=\"prose\"",
+  },
+  render: (args) => (
+    <AuthLayout {...args} data-testid="auth-root">
+      {legalProse}
+    </AuthLayout>
+  ),
+  play: async ({ canvasElement }) => {
+    // `max-w-md` = 28rem = 448px, wieder aus Tailwinds Skala.
+    await expect(getComputedStyle(readColumn(canvasElement)).maxWidth).toBe("448px");
+  },
+};
+
+/** Die Standardbreite im dunklen Theme — das SSO-Beispiel als Inhalt. */
+export const DefaultWidthDark: Story = {
+  args: {
+    title: "Anmelden",
+    description: "Mit Ihrem JLU-Account über Single Sign-on.",
+  },
+  globals: { theme: "dark" },
+  render: (args) => (
+    <AuthLayout {...args} logo={brand} data-testid="auth-root">
+      <Button className="w-full">
+        <KeyRound width="1em" height="1em" aria-hidden />
+        Mit JLU-Account anmelden
+      </Button>
+    </AuthLayout>
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(document.documentElement.dataset.theme).toBe("dark");
+    await expect(getComputedStyle(readColumn(canvasElement)).maxWidth).toBe("448px");
+  },
 };

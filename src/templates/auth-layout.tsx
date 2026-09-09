@@ -1,4 +1,5 @@
 import * as React from "react";
+import { type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardContent,
 } from "../components/card";
 import { Stack } from "../components/stack";
+import { authLayoutVariants } from "./auth-layout-variants";
 
 /**
  * Template „Login/Auth": a single centered card on the page surface —
@@ -15,9 +17,17 @@ import { Stack } from "../components/stack";
  * `children`, muted links (password reset, registration) in `footer`.
  * Fills the viewport height and keeps token page margins on small screens.
  * The form logic itself stays with the consumer.
+ *
+ * `width` sizes the centered column: `default` (448px) for a login form,
+ * `prose` (672px) for long-form page copy such as terms of use or an
+ * accessibility statement. It is a prop and not a `className` because the
+ * constraint sits on the inner column, which `className` — merging into the
+ * root element — cannot reach; see `auth-layout-variants.ts` for why those two
+ * steps and no others.
  */
 export interface AuthLayoutProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
+    VariantProps<typeof authLayoutVariants> {
   /** Brand block centered above the card. */
   logo?: React.ReactNode;
   /** Card heading (e.g. „Anmelden"). */
@@ -29,7 +39,10 @@ export interface AuthLayoutProps
 }
 
 const AuthLayout = React.forwardRef<HTMLDivElement, AuthLayoutProps>(
-  ({ className, logo, title, description, footer, children, ...props }, ref) => (
+  (
+    { className, logo, title, description, footer, width, children, ...props },
+    ref,
+  ) => (
     <div
       ref={ref}
       className={cn(
@@ -38,7 +51,7 @@ const AuthLayout = React.forwardRef<HTMLDivElement, AuthLayoutProps>(
       )}
       {...props}
     >
-      <Stack gap="lg" className="w-full max-w-md">
+      <Stack gap="lg" className={authLayoutVariants({ width })}>
         {logo && <div className="flex justify-center">{logo}</div>}
         <Card>
           <CardHeader className="text-center">
