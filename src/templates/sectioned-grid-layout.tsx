@@ -5,6 +5,7 @@ import { Container } from "../components/container";
 import { Grid, type GridProps } from "../components/grid";
 import { PageHeader } from "../components/page-header";
 import { cn } from "../lib/utils";
+import { headingTag, nextHeadingLevel, type HeadingLevel } from "../lib/heading-level";
 
 /**
  * The header half of one section — identical for every body shape below.
@@ -22,7 +23,11 @@ export interface SectionedGridSectionBase {
    * instances on one page cannot collide).
    */
   id: string;
-  /** Section heading — rendered inside an `<h2>`. */
+  /**
+   * Section heading. Rendered inside a heading **one level below the
+   * template's `headingLevel`** — not a hardcoded `<h2>`; see the
+   * `headingLevel` prop.
+   */
   title: React.ReactNode;
   /** Optional leading icon in the header row (lucide, `aria-hidden`). */
   icon?: React.ReactNode;
@@ -109,6 +114,25 @@ export interface SectionedGridLayoutProps
    * `pageLabel` bar.
    */
   title?: React.ReactNode;
+  /**
+   * The level the **page** title occupies in the document outline, `1`–`6`,
+   * default `1`. It is one dial for both heading roles this template has: the
+   * optional `PageHeader` sits at `headingLevel`, every section heading one
+   * level below it. At the default that is `<h1>` + `<h2>`, exactly what this
+   * template rendered before the prop existed — no call site moves.
+   *
+   * It applies **whether or not `title` is given**, because it declares where
+   * the page title *is*, not only where this template draws it. Omit `title`
+   * and keep the default and the sections stay `<h2>`s under the `<h1>` the
+   * app renders elsewhere; pass `headingLevel={2}` inside a frame that owns
+   * the `<h1>` and the whole template moves down one step together (`<h2>`
+   * title, `<h3>` sections) instead of colliding with it.
+   *
+   * Two independent hardcoded levels were the defect this replaces: a forced
+   * `<h1>` from `PageHeader` next to a forced `<h2>` per section could not
+   * both be right, and could not be moved from any call site.
+   */
+  headingLevel?: HeadingLevel;
   /** Muted line under the title. Requires `title`. */
   description?: React.ReactNode;
   /** Right-aligned header actions next to the title. Requires `title`. */
@@ -149,7 +173,9 @@ export interface SectionedGridLayoutProps
  * no `Accordion` primitive and this template does not smuggle one in: each
  * section is an ARIA **disclosure** (APG) built from a button and a panel.
  * The button carries `aria-expanded` and `aria-controls`; it sits *inside* the
- * `<h2>` so the heading stays navigable (APG's accordion markup). The panel
+ * section heading so it stays navigable (APG's accordion markup) — and that
+ * heading's **level** is derived from `headingLevel`, one step inside the page
+ * title, rather than the `<h2>` it used to be nailed to. The panel
  * element is **always** rendered — an `aria-controls` pointing at an id that
  * exists only while open would be a dangling reference that announces
  * nothing — and carries `hidden` while collapsed; its *children* are
@@ -171,18 +197,36 @@ export interface SectionedGridLayoutProps
  */
 const SectionedGridLayout = React.forwardRef<HTMLElement, SectionedGridLayoutProps>(
   (
-    { className, label, sections, title, description, actions, cols = 3, ...props },
+    {
+      className,
+      label,
+      sections,
+      title,
+      headingLevel = 1,
+      description,
+      actions,
+      cols = 3,
+      ...props
+    },
     ref,
   ) => {
     // Element ids have to be unique per document, not per section list: two
     // instances of this template on one page would otherwise share them.
     const uid = React.useId();
+    // Derived, never a second constant: the sections sit one step inside the
+    // page title, so one prop moves both and they cannot contradict.
+    const SectionHeading = headingTag(nextHeadingLevel(headingLevel));
 
     return (
       <section ref={ref} aria-label={label} className={cn("flex flex-col", className)} {...props}>
         <Container className="flex flex-col gap-stack-lg py-gutter md:py-margin-page">
           {title !== undefined && (
-            <PageHeader title={title} description={description} actions={actions} />
+            <PageHeader
+              title={title}
+              headingLevel={headingLevel}
+              description={description}
+              actions={actions}
+            />
           )}
 
           {sections.map((section) => {
@@ -195,7 +239,7 @@ const SectionedGridLayout = React.forwardRef<HTMLElement, SectionedGridLayoutPro
                   {/* APG accordion markup: the heading wraps the trigger, so
                       the section stays reachable by heading navigation while
                       the whole row remains the click target. */}
-                  <h2 className="min-w-0 flex-1 font-headline-md text-headline-md-mobile text-on-surface">
+                  <SectionHeading className="m-0 min-w-0 flex-1 font-headline-md text-headline-md-mobile text-on-surface">
                     <button
                       type="button"
                       id={triggerId}
@@ -219,7 +263,7 @@ const SectionedGridLayout = React.forwardRef<HTMLElement, SectionedGridLayoutPro
                         <Badge tone="neutral">{section.count}</Badge>
                       )}
                     </button>
-                  </h2>
+                  </SectionHeading>
                   {section.headerAction && (
                     <div className="shrink-0">{section.headerAction}</div>
                   )}

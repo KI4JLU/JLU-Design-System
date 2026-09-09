@@ -116,6 +116,24 @@ consuming repo** — new exceptions get the same scrutiny there.
   documented justification in the PR.
 - **No hardcoded colors.** Every color goes through a semantic token.
 - Compose classes with `cn()` (exported by the package).
+- **Every raw element with a non-zero user-agent margin carries an explicit
+  margin utility** (`m-0` unless the design says otherwise): headings, `<p>`,
+  `<pre>`, and the `<ol>` Radix renders for the toast viewport. Without it a
+  consuming app's `@layer base { margin: revert }` — the counterweight any app
+  keeping its own prose styling next to Tailwind Preflight has — wins the
+  cascade and the user-agent margin lands *inside* the component (measured:
+  16.08 px on `PageHeader`'s heading in production). A utility sits in the
+  `utilities` layer, so it changes nothing where Preflight is intact and it
+  beats a **layered** consumer reset — the `@layer base` shape a Preflight app
+  has. Being layered is the condition, not the `base` name: an **unlayered**
+  declaration outranks every layered one of equal importance whatever its
+  specificity, so a reset written outside any `@layer` defeats `m-0` (measured
+  in Chromium: unlayered `p { margin: revert }` leaves 14 px on a `text-sm`
+  `<p>`, exactly as if the utility were absent). Pinned — for the layered case,
+  the only one a consumer is known to have — by the
+  `Foundations/UA-Margin-Reset` story;
+  rationale in [COMPONENT_GUIDELINES.md → „Page headings: who owns
+  them"](./COMPONENT_GUIDELINES.md#page-headings-who-owns-them).
 - New component **variants require review** by the design system owner before
   merge.
 - New components follow shadcn/ui patterns (Radix primitives + cva + tokens),
@@ -229,6 +247,33 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   Tailwind's own `--breakpoint-lg`, read from `theme.css` rather than restated; a second, differing
   breakpoint anywhere in a template is a review FAIL. The consumer still writes
   no ladder — it passes the current pane as a controlled prop.
+- **A dimension a template constrains on an *inner* element needs a prop.** A
+  consumer's `className` merges into the template's **root**, so any `max-w-*`,
+  height or gap that sits deeper is unreachable from every call site — and it
+  fails *silently*, as a layout that simply looks wrong. `AuthLayout` had
+  exactly this (`max-w-md` on the inner column) and legal pages adopting it
+  dropped from 720px to 448px unnoticed; it is now the `width` prop
+  (`auth-layout-variants.ts`). Prefer the named prop over a
+  `stackClassName`-style passthrough: a second class surface re-opens what
+  `layout-only-classname` exists to close, and that rule cannot see arbitrary
+  values on composition components, so the passthrough would be unpoliced. The
+  check for a new template: does `className` reach every dimension the template
+  fixes? Where it doesn't, name the choices as variants. Templates whose width
+  comes from `Container` (`FormLayout`, `TableLayout`, `DashboardLayout`) are
+  fine — `className` merges onto the same element that carries the `max-w-*`.
+- **Who renders the page heading is one rule for all templates, and the level
+  is the call site's.** A template renders its `title` as a real heading
+  element; `headingLevel` (`1`–`6`, type `HeadingLevel`) says where in the
+  outline it sits, defaulting per template to exactly what it rendered before
+  the prop existed. A template with a second heading role *derives* it
+  (`SectionedGridLayout`'s sections are `headingLevel + 1`) and never hardcodes
+  a second level; a template with no `title` prop contributes no heading, and
+  its text slots (`AppShellLayout.pageLabel`) are chrome, not the page heading.
+  A new template answers this in its MDX. The rule, the reasoning and the
+  frozen per-template defaults live in one place —
+  [COMPONENT_GUIDELINES.md → „Page headings: who owns
+  them"](./COMPONENT_GUIDELINES.md#page-headings-who-owns-them) — because the
+  four-way split it replaced was the cost of never writing it down.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
@@ -348,6 +393,142 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **Unreleased** — **one rule for the page heading, and every element with a
+  user-agent margin now pins it.** Two findings from a consumer's template
+  adoption, both confirmed by independent reviewers (KI-693/KI-714), fixed
+  together on KI-736.
+
+  *Who owns the page heading.* Eight templates had **four** behaviours: a
+  `div` title (`AuthLayout`), a forced unreachable `<h1>`
+  (`DashboardLayout`, `FormLayout`, `TableLayout`), a forced `<h1>` **plus** a
+  hardcoded `<h2>` per section (`SectionedGridLayout`), and no heading at all
+  (`AppShellLayout`, `ChatLayout`, `WorkspaceLayout`). The cost was already
+  shipped: two admin pages that correctly adopted `DashboardLayout` came out
+  with **two `<h1>`s**, because they render inside a frame whose own `<h1>` is
+  the page title — a fresh WCAG 1.3.1 failure caused by using the library as
+  documented. The rule is now written down (COMPONENT_GUIDELINES.md →
+  "Page headings: who owns them"): a template renders its `title` as a real
+  heading, and the call site owns the **level** through one prop,
+  `headingLevel: 1 | 2 | 3 | 4 | 5 | 6` (new exported type `HeadingLevel`), on
+  `PageHeader`, `DashboardLayout`, `FormLayout`, `TableLayout`,
+  `SectionedGridLayout` and `AuthLayout`. A number and not `as="h2"` so the
+  prop can never render a non-heading, and so a template with two heading roles
+  can *derive* the inner one: `SectionedGridLayout`'s sections are
+  `headingLevel + 1` (clamped at 6) instead of a second hardcoded level — that
+  double behaviour was the bug. `CardTitle` gains `asChild` (new
+  `CardTitleProps`) so a card title can be a heading where the card really is a
+  titled section, while staying a `div` by default.
+
+  **Purely additive: every default is frozen at today's output, and none of the
+  365 pre-existing tests changed.** `PageHeader` and the three templates that
+  use it still render `<h1>`; `SectionedGridLayout` still renders `<h1>` +
+  `<h2>`; `AppShellLayout.pageLabel` stays a `<p>` (it is chrome — a location
+  label, not the page heading, and an `<h1>` there would sit next to the content
+  template's). `AuthLayout` is the one template that still contributes **no**
+  heading by default, and not out of caution: a shipping consumer passes its own
+  `<h1>` *element* into the `title` slot precisely because the slot never was a
+  heading, so a default heading would nest one inside the other. Whether that
+  default should flip to `1` in a future major is an owner decision and is open
+  on the card.
+
+  *Upgrading does not close the double-`<h1>` by itself — the fix is opt-in.*
+  Frozen defaults are the paragraph above; this is their consequence. A
+  template nested in a frame that already owns the page `<h1>` keeps emitting a
+  second one after the pin bump, so the WCAG 1.3.1 failure described above
+  stays live until the **call site** passes `headingLevel={2}` on the nested
+  template. That one prop per nested page is the entire required action, and
+  nothing in this release performs it. Pages that legitimately own their `<h1>`
+  need no change — that is the trade the frozen defaults buy. The consumer that
+  reported the defect has not adopted the prop (verified at the time of
+  writing: zero `headingLevel` occurrences in its source), so on this release
+  its two nested admin pages still carry two `<h1>`s.
+
+  *The missing margin utilities.* `PageHeader`'s `<h1>` and `<p>` carried size,
+  weight and colour but **no margin**, so an app that reverts element margins in
+  `@layer base` (any app keeping its own prose styling next to Tailwind
+  Preflight) leaked the user-agent margin into the component — **16.08 px** on
+  the heading, measured in production and reproduced here. This refutes a claim
+  a consumer's own `index.css` makes, that the revert cannot reach DS components
+  because every DS element carries an explicit utility: true for size and
+  weight, false for margin. An audit of **every** element this package renders,
+  against the user-agent margins measured in Chromium, found **ten** such
+  elements in six files — `PageHeader`'s heading and description, `CodeBlock`'s
+  `<pre>`, `FormDescription` and `FormMessage`, `DialogTitle` (Radix renders an
+  `<h2>`) and `DialogDescription` (a `<p>`), `ToastViewport` (Radix renders an
+  `<ol>`, whose margin offsets a `bottom-0` fixed bar by 16 px),
+  `AppShellLayout`'s page label, and `SectionedGridLayout`'s section heading.
+  All ten now carry `m-0`, which sits in the `utilities` layer: it changes
+  nothing where Preflight is intact, and it wins against a consumer's revert
+  **as long as that revert is layered**. Being layered is the condition, not
+  the `base` name — an unlayered declaration outranks every layered one of
+  equal importance, so a reset written outside any `@layer` still defeats `m-0`
+  (measured; only an `!important` utility would win there, and this package
+  ships none). `@layer base` is the shape the measured consumer has, and the
+  shape this release fixes. Everything else was measured clean: `TableCaption`
+  already carried `mt-4`, and
+  `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>`/`<li>` plus every
+  `div`/`span`/`button`/`input`/`label`/landmark element have a user-agent
+  margin of zero. The invariant is now pinned by a
+  `Foundations/UA-Margin-Reset` story that installs the reset the way a
+  consuming app does (an `@layer base` `margin: revert`) and measures the
+  computed margins in Chromium, with two **control** elements that must move —
+  so a green run cannot mean the reset never arrived. The consumer can drop its
+  `[&>header_h1]:m-0` workaround once it bumps the pin.
+
+  *What a consumer actually sees on upgrade.* Exactly one of the ten moves
+  visibly today, and it is not the one the 16.08 px figure points at:
+  **`FormDescription` and `FormMessage`**. Both are `<p>` at `text-sm`, the
+  measured consumer's field row renders both with no local margin workaround,
+  and its `@layer base` revert reaches them — so help and error text loses
+  1 em (**14 px**, measured in Chromium) above and below and tightens toward
+  its field: the gap between an input and its help text goes 18 px → 4 px, and
+  because `FormItem` is a flex column those margins never collapsed, so a row
+  carrying both help and error text loses about 56 px of height. A wanted
+  correction, but a visible one — re-check field spacing after the bump.
+  `PageHeader`'s heading and description, where the 16.08 px was measured, will
+  **not** move there: all three `DashboardLayout` call sites already carry
+  `[&>header_h1]:m-0 [&>header_p]:m-0`, so this only makes those workarounds
+  redundant. And `CodeBlock`'s `<pre>`, `DialogTitle`/`DialogDescription`,
+  `ToastViewport`, `AppShellLayout`'s page label and `SectionedGridLayout`'s
+  section heading have **no consumer today that reverts element margins** —
+  their fix is prospective, right for the next adopter and a no-op now, which
+  includes the concern that `ToastViewport`'s `m-0` would shift a fixed
+  `bottom-0` toast stack by 16 px. That asymmetry is why one pair is named here
+  instead of a list of ten.
+
+  Also fixed: this repo's own `DashboardLayout` story jumped from the
+  template's `<h1>` straight to `<h4>` on its card titles, which axe-core
+  reported as `heading-order` on that story **and** on the `AppShellLayout`
+  story that composes it. Both were on the pre-existing-axe-failures list; both
+  are gone (measured with axe-core 4.12.1, `heading-order` now returns zero
+  violations on both stories). The `color-contrast` finding on the same story's
+  `.opacity-70` line is deliberately untouched — that belongs to the axe card,
+  and the a11y gate stays at `test: 'todo'`.
+
+  26 new tests (365 → 391), all mutation-verified: 31 mutations, 31 killed.
+  The version bump and tag are a separate step.
+- **Unreleased** — `AuthLayout` gets a **`width` prop**, because its column
+  width was unreachable from every call site: the `max-w-md` sat on the inner
+  column while a consumer's `className` merges into the root element. A
+  consumer's legal pages (terms of use, accessibility statement, privacy
+  statement) silently went 720px → 448px on adopting the template, and the
+  width was rejected at visual QA. Two named steps on `authLayoutVariants`
+  (new export), both Tailwind steps rather than arbitrary values:
+  `default` = `max-w-md` (448px, **unchanged** — no existing login page moves)
+  and `prose` = `max-w-2xl` (672px) for long-form copy inside the card.
+  `max-w-2xl` and not `max-w-3xl` for two independent reasons: it is the step
+  this system already names for a reading column (`Container size="narrow"`
+  *is* `max-w-2xl`, so a wide `AuthLayout` matches a `FormLayout` column
+  instead of inventing a second reading width), and WCAG 1.4.8 (AAA) caps a
+  line at 80 characters — minus the Card's `p-6` the text measure is 624px at
+  `2xl` against 720px at `3xl`. So `prose` is deliberately 48px *narrower*
+  than the 720px it replaces. Purely additive: no existing prop, class or
+  export changes. Four new stories (both widths × both themes, the long-prose
+  legal case included, plus the rejected 448px state kept for comparison)
+  measure the **computed** `max-width` through the CSSOM in Chromium rather
+  than asserting a class string. `AuthLayout` is the **only** template with
+  this defect — the other five take their width from `Container`, where
+  `className` reaches it. The version bump and tag are a separate step.
 - **0.23.0** — *Skipped.* The tag was pushed at the commit before the release
   commit (the version bump had been rejected by the commit-msg hook), so
   `v0.23.0` points at a tree whose `package.json` still reads `0.22.1`. Tags

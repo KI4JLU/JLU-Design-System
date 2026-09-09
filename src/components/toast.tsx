@@ -87,7 +87,10 @@ const ToastViewport = React.forwardRef<
     className={cn(
       // pointer-events-none: the viewport spans the screen width, only the
       // toasts themselves may swallow clicks (they re-enable it).
-      "pointer-events-none fixed inset-x-0 bottom-0 z-100 flex max-h-screen flex-col-reverse gap-stack-sm p-3",
+      // m-0: Radix renders the viewport as an <ol>, whose user-agent margin
+      // (1em, measured in Chromium) would offset a `bottom-0` fixed box by
+      // 16px in any app that reverts element margins in `@layer base`.
+      "pointer-events-none fixed inset-x-0 bottom-0 z-100 m-0 flex max-h-screen flex-col-reverse gap-stack-sm p-3",
       "sm:inset-x-auto sm:right-0 sm:max-w-sm sm:p-gutter",
       className,
     )}

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
+import { expect } from "storybook/test";
 import { useState, type ReactNode } from "react";
 import {
   BookOpen,
@@ -111,7 +112,13 @@ type Story = StoryObj<typeof meta>;
  * Der Zustand liegt (wie in einer App) außerhalb des Templates; hier ist es
  * lokaler Story-State statt eines Contexts.
  */
-const Interactive = ({ title }: { title?: ReactNode }) => {
+const Interactive = ({
+  title,
+  headingLevel,
+}: {
+  title?: ReactNode;
+  headingLevel?: 1 | 2 | 3 | 4 | 5 | 6;
+}) => {
   const [open, setOpen] = useState<Record<string, boolean>>({
     favorites: true,
     discover: false,
@@ -170,6 +177,7 @@ const Interactive = ({ title }: { title?: ReactNode }) => {
     <SectionedGridLayout
       label="Sammlungen"
       title={title}
+      headingLevel={headingLevel}
       description="Erklärzeile unter dem Titel — was auf dieser Seite gruppiert ist."
       actions={
         <span className="text-body-base text-on-surface-variant">6 Sammlungen</span>
@@ -256,4 +264,34 @@ export const InAppShell: Story = {
       <Interactive />
     </AppShellLayout>
   ),
+};
+
+/**
+ * **Eine Stufe tiefer, komplett.** `headingLevel={2}` verschiebt den
+ * Seitentitel **und** jede Sektionsüberschrift zusammen — Titel `h2`,
+ * Sektionen `h3`. Die beiden Stufen sind eine einzige Zahl und ihr Nachfolger,
+ * keine zwei festen Werte mehr: vorher standen ein erzwungenes `h1` und ein
+ * erzwungenes `h2` nebeneinander und konnten sich nicht gemeinsam bewegen.
+ *
+ * Für eine Seite, deren `<h1>` woanders steht (Admin-Rahmen, CMS) — dort ist
+ * das der Unterschied zwischen einem sauberen Outline und einem zweiten `<h1>`.
+ */
+export const NestedHeadingLevels: Story = {
+  render: () => (
+    <div className="flex flex-col gap-stack-md">
+      <div className="px-margin-page pt-8">
+        <h1 className="m-0 font-headline-md text-display-lg text-on-surface">Administration</h1>
+      </div>
+      <Interactive title="Sammlungen" headingLevel={2} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    // Orakel: der Dokument-Outline (ARIA in HTML: h1–h6 -> `heading` + Stufe).
+    // Genau ein Element auf Stufe 1, und es gehört dem Rahmen, nicht dem
+    // Template; die vier Sektionen liegen auf Stufe 3.
+    const levels = [...canvasElement.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(
+      (heading) => heading.tagName,
+    );
+    await expect(levels).toEqual(["H1", "H2", "H3", "H3", "H3", "H3"]);
+  },
 };

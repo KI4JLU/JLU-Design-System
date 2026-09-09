@@ -3,6 +3,7 @@ import { Card } from "../components/card";
 import { Container } from "../components/container";
 import { PageHeader } from "../components/page-header";
 import { cn } from "../lib/utils";
+import { type HeadingLevel } from "../lib/heading-level";
 
 /**
  * Template „Tabellen/Admin": PageHeader with actions, a Card holding an
@@ -13,8 +14,16 @@ import { cn } from "../lib/utils";
  */
 export interface TableLayoutProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
-  /** Page title. */
+  /** Page title. Rendered as a real heading by `PageHeader`. */
   title: React.ReactNode;
+  /**
+   * Level of `title` in the document outline, `1`–`6`. Defaults to
+   * `PageHeader`'s `1`, i.e. an `<h1>` — unchanged for every existing call
+   * site. Pass `2` when this table page is nested in a frame that already
+   * owns the `<h1>` (an admin shell); see
+   * `docs/COMPONENT_GUIDELINES.md` → „Page headings: who owns them".
+   */
+  headingLevel?: HeadingLevel;
   /** Muted line under the title. */
   description?: React.ReactNode;
   /** Right-aligned header actions (e.g. „Neu anlegen"). */
@@ -27,7 +36,17 @@ export interface TableLayoutProps
 
 const TableLayout = React.forwardRef<HTMLDivElement, TableLayoutProps>(
   (
-    { className, title, description, actions, toolbar, footer, children, ...props },
+    {
+      className,
+      title,
+      headingLevel,
+      description,
+      actions,
+      toolbar,
+      footer,
+      children,
+      ...props
+    },
     ref,
   ) => (
     <Container
@@ -35,7 +54,14 @@ const TableLayout = React.forwardRef<HTMLDivElement, TableLayoutProps>(
       className={cn("flex flex-col gap-gutter py-gutter md:py-margin-page", className)}
       {...props}
     >
-      <PageHeader title={title} description={description} actions={actions} />
+      {/* `headingLevel` is forwarded, not defaulted here: `PageHeader` owns
+          the default (1) so there is one place to read it off. */}
+      <PageHeader
+        title={title}
+        headingLevel={headingLevel}
+        description={description}
+        actions={actions}
+      />
       <Card>
         {toolbar && (
           <div className="flex flex-wrap items-center gap-stack-sm border-b border-outline-variant p-4">

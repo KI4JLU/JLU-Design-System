@@ -28,6 +28,7 @@ export {
   type CardProps,
   CardHeader,
   CardTitle,
+  type CardTitleProps,
   CardDescription,
   CardContent,
   CardFooter,
@@ -172,6 +173,7 @@ export {
   type AppShellLayoutProps,
 } from "./templates/app-shell-layout";
 export { AuthLayout, type AuthLayoutProps } from "./templates/auth-layout";
+export { authLayoutVariants } from "./templates/auth-layout-variants";
 export { ChatLayout, type ChatLayoutProps } from "./templates/chat-layout";
 export {
   DashboardLayout,
@@ -194,3 +196,9 @@ export {
   type WorkspaceMobileTab,
 } from "./templates/workspace-layout";
 export { cn } from "./lib/utils";
+/**
+ * The level type behind every template's `headingLevel` prop — exported so a
+ * consumer wrapping a template can pass the prop through without restating
+ * the union.
+ */
+export { type HeadingLevel } from "./lib/heading-level";
