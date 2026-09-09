@@ -393,7 +393,7 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
-- **Unreleased** — **one rule for the page heading, and every element with a
+- **0.24.0** — **one rule for the page heading, and every element with a
   user-agent margin now pins it.** Two findings from a consumer's template
   adoption, both confirmed by independent reviewers (KI-693/KI-714), fixed
   together on KI-736.
@@ -507,7 +507,7 @@ Until then the git path carries us; keep the README's git section first.
 
   26 new tests (365 → 391), all mutation-verified: 31 mutations, 31 killed.
   The version bump and tag are a separate step.
-- **Unreleased** — `AuthLayout` gets a **`width` prop**, because its column
+- **0.24.0** — `AuthLayout` gets a **`width` prop**, because its column
   width was unreachable from every call site: the `max-w-md` sat on the inner
   column while a consumer's `className` merges into the root element. A
   consumer's legal pages (terms of use, accessibility statement, privacy
