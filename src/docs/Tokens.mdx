@@ -91,7 +91,12 @@ die es lösen soll.
 
 - **Typografie**: `text-display-lg`, `text-headline-md`, `text-label-sm`,
   `text-stat-lg`, `text-body-base` (+ zugehörige `font-*`-Familien).
-- **Spacing**: `gutter`, `stack-sm/md/lg`, `margin-page`, `container-max`.
+- **Spacing**: `gutter`, `stack-sm/md/lg`, `margin-page`.
+- **Seitenbreiten**: `container-max` (1440px), `container-content` (1000px),
+  `container-reading` (42rem/672px) — die drei Breiten, die `Container size`
+  als `page` / `content` / `reading` benennt. Referenziert werden sie als
+  `max-w-(--max-width-container-*)`; warum nicht als `max-w-container-*`,
+  steht in `container.mdx`.
 - **Radius**: `rounded`, `rounded-lg`, `rounded-xl`, `rounded-full`.
 - **Interaktionszustände**: `primary-hover`, `primary-active`, `focus-ring`,
   `disabled`, `on-disabled`. Im Dark Mode hellen `hover`/`active` gegenüber

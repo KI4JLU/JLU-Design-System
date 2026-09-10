@@ -22,7 +22,7 @@ import { cva } from "class-variance-authority";
  * lies between the two steps):
  *
  * 1. `max-w-2xl` is the step this system has **already** named for a reading
- *    column — `containerVariants` `size="narrow"` is `max-w-2xl` — so a wide
+ *    column — `containerVariants` `size="reading"` is the same 672px — so a wide
  *    AuthLayout matches a `FormLayout` column instead of introducing a second,
  *    competing reading width.
  * 2. WCAG 1.4.8 (AAA) caps a line at 80 characters. Minus the Card's `p-6`
