@@ -37,7 +37,7 @@ const FormLayout = React.forwardRef<HTMLDivElement, FormLayoutProps>(
   ) => (
     <Container
       ref={ref}
-      size="narrow"
+      size="reading"
       className={cn("flex flex-col gap-stack-lg py-gutter md:py-margin-page", className)}
       {...props}
     >

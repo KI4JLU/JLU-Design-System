@@ -230,7 +230,26 @@
   --spacing-stack-md: 16px;
   --spacing-stack-lg: 32px;
   --spacing-margin-page: 40px;
+
+  /* Seitenbreiten-Skala — die drei Breiten, die `Container size` benennt
+   * (`page` / `content` / `reading`). EINE Stelle zum Nachjustieren; ein
+   * `max-w-[…]` am Aufrufort ist immer ein Fehler, weil er hier nicht sichtbar
+   * ist. Referenziert werden sie als `max-w-(--max-width-container-*)`, nicht
+   * als `max-w-container-*` — Begründung in `container-variants.ts`.
+   *
+   * `page` und `content` sind Geräteraum (px): eine Seitenbreite begrenzt
+   * Karten, Raster und Tabellen. `reading` ist ein TEXTmaß und deshalb in rem —
+   * es soll mit der Schriftgröße des Nutzers mitwachsen. 42rem = 672px bei
+   * 16px-Wurzelgröße und ist damit derselbe Wert wie Tailwinds `--container-2xl`
+   * (`max-w-2xl`), den diese Breite vorher direkt benutzt hat.
+   *
+   * Der Name `container-max` (nicht `container-page`) bleibt, obwohl die
+   * Variante `page` heißt: dieses Token ist veröffentlicht und wird in
+   * CampusAgents direkt als `max-w-container-max` geschrieben — eine Umbenennung
+   * wäre dort ein stiller Ausfall (Klasse kompiliert zu nichts). */
   --max-width-container-max: 1440px;
+  --max-width-container-content: 1000px;
+  --max-width-container-reading: 42rem;
 
   /* Font families */
   --font-display-lg: "Manrope", sans-serif;

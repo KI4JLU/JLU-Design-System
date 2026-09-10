@@ -413,6 +413,16 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   (`sm|md|lg|gutter` = spacing tokens), page margins via `Container` — no
   ad-hoc `gap-[13px]` or hand-rolled breakpoint ladders; `Grid cols` already
   collapses responsively.
+- **The page width is a `Container` `size`, never a class at the call site.**
+  Three named roles: `page` (1440px, the page maximum — dashboards, wide
+  tables, editor views), `content` (1000px — the ordinary page of cards,
+  grids and sections) and `reading` (672px — running text or form fields;
+  `FormLayout` uses it). A new page starts at `content`. `max-w-[1000px]` or
+  any `max-w-*` on a `Container` is a review FAIL and **lint cannot catch
+  it**: `layout-only-classname` only checks `DS_CONTROLS`, which contains no
+  composition components (KI-711). If the width you need has no name, add a
+  token + variant in the design system — see `container.mdx`, which also
+  carries the measured characters-per-line per width.
 - **Who renders the page heading is one rule, not a per-template habit** — see
   "Page headings: who owns them" below. Short version: the template renders the
   `title` as a real heading, `headingLevel` picks its level (default `1`), and a

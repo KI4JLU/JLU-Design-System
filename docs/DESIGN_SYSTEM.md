@@ -184,13 +184,14 @@ Changelog cards on the board.)*
 
 ### Layout primitives (`src/components/`)
 Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
-`margin-page`, `container-max`, radius, colors) — no raw pixel values.
+`margin-page`, the page widths `--max-width-container-max`/`-content`/
+`-reading`, radius, colors) — no raw pixel values.
 
 | Component | File | Notes |
 |-----------|------|-------|
 | `Stack` (+ `stackVariants`) | `stack.tsx` / `stack-variants.ts` | 1-D flex: `direction` column/row, `gap` = spacing tokens, align/justify/wrap; `asChild` for semantic elements |
 | `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
-| `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`, max `container-max`; `size="narrow"` for forms |
+| `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`; `size` names the page's role — `page` (1440px, default), `content` (1000px), `reading` (672px), all three from `--max-width-container-*`. Never a `max-w-*` at the call site |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
 | `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
 | `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both |
@@ -393,6 +394,77 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.25.0** — **`Container` names three page widths instead of two, and the
+  sizes now name a role.** KI-751. The gap was that 1440px is a *page maximum*
+  and 672px a *reading measure*, with nothing in between for the width most
+  pages actually want — so a consumer aligning a page with its own content
+  column had to write `className="max-w-[1000px]"` on a `Container`, which
+  `layout-only-classname` **structurally cannot see**: the rule only checks
+  `DS_CONTROLS` in `eslint-plugin/index.js` (ten controls, no composition
+  components — KI-711). It passes lint silently, and the width scale becomes
+  advisory.
+
+  *The new width is 1000px, measured rather than picked.* The content columns
+  the two consumers actually use today: JustRAG `.home-view__section` and
+  `.home-view__grid--main` **1000px** (`web/src/components/HomeView.css:140`
+  and `:247`), `GlobalKbSettings` 900px, `Profile` and `StudioWorkspace` 800px,
+  `.admin-container` `min(1600px, 95vw)`; CampusAgents `EditorShell`,
+  `AgentConfigPage` and `WidgetConfigPage` `max-w-container-max` (1440px),
+  `WidgetEmbedPage`/`StandaloneWidgetPage` 672px. Between 672 and 1440 there
+  are 800, 900 and 1000 twice — and 1000 is the column the next page to move
+  (KI-750, JustRAG's legal pages) was asked to line up with. `max-w-5xl`
+  (1024px) would have been the tidier number and would have missed that
+  alignment by 12px a side, which is exactly the `max-w-[1000px]` this release
+  exists to remove.
+
+  *The sizes are `page` / `content` / `reading`, renamed from `default` /
+  `narrow`.* Positional names gave no answer to "which one do I want", which is
+  how the arbitrary value got written in the first place; a third positional
+  name would have made it worse. **No width moved** — `page` is the unchanged
+  1440px and `reading` the unchanged 672px, both pinned by the CSSOM tests.
+  The migration is complete and verified: the only call site in this repo was
+  `FormLayout` (`size="narrow"` → `size="reading"`), and **neither consumer
+  imports `Container` at all** — both reach it through templates, and
+  `grep -rn 'size="narrow"'` finds nothing in either. A consumer that did pass
+  the old name breaks as a **type error**, not silently. Earlier entries in
+  this changelog still say `size="narrow"`; that is the historical record of
+  what shipped then, not a live API.
+
+  *Three tokens, one pattern.* `--max-width-container-content: 1000px` and
+  `--max-width-container-reading: 42rem` join `--max-width-container-max`, and
+  all three variants reference them as `max-w-(--max-width-container-*)` — the
+  file previously mixed a token (`default`) with a bare Tailwind step
+  (`narrow`). Tailwind 4 *does* generate `max-w-container-max` from the same
+  token (measured, tailwindcss 4.3.2 against this package's `tokens.css`; the
+  old comment in `container-variants.ts` claiming there is no `--max-width-*`
+  namespace was wrong), but the arbitrary-variable form is the one to use
+  because of **tailwind-merge**, which `cn()` runs on every `Container`:
+  measured with tailwind-merge 3.6.0,
+  `max-w-(--max-width-container-content) max-w-3xl` collapses to `max-w-3xl`,
+  while `max-w-container-content max-w-3xl` keeps **both** classes — a custom
+  theme key is not in its `max-w` conflict group, so a call site's own width
+  would stop winning and CSS source order would decide. That mechanism is now
+  pinned by the `CallSiteWidthStillWins` story. `reading` is in `rem` on
+  purpose: it is a *text* measure and should scale with the user's font size,
+  while `page`/`content` bound device space (cards, grids, tables).
+  `--max-width-container-max` keeps its name although its variant is called
+  `page`, because CampusAgents writes `max-w-container-max` in its own source
+  and a rename would fail there silently.
+
+  *Measured line lengths, so the next page picks the right width.* In Chromium,
+  Inter 16px, German legal prose: `page` 1360px text measure → ~181
+  characters/line, `content` 920px → ~121, `reading` 592px → ~74. WCAG 1.4.8
+  (AAA) caps a line at 80, so **`content` is a page width, not a prose
+  measure** — running text belongs in `reading`. Both numbers and the rule are
+  in the new `container.mdx`, together with the reason not to reach for
+  `className`; `COMPONENT_GUIDELINES.md` carries the short form as an
+  enforceable rule.
+
+  3 new story tests (391 → 394: `AllSizes`, `AllSizesDark`,
+  `CallSiteWidthStillWins`), all asserting the **computed** `max-width` through
+  the CSSOM rather than a class string — a class assertion would stay green if
+  the utility compiled to nothing, which is the actual failure mode here.
+  Mutation-verified: 4 mutations, 4 killed. The tag is a separate step.
 - **0.24.0** — **one rule for the page heading, and every element with a
   user-agent margin now pins it.** Two findings from a consumer's template
   adoption, both confirmed by independent reviewers (KI-693/KI-714), fixed
