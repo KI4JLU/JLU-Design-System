@@ -109,6 +109,10 @@ export {
   type SegmentedControlProps,
 } from "./components/segmented-control";
 export { Sidebar, type SidebarProps } from "./components/sidebar";
+// The read side of the collapsed state, for a consumer's own header/footer
+// node. The context objects themselves stay internal: writing them would let
+// an app claim a sidebar is collapsed while its width says otherwise.
+export { useSidebarCollapsed } from "./components/sidebar-context";
 export {
   SidebarUserMenu,
   type SidebarUserMenuProps,

@@ -63,6 +63,13 @@ Component  ─uses→  Semantic (--color-primary)  ─references→  Primitive (
   dark mode so series stay readable on dark surfaces.
 - **Typography / spacing / radius** — display/headline/label/stat/body scales,
   `spacing-gutter`/`stack-*`/`margin-page`, `radius-*`.
+- **Layout widths** — `--max-width-container-*` (the three `Container` page
+  widths) and `--width-sidebar` / `--width-sidebar-collapsed` (the navigation
+  column in its two states). Written at the call site as
+  `max-w-(--token)` / `w-(--token)`, **not** as `max-w-container-max` /
+  `w-sidebar`: tailwind-merge does not recognise a custom theme key as a
+  conflict, so the theme-key form would let a call site's own width lose to CSS
+  source order. Full measurement in `container-variants.ts`.
 - **Control radii** — `radius-action` (Buttons **and** NavItems, one dial:
   default `lg`) and `radius-field` (Input/Textarea, default `lg`).
   Change the token, every control follows — never hardcode a radius on a
@@ -168,7 +175,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Dialog` (+ parts) | `dialog.tsx` | Radix — focus trap, Esc-to-close, ARIA, scroll lock; built-in close button label overridable via `closeLabel` (default „Schließen") |
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
-| `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links |
+| `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links. `label` (a plain string mirroring the visible text) is what lets a row collapse: inside a collapsed `Sidebar` it becomes the row's `aria-label` **and** a `Tooltip`, and the non-`<svg>` children are hidden. Without `label` a row does not collapse at all — the row cannot invent a name it was not told. The collapsed state comes from the `Sidebar` (context), never from a prop, so one column cannot end up half collapsed |
 | `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
@@ -193,8 +200,9 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
 | `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`; `size` names the page's role — `page` (1440px, default), `content` (1000px), `reading` (672px), all three from `--max-width-container-*`. Never a `max-w-*` at the call site |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
-| `Sidebar` | `sidebar.tsx` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell |
-| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both |
+| `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node |
+| `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both. Marks its drawer copy of the sidebar node via `SidebarSurfaceContext`, which is how that copy renders expanded and without a collapse toggle |
+| `SidebarUserMenu` | `sidebar-user-menu.tsx` | sidebar-footer user menu: initials avatar, name over role, chevron; the whole row is the dropdown trigger. In a collapsed `Sidebar` it shrinks to the avatar alone (round, icon-sized, no chevron) — kept rather than hidden, because it is the only route to sign-out. Name and role stay as `sr-only`, so the trigger's accessible name is the same string in both states |
 | `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. No viewport awareness: which pane is rendered is the template's job |
 | `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: focusable `role="separator"` (WAI-ARIA APG „Window Splitter") with `aria-valuemin/max/now`, clamped, and `aria-orientation="vertical"` for the bar itself (not the role's default). Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Entschieden: `separator` statt `slider`" in the MDX — role **and** vertical mirroring were one decision and are both settled (owner, 08/2026). `controls` (→ `aria-controls`, the pane root whose width `aria-valuenow` reports) completes the pattern: every *required* APG piece is present; of the *optional* keys, Home/End are in, `Enter` (collapse — `SidePanel`'s visible button) and F6 are deliberately out. In `WorkspaceLayout` the id is minted by the template and always wired; see „Entschieden: `aria-controls` zeigt auf die Leisten-Wurzel" in the MDX |
 | `BottomTabBar` | `bottom-tab-bar.tsx` / `bottom-tab-bar-variants.ts` | fixed bottom `navigation` landmark for narrow-screen pane switching: `items` of icon + label, exactly one `aria-current="page"`. Deliberately **not** `SegmentedControl` — that is a `role="group"` of `aria-pressed` toggles, an inline control rather than a landmark whose active item is the displayed view |
@@ -406,6 +414,45 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.27.0** — **`Sidebar` collapses to an icon column, controlled by the
+  app.** KI-785.
+
+  New: `collapsed` / `onCollapsedChange` on `Sidebar`, plus `collapseLabel` /
+  `expandLabel` (German defaults, like `AppShell`'s `menuLabel`); `label` on
+  `NavItem`; the exported hook `useSidebarCollapsed`; the tokens
+  `--width-sidebar` (16rem — exactly what the previous `w-64` resolved to, so
+  no expanded column moves) and `--width-sidebar-collapsed` (5rem).
+
+  **Controlled, with no `defaultCollapsed`** — the same argument
+  `SectionedGridSectionBase` and `SidePanel` already make: a component that
+  remembered anything would be a second truth next to the app's, and sidebar
+  width is exactly the sort of thing an app persists per user.
+
+  **The toggle is the column's, not a slot's.** It is the only way back out of
+  the collapsed state, so it has to survive collapsing, and it carries a
+  contract an arbitrary slotted node could not be held to: `aria-expanded` plus
+  `aria-controls` on the `<nav>`, and a label for each direction. Same reason
+  `SidePanel` owns its expand control.
+
+  **Not in the mobile drawer.** `AppShell` renders the *same* sidebar node
+  twice, so the drawer copy cannot be told apart from props — `AppShell` now
+  marks it with a context, and there the column renders expanded and without
+  the toggle. A "minimise the column" control inside a modal drawer is
+  meaningless, and a drawer that opened collapsed would show icon-only rows
+  with no control to widen them. This is decided in JavaScript rather than with
+  an `lg:` utility because it is not a question about the viewport but about
+  *which of the two mounts* this is — and only `AppShell` knows that.
+
+  **The a11y risk of the feature is the icon-only row**, so it is the thing
+  under test: a collapsed row keeps its accessible name via `aria-label` from
+  `label` and gets a `Tooltip` with the same text. A row given no `label` does
+  not collapse — dropping its only text would be precisely the regression.
+
+  Open, deliberately not decided here: `AppShellLayout` does **not** forward
+  the new props yet (its file is the open PR #23's, and conflating them would
+  make one review reason about both), and the mobile counterpart depends on the
+  pending `BottomTabBar` decision card.
+
 - **0.26.0** — **BREAKING: `AppShellLayout` no longer renders a `ThemeToggle`.
   The page-label bar has a `headerActions` slot, and `ThemeToggle` takes an
   `id`.** KI-784.
