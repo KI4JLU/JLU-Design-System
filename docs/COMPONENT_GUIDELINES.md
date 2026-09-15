@@ -402,7 +402,12 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   icon-only row's accessible name and its tooltip, and a row without one stays
   full width rather than losing its text. Inside `AppShell`'s mobile drawer the
   same node renders expanded and without the toggle — that is handled for you,
-  so no breakpoint check at the call site.
+  so no breakpoint check at the call site. **Inside `AppShellLayout` you pass
+  the very same props to the template** (`collapsed`, `onCollapsedChange`,
+  `collapseLabel`, `expandLabel`, since 0.28.0); it forwards them to the
+  `Sidebar` it builds. Do not compose `AppShell` + `Sidebar` by hand to get a
+  collapsible column, and do not put a minimise button of your own into
+  `logo` or `headerActions`.
 - **`WorkspaceLayout` is standalone — never a child of `AppShellLayout`.** It
   owns the full viewport and its panes *are* the page's chrome, so nesting it
   in the shell puts the shell's nav column next to the left pane: two chrome

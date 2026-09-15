@@ -23,6 +23,10 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 | `drawerLabel` | `string` | — | Screenreader-Titel des mobilen Drawer-Dialogs (Default „Navigation"). |
 | `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt. |
 | `headerActions` | `ReactNode` | — | Chrome-Bedienelemente in derselben Zeile, rechts vom `pageLabel`: `ThemeToggle`, Suchfeld, mehrere davon — oder nichts. **Seit 0.26.0**; davor rendete das Template hier fest einen `<ThemeToggle />`. |
+| `collapsed` | `boolean` | — | Sidebar eingeklappt (Icon-Breite) oder voll. **Seit 0.28.0**, unverändert an die interne `Sidebar` durchgereicht. Ohne `onCollapsedChange` rein darstellend. |
+| `onCollapsedChange` | `(collapsed: boolean) => void` | — | Der Schalter wurde gedrückt; bekommt den **gewünschten** Zustand. Erst dieses Prop lässt die Spalte den Schalter rendern. **Seit 0.28.0.** |
+| `collapseLabel` | `string` | — | Zugänglicher Name des Schalters im ausgeklappten Zustand (Default „Navigation einklappen"). **Seit 0.28.0.** |
+| `expandLabel` | `string` | — | Zugänglicher Name des Schalters im eingeklappten Zustand (Default „Navigation ausklappen"). **Seit 0.28.0.** |
 | `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
 
 <Controls />
@@ -78,6 +82,71 @@ fehlten: die vier Label-Props des `ThemeToggle`
 eigenen Element erreichbar — das Template muss sie nicht mehr durchreichen —
 und `id` adressiert die `role="group"`-Gruppe.
 
+## Einklappbare Sidebar (seit 0.28.0)
+
+Die Spalte, die 0.27.0 der `Sidebar` gegeben hat, ist jetzt **aus dem Template
+heraus** erreichbar. Der Zustand gehört der App — es gibt bewusst kein
+`defaultCollapsed`, weil die Sidebar-Breite genau die Art Wert ist, die eine
+App pro Nutzer speichert:
+
+```tsx
+const [collapsed, setCollapsed] = useState(false);   // oder URL, Context, localStorage
+
+<AppShellLayout
+  logo={logo}
+  nav={nav}
+  pageLabel={label}
+  collapsed={collapsed}
+  onCollapsedChange={setCollapsed}
+  collapseLabel={t("collapseNavigation")}   // optional, Default ist deutsch
+  expandLabel={t("expandNavigation")}
+>
+  {page}
+</AppShellLayout>
+```
+
+<Canvas of={AppShellLayoutStories.WithCollapsibleSidebar} />
+
+- **Den Schalter rendert die Spalte selbst**, rechtsbündig in der Header-Zeile
+  neben dem `logo` — das Template bringt hier **kein** eigenes Bedienelement
+  mit und öffnet auch keinen Slot. Warum das kein Widerspruch zu
+  `headerActions` ist, steht unten.
+- **Ohne `onCollapsedChange` gibt es keinen Schalter.** Jede Aufrufstelle von
+  vor 0.28.0 rendert deshalb exakt wie vorher: die Ergänzung ist rein additiv,
+  vier optionale Props, kein geändertes Standardverhalten.
+- **Jede Zeile, die einklappen soll, braucht ein `label` am `NavItem`.** Dieser
+  String ist der zugängliche Name der Icon-Zeile und ihr Tooltip; eine Zeile
+  ohne `label` bleibt in voller Breite stehen, statt ihren einzigen Text zu
+  verlieren.
+- **Im mobilen Drawer passiert nichts davon.** Dieselbe Sidebar-Instanz wird
+  dort ein zweites Mal gerendert und ist immer ausgeklappt und ohne Schalter —
+  ein „Spalte verkleinern" in einem modalen Drawer wäre sinnlos. Das entscheidet
+  `AppShell` in JavaScript (welche der beiden Montierungen), nicht ein
+  Breakpoint; die App schreibt dafür keine Abfrage.
+- **Beide Label-Props sind übersetzbar** — die Defaults sind deutsch, wie bei
+  `menuLabel`/`drawerLabel`.
+
+### Warum durchgereicht und nicht als Slot (im Gegensatz zu `headerActions`)
+
+Ein Template öffnet einen Slot, wenn es sonst **selbst entscheiden würde**,
+welches Bedienelement in eine Chrome-Position gehört, die ihm gehört — das war
+`headerActions` (KI-784). Der Sidebar-Schalter ist keine solche Entscheidung:
+er gehört seit 0.27.0 der `Sidebar`, weil er das Einklappen **überleben** muss
+(er ist der einzige Weg zurück) und weil er einen Vertrag trägt, den ein
+beliebig eingehängter Knoten nicht einhalten könnte — `aria-expanded` plus
+`aria-controls` auf das `<nav>`, dessen `id` nur die `Sidebar` kennt (`useId`,
+pro Montierung). Ein Slot an dieser Stelle käme an diese `id` gar nicht heran.
+
+Was der Slot-Pattern schützt, gilt trotzdem weiter: **unterdrückbar** (Prop
+weglassen → kein Schalter), **übersetzbar** (`collapseLabel`/`expandLabel`),
+und die *Position* ist keine Meinung des Templates, sondern Teil des
+Sidebar-Vertrags — in 80px Breite ist Platz für genau ein Element.
+
+Anders als 0.26.0 beim `ThemeToggle` kann diese Lücke hier **nicht durch
+Löschen** geschlossen werden: den `ThemeToggle` baut die App seitdem selbst,
+die `Sidebar`-Instanz dagegen gehört dem Template. Durchreichen ist der
+einzige Weg an diese Props.
+
 ## Responsives Verhalten
 
 - **ab `lg`**: feste, sticky Sidebar (volle Höhe, rechter Rand), Inhalt daneben.
@@ -108,5 +177,11 @@ und `id` adressiert die `role="group"`-Gruppe.
   COMPONENT_GUIDELINES.md → „Page headings: who owns them".
 - ❌ Keine eigene Sidebar/Top-Bar in der App bauen oder das Template per
   `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
+- ❌ **Nicht** `AppShell` + `Sidebar` von Hand komponieren, nur um die Spalte
+  einklappbar zu machen — genau diese Lücke schließt 0.28.0. Wer ein weiteres
+  `Sidebar`-Prop braucht, meldet es hier an, statt das Gerüst nachzubauen.
+- ❌ **Keinen eigenen Einklapp-Button** in `logo` oder `headerActions` hängen:
+  die Spalte rendert ihren Schalter selbst, sobald sie `onCollapsedChange` hat,
+  samt `aria-expanded`/`aria-controls`. Zwei Schalter wären zwei Wahrheiten.
 - ❌ Keine Business-Logik hinein reichen: Routing und Active-State leben in den
   injizierten `NavItem`s, nicht im Template.

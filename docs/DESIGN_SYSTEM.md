@@ -200,7 +200,7 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
 | `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`; `size` names the page's role — `page` (1440px, default), `content` (1000px), `reading` (672px), all three from `--max-width-container-*`. Never a `max-w-*` at the call site |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
-| `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node |
+| `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node. `AppShellLayout` forwards all four props (`collapsed`, `onCollapsedChange`, `collapseLabel`, `expandLabel`) since 0.28.0, so the template is the supported way to reach this |
 | `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both. Marks its drawer copy of the sidebar node via `SidebarSurfaceContext`, which is how that copy renders expanded and without a collapse toggle |
 | `SidebarUserMenu` | `sidebar-user-menu.tsx` | sidebar-footer user menu: initials avatar, name over role, chevron; the whole row is the dropdown trigger. In a collapsed `Sidebar` it shrinks to the avatar alone (round, icon-sized, no chevron) — kept rather than hidden, because it is the only route to sign-out. Name and role stay as `sr-only`, so the trigger's accessible name is the same string in both states |
 | `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. No viewport awareness: which pane is rendered is the template's job |
@@ -295,6 +295,27 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   would have kept exactly the case the slot exists to solve (the app that
   wants the position *empty*) impossible. The slot inherits the position's
   rules, heading ownership included: chrome stays chrome.
+- **A control that belongs to a *component* the template composes is
+  forwarded, not re-slotted.** The previous rule is about a position the
+  *template* would otherwise fill with an opinion of its own. Where the
+  component already owns the control — `Sidebar`'s collapse toggle, which has
+  to survive collapsing and carries `aria-expanded` + `aria-controls` on a
+  `<nav>` id minted inside it — a template-level slot would re-open exactly
+  the question the component closed, one level higher, and could not reach the
+  id at all. `AppShellLayout` therefore `Pick`s `collapsed` /
+  `onCollapsedChange` / `collapseLabel` / `expandLabel` from `SidebarProps`
+  (0.28.0, KI-793), the same way it `Pick`s `menuLabel` / `drawerLabel` from
+  `AppShellProps`: same names, same descriptions, nothing to drift. The test
+  for which rule applies is „who owns the control", not „is it in my subtree".
+  Forwarding is only additive as long as the props stay optional and keep the
+  component's defaults — a forwarded prop with a new default at template level
+  is a behaviour change in disguise.
+- **A template that composes a component with labelled controls forwards those
+  labels too.** The defaults are German; an app that cannot reach them ships
+  German strings it never chose. Where the consumer can construct the
+  component itself, deleting the mount is the better fix (0.26.0's
+  `ThemeToggle`) — where the template owns the instance, forwarding is the
+  only route (0.28.0's `collapseLabel`/`expandLabel`).
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
@@ -414,6 +435,79 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.28.0** — **`AppShellLayout` forwards the collapsible column.** KI-793.
+
+  New on `AppShellLayoutProps`: `collapsed`, `onCollapsedChange`,
+  `collapseLabel`, `expandLabel` — `Pick`ed from `SidebarProps` and handed to
+  the `Sidebar` the template constructs internally, exactly as `menuLabel` /
+  `drawerLabel` are `Pick`ed from `AppShellProps`. Nothing else changed.
+
+  **The gap.** 0.27.0 gave `Sidebar` a controlled collapsed state, but
+  `AppShellLayout` builds its own `Sidebar` and forwarded none of it, so the
+  feature was reachable only by composing `AppShell` + `Sidebar` by hand —
+  i.e. by rebuilding the page skeleton in the app, which §4 tells consumers
+  not to do. A consumer (JustRAG) was blocked on exactly that.
+
+  **Forwarded, not re-slotted — and that is not a contradiction of
+  `headerActions`.** A template opens a slot when it would otherwise *decide*
+  which control belongs in a chrome position it owns (0.26.0). The sidebar
+  toggle is not such a decision: it belongs to `Sidebar` (0.27.0) because it
+  must survive collapsing and it carries `aria-expanded` + `aria-controls`
+  pointing at a `<nav>` id minted inside the component (`useId`, per mount).
+  A template-level slot could not be held to that contract and could not reach
+  that id — it would re-open the question 0.27.0 closed, one level higher. The
+  four things the slot pattern protects hold anyway: the control is
+  **suppressible** (omit `onCollapsedChange` → no toggle), **localizable**
+  (both labels), its **position** is the column's contract rather than a
+  template opinion (80px holds one element), and *adding a second control*
+  beside it is not a use case — a second toggle would be a second truth.
+
+  **Both label props forward, and here that is the only route.** 0.26.0 closed
+  the equivalent `ThemeToggle` gap by *deletion* — the consumer constructs the
+  component itself and passes its own labels. That option does not exist here:
+  the template owns the `Sidebar` instance. Without forwarding, the German
+  defaults „Navigation einklappen" / „Navigation ausklappen" would be
+  unreachable from a bilingual app, which is precisely the complaint KI-784
+  recorded.
+
+  **Additive, deliberately.** Four optional props, no removed or renamed
+  export, no changed default: `collapsed` defaults to `false` inside `Sidebar`
+  and no `onCollapsedChange` means no toggle, so every call site written
+  against 0.26.0/0.27.0 renders identically. `collapsed` alone stays
+  presentational (for an app driving the state from elsewhere), as on
+  `Sidebar`.
+
+  *Known consumers, audited 2026-09-15 (read-only, at that moment).* Neither
+  needs a change, and neither is dragged onto this release by an install:
+  **JustRAG** — one call site, `web/src/components/AppChrome.tsx:336`, pinned
+  `github:KI4JLU/JLU-Design-System#v0.26.0` (lock at `9bd9141`, the 0.26.0
+  release commit); it is the consumer that asked for the toggle and is
+  blocked on it, and it already passes `navLabel`/`menuLabel`/`drawerLabel`
+  through its `t()` translations, so it will pass the two new labels the same
+  way. **CampusAgents** — one call site, `src/components/AppLayout.tsx:31`,
+  pinned `^0.22.0` and locked at 0.22.0, so six minors behind and unaffected
+  until someone raises the pin.
+
+  **The three facts from 0.27.0 are re-asserted through the template**, not
+  trusted from the component suites — a prop that silently never arrives
+  leaves every component test green: the drawer copy stays expanded and
+  toggle-less, a `NavItem` without `label` does not collapse, and every row
+  (including `SidebarUserMenu`) keeps the *same* accessible-name string in
+  both states. `app-shell-layout.test.tsx`, plus a template-level story
+  (`WithCollapsibleSidebar`) that measures both widths in Chromium against the
+  tokens.
+
+  *Not closed here:* `Sidebar` exposes no `id` for its toggle, so the
+  „addressable" half of the 0.26.0 argument has no counterpart yet — no
+  consumer has asked, and inventing one now would be API on speculation.
+  Unrelated but adjacent: `AppShell` renders the sidebar node twice, so a
+  consumer `id` inside the column duplicates while the drawer is open (own
+  card `lgqqwyfn1imd`) — this release does not change that, since it adds no
+  id-bearing node.
+
+  *Version.* Purely additive, so a minor. The `package.json` bump belongs in
+  its own `chore(release): 0.28.0` commit, as in 0.22.0–0.27.0.
+
 - **0.27.0** — **`Sidebar` collapses to an icon column, controlled by the
   app.** KI-785.
 
@@ -448,8 +542,8 @@ Until then the git path carries us; keep the README's git section first.
   `label` and gets a `Tooltip` with the same text. A row given no `label` does
   not collapse — dropping its only text would be precisely the regression.
 
-  Open, deliberately not decided here: `AppShellLayout` does **not** forward
-  the new props yet (its file is the open PR #23's, and conflating them would
+  Open, deliberately not decided here *(the first half closed in 0.28.0)*:
+  `AppShellLayout` does **not** forward the new props yet (its file is the open PR #23's, and conflating them would
   make one review reason about both), and the mobile counterpart depends on the
   pending `BottomTabBar` decision card.
 
