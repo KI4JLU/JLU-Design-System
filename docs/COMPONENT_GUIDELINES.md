@@ -473,6 +473,10 @@ fresh WCAG 1.3.1 failure created by using the library as documented.
    are free-form slots. The page heading belongs to the content template hung
    inside the shell, or to the call site. An `<h1>` in the shell's page-label
    bar would sit next to the one every content template already renders.
+   **A slot in a chrome bar inherits that rule** — `AppShellLayout.headerActions`
+   (0.26.0) sits in the same bar as `pageLabel`, so its content is chrome too:
+   a toggle, a search field, small tools, never a heading. Opening a slot is
+   not a way around the rule; it only moves *who* fills the position.
 
 **A template nested in a page that already has an `<h1>` is normal, not an edge
 case.** An admin frame, a CMS page or a portal owns the page title and the

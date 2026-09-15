@@ -48,6 +48,37 @@ describe("ThemeToggle", () => {
     expect(screen.queryByRole("group", { name: "Farbschema" })).not.toBeInTheDocument();
   });
 
+  /**
+   * Oracle: two *independent* lookups have to land on the same node — the DOM
+   * id index (`document.getElementById`, the browser's own resolution of the
+   * `id` attribute, which is what `aria-controls`, `<label for>`, a skip link
+   * and `location.hash` all use) and the accessibility tree (Testing
+   * Library's `getByRole("group", …)`, computed by aria-query +
+   * dom-accessibility-api). Neither reads this component's markup, so an id
+   * parked on a wrapper or on one of the buttons fails the test: only the
+   * element that *is* the group can satisfy both.
+   */
+  it("puts `id` on the role=group element, where a consumer can reach it", () => {
+    render(
+      <ThemeProvider>
+        <ThemeToggle id="app-theme-toggle" />
+      </ThemeProvider>,
+    );
+    const group = screen.getByRole("group", { name: "Farbschema" });
+    expect(document.getElementById("app-theme-toggle")).toBe(group);
+  });
+
+  it("carries no id of its own when none is passed", () => {
+    render(
+      <ThemeProvider>
+        <ThemeToggle />
+      </ThemeProvider>,
+    );
+    // A generated fallback id would be worse than none: it changes between
+    // renders, so a consumer's `aria-controls` could never point at it.
+    expect(screen.getByRole("group", { name: "Farbschema" })).not.toHaveAttribute("id");
+  });
+
   it("marks the active option via aria-pressed", () => {
     render(
       <ThemeProvider theme="dark">

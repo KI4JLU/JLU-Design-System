@@ -172,7 +172,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
-| `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime; all labels overridable (`themeLabel`, `lightLabel`, `systemLabel`, `darkLabel`; German defaults) |
+| `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime; all labels overridable (`themeLabel`, `lightLabel`, `systemLabel`, `darkLabel`; German defaults); `id` lands on the `role="group"` element, the one part a consumer has reason to address from outside (the option buttons stay internal) |
 | `Table` (+ Header/Body/Footer/Row/Head/Cell/Caption) | `table.tsx` | semantic `<table>` part set, **no Radix** (Radix ships no table primitive; shadcn's own source imports only React + `cn`). Brings its own horizontal scroll container — role-less and untabbable, so the `table`/`rowgroup`/`row`/`columnheader`/`cell` tree is untouched; reach it via `containerClassName` (bounded height = vertical scrolling). `TableHead` defaults to `scope="col"`; `TableCaption` is the table's accessible name. Diverges from shadcn where the evidence did: cells **wrap** by default (`whitespace-nowrap` per cell at the call site), `wrap-anywhere` for hashes/URLs, and every divider carries `border-outline-variant` — a bare `border-b` would render in `currentColor`, since this repo has no global `border-border` reset. No sticky header yet (see MDX „Bewusst nicht enthalten") |
 | `Tabs` (+ List/Trigger/Content) | `tabs.tsx` | Radix — APG „Tabs": `tablist` / `tab` + `aria-selected` + `aria-controls` / `tabpanel` + `aria-labelledby`, ein Tabstopp für die ganze Leiste, Pfeiltasten + Home/End, `orientation` horizontal/vertical, `activationMode` automatic (Default) / manual. Abgrenzung: Tabs benennen einen Inhaltsbereich (ein Panel je Reiter), `SegmentedControl` setzt nur einen Wert (`role="group"` + `aria-pressed`), `BottomTabBar` ist Chrome-Navigation (`aria-current="page"`). Aktiv = Unterstrich + `text-primary`, damit Tabs auch optisch nicht wie ein SegmentedControl aussehen. Zwei geprüfte Radix-Eigenheiten stehen in der MDX: inaktive Panels sind **ausgehängt** (Panel-Zustand überlebt den Wechsel nicht, `forceMount` ist kein Ersatz), und der Roving-Tabindex sitzt vor dem ersten Fokus auf dem `tablist`-Container statt auf dem aktiven Reiter |
 | `Toast` (+ Provider/Viewport/Title/Description/Action/Close, `TOAST_DURATIONS`) | `toast.tsx` / `toast-variants.ts` | Radix (`@radix-ui/react-toast`) — flüchtige Statusmeldung in der festen Bildschirmecke; ersetzt JustRAGs `ToastContainer.tsx`/`Toast.css`. `variant` = neutral/success/error/warning/info steuert Akzentkante, Icon (WCAG 1.4.1 — Status nicht nur über Farbe), Standarddauer (`TOAST_DURATIONS`, JustRAGs Werte: Erfolg 4 s, Fehler 6 s) **und** die Dringlichkeit der Ansage: `error` → `assertive`, sonst `polite`, per `type` übersteuerbar. Kein handgeschriebenes `role="alert"` — Radix sagt über ein verborgenes `role="status"` an, dessen explizites `aria-live="assertive"` zusammen mit dem impliziten `aria-atomic` der Rolle genau das ergibt, was `role="alert"` definiert; der sichtbare Toast ist selbst keine Live-Region (genau eine Ansage). Kein Fokusdiebstahl; WCAG 2.2.1 ist über Radix' Pause bei Hover **und** Fokus (F8 in den Viewport) plus `ToastClose`/`duration={Infinity}` erfüllt, nicht über einen eigenen Schalter. Keine Ein-/Ausblend-Animation wie bei allen schwebenden Flächen, damit ist `prefers-reduced-motion` gegenstandslos. **Die Warteschlange bleibt in der App** (JustRAGs `MAX_TOASTS = 5`): das Paket liefert Darstellung + Timer, keinen `toast()`-Singleton. Bewusst gegen `sonner` entschieden (eigene Toast-Maschine mit eigenem State/Markup/CSS — Bruch mit dem „dünne Radix-Hülle"-Muster). `z-100` liegt über `Dialog`/`BottomTabBar` (`z-50`); ein `Toast` ohne gemounteten `ToastViewport` rendert still gar nichts |
@@ -275,6 +275,18 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   [COMPONENT_GUIDELINES.md → „Page headings: who owns
   them"](./COMPONENT_GUIDELINES.md#page-headings-who-owns-them) — because the
   four-way split it replaced was the cost of never writing it down.
+- **A template does not decide which controls belong in its chrome — it opens
+  the position.** A control a template mounts by itself can be neither moved,
+  suppressed, localized nor addressed by the app, and the app has no way to
+  add a second one beside it. `AppShellLayout` hardcoded a `<ThemeToggle />`
+  in its page-label bar and hit all four at once (KI-784): one consumer wanted
+  the toggle in its user menu, another wanted a search field in that bar, a
+  third needed an `id` on it, and its four label props were unreachable from a
+  bilingual app. The fix is a `ReactNode` slot (`headerActions`) and **no**
+  fallback content — a "render the toggle when the slot is empty" default
+  would have kept exactly the case the slot exists to solve (the app that
+  wants the position *empty*) impossible. The slot inherits the position's
+  rules, heading ownership included: chrome stays chrome.
 - Apps **import** templates; they never rebuild a page skeleton. If a template
   doesn't fit, extend it here (owner review), don't fork it in the app.
 - Each template has a story under `Templates/` (content composed from existing
@@ -394,6 +406,89 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.26.0** — **BREAKING: `AppShellLayout` no longer renders a `ThemeToggle`.
+  The page-label bar has a `headerActions` slot, and `ThemeToggle` takes an
+  `id`.** KI-784.
+
+  *What broke, exactly.* Until 0.25.0 the page-label bar was
+  `<p>{pageLabel}</p>` plus an unconditional `<ThemeToggle />`. From 0.26.0 the
+  template renders **no** control there; `headerActions?: ReactNode` fills the
+  position, and an omitted slot means an empty bar. **A consumer that does
+  nothing loses its theme toggle, silently** — the slot is optional, so there
+  is no type error. That is the whole breaking surface: no export was removed
+  or renamed, no other prop changed, and `ThemeToggle` itself is untouched
+  apart from the new optional `id`.
+
+  *Migration — one line, and it restores 0.25.0 behaviour exactly:*
+
+  ```tsx
+  import { AppShellLayout, ThemeToggle } from "@ki4jlu/design-system";
+
+  <AppShellLayout logo={logo} nav={nav} pageLabel={label}
+                  headerActions={<ThemeToggle />}>   {/* was implicit */}
+    {page}
+  </AppShellLayout>
+  ```
+
+  *Known consumers, audited 2026-09-15 (read-only, at that moment).* Both use
+  the template, both pin deliberately, so neither is dragged onto 0.26.0 by an
+  install: **JustRAG** — one call site,
+  `web/src/components/HomeView.tsx:746`, pinned
+  `github:KI4JLU/JLU-Design-System#v0.25.0` (adopted at its Stage 7b); it is
+  the consumer that asked for this and will use the empty slot, moving the
+  toggle into its user menu. **CampusAgents** — one call site,
+  `src/components/AppLayout.tsx:31`, pinned `^0.22.0` and locked at 0.22.0, so
+  it is four minors behind and does not see this release at all until someone
+  raises the pin; when they do, the one-line migration above is the whole
+  change for them. No other consumer is known.
+
+  *Why breaking rather than additive.* The additive form — keep rendering the
+  toggle when no slot is passed — was on the table and was rejected by the
+  developer on 2026-09-15. It would have left the one case the slot exists for
+  unreachable: an app that wants the position **empty** because its toggle
+  lives in the user menu could not say so, and would still ship two toggles.
+  „Empty" has to be expressible, and a default that fills the slot cannot
+  express it.
+
+  *`ThemeToggle` gained `id`*, landing on the `role="group"` element — the
+  only part of the component a consumer has reason to address from outside
+  (`aria-controls`, a skip link, a scroll target). The option buttons stay
+  unaddressable: they are internals. No default id is generated; a generated
+  one would change between renders and could never be pointed at.
+
+  *The label-forwarding gap is closed by deletion, not by forwarding.* The
+  open item was that `AppShellLayoutProps` picks only `menuLabel | drawerLabel`
+  from `AppShellProps`, so none of `ThemeToggle`'s four label props reached the
+  toggle the template mounted — German-only labels in a bilingual app. With the
+  template no longer mounting a toggle, the consumer constructs its own element
+  and passes the labels (and the `id`) directly; four forwarding props would
+  now be dead API. `AppShellLayoutProps` therefore gained exactly one prop and
+  lost none.
+
+  *Side effect worth having: the shell no longer needs a `ThemeProvider`.*
+  Because it mounted a `ThemeToggle`, `AppShellLayout` used to require the
+  provider, and an app that had never mounted one learned that from a runtime
+  throw (`useTheme must be used within a ThemeProvider`) raised by a template
+  whose props say nothing about theming — a complaint from JustRAG's adoption
+  (KI-778). Nothing in the shell chain (`AppShell`, `Sidebar`, `Container`)
+  calls `useTheme`, so from 0.26.0 the shell renders without a provider;
+  asserted in `app-shell-layout.test.tsx`. The dependency did not disappear,
+  it moved to where it is visible: the call site that puts a toggle in the
+  slot still needs the provider around it.
+
+  *Slot geometry.* The slot region takes the width the label leaves
+  (`flex-1`) and aligns content to the right, so a single control sits exactly
+  where the hardcoded toggle sat; several controls form a row (`gap-2`). A
+  search field that should fill or centre the space says so on its own element
+  (`w-full max-w-md mx-auto` — auto margins beat `justify-end`), which means
+  „centred in the space after the label", not „centred in the viewport". The
+  wrapper is rendered only when the slot is filled.
+
+  *Version.* Breaking, but 0.x, so it is a minor — the same call this repo made
+  in 0.25.0, where `size="narrow"` → `size="reading"` broke every call site
+  that used it and shipped as a minor. The package.json bump belongs in its own
+  `chore(release): 0.26.0` commit, as in 0.22.0–0.25.0.
+
 - **0.25.0** — **`Container` names three page widths instead of two, and the
   sizes now name a role.** KI-751. The gap was that 1440px is a *page maximum*
   and 672px a *reading measure*, with nothing in between for the width most
