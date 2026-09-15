@@ -251,6 +251,33 @@
   --max-width-container-content: 1000px;
   --max-width-container-reading: 42rem;
 
+  /* Sidebar-Breiten — die Navigationsspalte in ihren beiden Zuständen.
+   * Referenziert als `w-(--width-sidebar)` bzw. `w-(--width-sidebar-collapsed)`,
+   * aus demselben Grund wie bei den Container-Breiten (Begründung ausführlich
+   * in `container-variants.ts`): tailwind-merge kennt einen eigenen Theme-Key
+   * nicht als `w`-Konflikt, die Arbitrary-Variable-Form dagegen schon — eine
+   * Breitenklasse am Aufrufort gewinnt damit weiterhin.
+   *
+   * `16rem` ist exakt der Wert, den das bisherige `w-64` aufgelöst hat
+   * (Tailwind-Spacing 64 × 0.25rem). Die Umstellung auf das Token ändert die
+   * ausgeklappte Breite also nicht — auch nicht bei abweichender
+   * Wurzelschriftgröße, und deshalb rem statt px: die Spalte ist bisher mit
+   * der Schriftgröße mitgewachsen.
+   *
+   * `5rem` (80px bei 16px-Wurzel) ist die eingeklappte Breite. Hergeleitet,
+   * nicht gewählt: die <nav>-Spalte behält eingeklappt `px-2` (2 × 8px), eine
+   * NavItem-Zeile bringt ihre eigenen `px-4` (2 × 16px) aus `navItemVariants`
+   * mit — 80 − 16 − 32 = 32px freie Fläche, in der ein 16px- (1em) wie ein
+   * 20px-Icon (h-5) zentriert Platz hat.
+   *
+   * Bewusst NICHT `SIDE_PANEL_RAIL_WIDTH` (60px): dort steht ein einzelner
+   * Icon-Button ohne Zeilen-Innenabstand, hier eine vollbreite Zeile. Ein
+   * gemeinsames „Chrome-Maß" über AppShell/SidePanel/BottomTabBar/Sidebar wäre
+   * das aufgeräumtere System — siehe das TODO in `side-panel-variants.ts`;
+   * das ist eine Eigentümer-Entscheidung und hier nicht getroffen. */
+  --width-sidebar: 16rem;
+  --width-sidebar-collapsed: 5rem;
+
   /* Font families */
   --font-display-lg: "Manrope", sans-serif;
   --font-headline-md: "Manrope", sans-serif;

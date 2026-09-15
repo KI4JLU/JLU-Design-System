@@ -391,6 +391,18 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   `width` and the current mobile tab in as controlled props — never a
   breakpoint check or a pane frame of your own. Hiding a pane goes through
   `showRight`, never through its collapse state.
+- **A collapsible nav column is `Sidebar`'s `collapsed` / `onCollapsedChange`,
+  and the state lives in the app.** Hold it where the app already holds user
+  preferences (context, URL, `localStorage`) and pass it down; there is no
+  `defaultCollapsed`, and a second source of truth is the bug that prop
+  prevents. Do **not** put your own minimise button into the `header` slot —
+  the column renders one as soon as it has a handler, right-aligned next to the
+  brand, with the `aria-expanded`/`aria-controls` wiring already done. Every
+  row that should collapse needs a `label` on its `NavItem`: that string is the
+  icon-only row's accessible name and its tooltip, and a row without one stays
+  full width rather than losing its text. Inside `AppShell`'s mobile drawer the
+  same node renders expanded and without the toggle — that is handled for you,
+  so no breakpoint check at the call site.
 - **`WorkspaceLayout` is standalone — never a child of `AppShellLayout`.** It
   owns the full viewport and its panes *are* the page's chrome, so nesting it
   in the shell puts the shell's nav column next to the left pane: two chrome

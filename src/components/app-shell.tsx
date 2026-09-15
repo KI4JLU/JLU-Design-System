@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 import { Dialog, DialogTrigger, DialogPortal, DialogOverlay } from "./dialog";
+import { SidebarSurfaceContext } from "./sidebar-context";
 
 /**
  * Responsive application frame. From lg up the `sidebar` node is a sticky
@@ -73,7 +74,14 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
                   <DialogPrimitive.Title className="sr-only">
                     {drawerLabel}
                   </DialogPrimitive.Title>
-                  {sidebar}
+                  {/* The same node is already mounted as the desktop column
+                      above; only this copy can be told apart, and only from
+                      here. A Sidebar reads this to suppress its collapse
+                      toggle and its collapsed width inside the drawer — see
+                      sidebar-context.ts. Any other node is unaffected. */}
+                  <SidebarSurfaceContext.Provider value="drawer">
+                    {sidebar}
+                  </SidebarSurfaceContext.Provider>
                 </DialogPrimitive.Content>
               </DialogPortal>
             </Dialog>

@@ -59,6 +59,65 @@ describe("AppShell", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Inhalt");
   });
 
+  /**
+   * Oracle: the card's decision that a "minimise the column" control is
+   * meaningless inside a modal drawer, plus the structural fact that AppShell
+   * mounts the *same* node twice. Asserted through the accessible tree
+   * (`within(drawer)`), not through class names.
+   */
+  describe("a collapsed Sidebar in the mobile drawer", () => {
+    const collapsibleShell = (
+      <AppShell
+        sidebar={
+          <Sidebar collapsed onCollapsedChange={() => {}} header={<span>Marke</span>}>
+            <NavItem label="Bereich A">
+              <svg aria-hidden />
+              <span>Bereich A</span>
+            </NavItem>
+          </Sidebar>
+        }
+      >
+        <p>Inhalt</p>
+      </AppShell>
+    );
+
+    it("renders the drawer copy expanded and without the toggle", async () => {
+      render(collapsibleShell);
+      // The desktop column is mounted from the start and is collapsed.
+      expect(
+        screen.getByRole("button", { name: "Navigation ausklappen" }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Navigation öffnen" }));
+      const drawer = await screen.findByRole("dialog");
+      const drawerAside = drawer.querySelector("aside")!;
+      expect(drawerAside).toHaveClass("w-(--width-sidebar)");
+      expect(drawerAside).not.toHaveClass("w-(--width-sidebar-collapsed)");
+      // The brand is back, the toggle is not there, and the row shows its text.
+      expect(within(drawer).getByText("Marke")).toBeInTheDocument();
+      expect(
+        within(drawer).queryByRole("button", { name: "Navigation ausklappen" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(drawer).getByRole("button", { name: "Bereich A" }),
+      ).not.toHaveAttribute("aria-label");
+    });
+
+    it("leaves the desktop column collapsed while the drawer is open", async () => {
+      const { baseElement } = render(collapsibleShell);
+      await userEvent.click(screen.getByRole("button", { name: "Navigation öffnen" }));
+      const drawer = await screen.findByRole("dialog");
+      // Queried through the DOM, not through roles: Radix marks everything
+      // outside an open modal `aria-hidden`, so the desktop column is
+      // (correctly) absent from the accessible tree at this moment.
+      const asides = [...baseElement.querySelectorAll("aside")];
+      expect(asides).toHaveLength(2);
+      const desktop = asides.find((a) => !drawer.contains(a))!;
+      expect(desktop).toHaveClass("w-(--width-sidebar-collapsed)");
+      expect(desktop.querySelector("[aria-label='Navigation ausklappen']")).not.toBeNull();
+    });
+  });
+
   it("menuLabel and drawerLabel override the German defaults", async () => {
     render(
       <AppShell
