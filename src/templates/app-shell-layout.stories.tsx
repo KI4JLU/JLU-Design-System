@@ -1,7 +1,9 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
+import { expect } from "storybook/test";
 import { LayoutDashboard, LogOut, Search, Settings, Users } from "lucide-react";
-import { AppShellLayout } from "./app-shell-layout";
+import { AppShellLayout, type AppShellLayoutProps } from "./app-shell-layout";
 import { DropdownMenuItem } from "../components/dropdown-menu";
 import { Input } from "../components/input";
 import { Logo } from "../components/logo";
@@ -132,4 +134,101 @@ export const WithoutHeaderActions: Story = {
       <DashboardPage />
     </AppShellLayout>
   ),
+};
+
+/**
+ * Dieselben Zeilen, aber mit `label` — das ist die Bedingung dafür, dass eine
+ * Zeile überhaupt einklappt: der String ist ihr zugänglicher Name und ihr
+ * Tooltip, und eine Zeile ohne `label` bleibt in voller Breite stehen, statt
+ * ihren einzigen Text zu verlieren.
+ */
+const collapsibleNav = (
+  <>
+    <NavItem label="Übersicht" active>
+      <LayoutDashboard width="1em" height="1em" aria-hidden />
+      <span>Übersicht</span>
+    </NavItem>
+    <NavItem label="Team">
+      <Users width="1em" height="1em" aria-hidden />
+      <span>Team</span>
+    </NavItem>
+    <NavItem label="Einstellungen">
+      <Settings width="1em" height="1em" aria-hidden />
+      <span>Einstellungen</span>
+    </NavItem>
+  </>
+);
+
+function CollapsibleShell(
+  props: Omit<AppShellLayoutProps, "collapsed" | "onCollapsedChange">,
+) {
+  // Der Zustand gehört der App — genau so sieht die vorgesehene Verdrahtung
+  // aus. Das Template reicht ihn nur an seine Sidebar weiter und merkt sich
+  // nichts; `localStorage`/URL/Context statt `useState` ändern daran nichts.
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <AppShellLayout {...props} collapsed={collapsed} onCollapsedChange={setCollapsed}>
+      <DashboardPage />
+    </AppShellLayout>
+  );
+}
+
+/**
+ * **Seit 0.28.0**: die einklappbare Spalte ist aus dem Template erreichbar.
+ * `collapsed` + `onCollapsedChange` gehen unverändert an die interne
+ * `Sidebar`; den Schalter rendert die Spalte selbst (rechts in der
+ * Header-Zeile, neben der Marke) — das Template bringt hier **kein** eigenes
+ * Bedienelement mit und braucht dafür auch keinen Slot.
+ *
+ * Beide Zustände in einer Story, weil der Schalter der einzige Weg zurück ist:
+ * klicken zeigt die 80px-Spalte mit Icon-Zeilen, erneut klicken die volle.
+ * Ohne `onCollapsedChange` (alle Stories oben) gibt es weiterhin keinen
+ * Schalter — die Ergänzung ist rein additiv.
+ */
+export const WithCollapsibleSidebar: Story = {
+  args: {
+    logo: <Logo product="App" size="sm" />,
+    pageLabel: "Dashboard",
+    nav: collapsibleNav,
+    sidebarFooter: userMenu,
+    headerActions: <ThemeToggle />,
+  },
+  render: (args) => <CollapsibleShell {...args} />,
+  play: async ({ canvasElement, userEvent }) => {
+    // Oracle für die Breiten: der in `src/tokens.css` deklarierte Token, aus
+    // dem CSSOM zurückgelesen — kein literales "256px", das auch dann grün
+    // wäre, wenn das Utility zu nichts kompilierte. Diese Story prüft, dass
+    // die Zustände im Browser wirklich unterschiedlich *aussehen*; dass die
+    // zugänglichen Namen beide Zustände überleben, ist in
+    // `app-shell-layout.test.tsx` gegen accname geprüft — hier wird nur die
+    // Quelle des Namens abgetastet (`aria-label` vorhanden/nicht).
+    const tokenWidth = (name: string) => {
+      const root = getComputedStyle(document.documentElement);
+      const raw = root.getPropertyValue(name).trim();
+      const match = /^([\d.]+)rem$/.exec(raw);
+      if (!match) throw new Error(`Token ${name} fehlt oder ist kein rem-Maß: "${raw}"`);
+      return `${parseFloat(match[1]) * parseFloat(root.fontSize)}px`;
+    };
+    const desktopColumn = () => canvasElement.querySelector("aside") as HTMLElement;
+    const byLabel = (label: string) =>
+      canvasElement.querySelector(`[aria-label='${label}']`) as HTMLElement;
+
+    await expect(getComputedStyle(desktopColumn()).width).toBe(
+      tokenWidth("--width-sidebar"),
+    );
+    // Die Zeile trägt ihren Namen hier aus ihrem sichtbaren Text.
+    await expect(byLabel("Team")).toBeNull();
+
+    await userEvent.click(byLabel("Navigation einklappen"));
+    await expect(getComputedStyle(desktopColumn()).width).toBe(
+      tokenWidth("--width-sidebar-collapsed"),
+    );
+    // …und eingeklappt aus `label` — derselbe String, andere Quelle.
+    await expect(byLabel("Team")).not.toBeNull();
+
+    await userEvent.click(byLabel("Navigation ausklappen"));
+    await expect(getComputedStyle(desktopColumn()).width).toBe(
+      tokenWidth("--width-sidebar"),
+    );
+  },
 };

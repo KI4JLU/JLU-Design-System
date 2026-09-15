@@ -1,8 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState, type ReactNode } from "react";
 import { AppShellLayout } from "./app-shell-layout";
+import { DropdownMenuItem } from "../components/dropdown-menu";
 import { Input } from "../components/input";
+import { NavItem } from "../components/nav-item";
+import { SidebarUserMenu } from "../components/sidebar-user-menu";
 import { ThemeToggle } from "../components/theme-toggle";
 import { ThemeProvider } from "../theme/ThemeContext";
 
@@ -146,5 +150,260 @@ describe("AppShellLayout — the page-label bar", () => {
     expect(document.getElementById("app-theme-toggle")).toBe(
       screen.getByRole("group", { name: "Colour scheme" }),
     );
+  });
+});
+
+/**
+ * The collapsible sidebar, reached **through the template** — 0.28.0 forwards
+ * `collapsed` / `onCollapsedChange` / `collapseLabel` / `expandLabel` to the
+ * `Sidebar` the template constructs internally.
+ *
+ * Why these assertions exist at all, given `sidebar.test.tsx`, `nav-item.test.tsx`
+ * and `app-shell.test.tsx` already cover the same behaviours on the components:
+ * those suites prove the *components* keep their contract, not that this
+ * template's wiring reaches them. A forwarded prop that silently never arrives
+ * (dropped in the destructuring, spread onto the wrong element, shadowed by a
+ * default) leaves every component test green. So the three facts carried over
+ * from KI-785 are re-derived here from the template's own public surface.
+ *
+ * Oracles, all outside `app-shell-layout.tsx`:
+ *
+ * 1. **The accessibility tree.** Accessible names and roles are computed by
+ *    aria-query + dom-accessibility-api inside Testing Library's
+ *    `getByRole({ name })`, which implements accname and reads none of this
+ *    repo's markup, classes or props. „The row is still named Team while the
+ *    column is icon-only" is therefore a checkable statement rather than a
+ *    claim about the DOM.
+ * 2. **The WAI-ARIA disclosure pattern.** The toggle exposes `aria-expanded`;
+ *    the assertions below read that, not an internal flag, so a template that
+ *    forwarded nothing could not satisfy them.
+ * 3. **`Sidebar`'s published German defaults** („Navigation einklappen" /
+ *    „Navigation ausklappen", DESIGN_SYSTEM.md §7 → 0.27.0, asserted
+ *    independently in `sidebar.test.tsx`). They belong to a *different*
+ *    component, which is what makes them usable here as the fingerprint of
+ *    „the template mounted a collapsible column" — and their absence, in the
+ *    localisation test, as proof that no German string survives.
+ * 4. **React's controlled-component contract**: the column re-renders only
+ *    from the `collapsed` it is given, so the round trip below goes through
+ *    consumer state.
+ */
+const SIDEBAR_LABELS = {
+  collapse: "Navigation einklappen",
+  expand: "Navigation ausklappen",
+};
+
+/**
+ * What accname computes for the user-menu trigger — name and role line
+ * concatenated without a separator. Pinned as one constant so the expanded and
+ * the collapsed assertion cannot drift apart; the missing space is pre-existing
+ * (`sidebar.test.tsx` pins the same string) and not this card's to change.
+ */
+const USER_MENU_NAME = "Jamie LeeAdmin";
+
+const collapsibleNav = (
+  <>
+    <NavItem label="Team">
+      <svg aria-hidden />
+      <span>Team</span>
+    </NavItem>
+    {/* Deliberately no `label`: the row that must refuse to collapse. */}
+    <NavItem>
+      <svg aria-hidden />
+      <span>Berichte</span>
+    </NavItem>
+  </>
+);
+
+const collapsibleFooter = (
+  <SidebarUserMenu initials="JL" name="Jamie Lee" role="Admin">
+    <DropdownMenuItem>Abmelden</DropdownMenuItem>
+  </SidebarUserMenu>
+);
+
+function renderCollapsible(
+  props: Partial<React.ComponentProps<typeof AppShellLayout>> = {},
+) {
+  return render(
+    <AppShellLayout
+      logo={<span>Marke</span>}
+      nav={collapsibleNav}
+      sidebarFooter={collapsibleFooter}
+      pageLabel="Dashboard"
+      {...props}
+    >
+      Inhalt
+    </AppShellLayout>,
+  );
+}
+
+/** The wiring a consuming app writes — the state lives in the app. */
+function ControlledShell({ start = false }: { start?: boolean }) {
+  const [collapsed, setCollapsed] = useState(start);
+  return (
+    <AppShellLayout
+      logo={<span>Marke</span>}
+      nav={collapsibleNav}
+      sidebarFooter={collapsibleFooter}
+      pageLabel="Dashboard"
+      collapsed={collapsed}
+      onCollapsedChange={setCollapsed}
+    >
+      Inhalt
+    </AppShellLayout>
+  );
+}
+
+describe("AppShellLayout — the collapsible sidebar (0.28.0)", () => {
+  it("renders no toggle when the collapse props are omitted — every pre-0.28.0 call site", () => {
+    renderCollapsible();
+    for (const name of Object.values(SIDEBAR_LABELS)) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    // …and the rows are untouched: full text, no aria-label, no tooltip.
+    expect(screen.getByRole("button", { name: "Team" })).not.toHaveAttribute("aria-label");
+  });
+
+  it("renders no toggle for `collapsed` alone — it stays presentational", () => {
+    // The prop pair is not one prop: an app that drives the state from
+    // elsewhere (a URL parameter, a global store) can pass the value without
+    // asking for a control, exactly as on `Sidebar`.
+    renderCollapsible({ collapsed: true });
+    for (const name of Object.values(SIDEBAR_LABELS)) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    // But the column *is* collapsed: the row is now named by its `label`.
+    expect(screen.getByRole("button", { name: "Team" })).toHaveAttribute(
+      "aria-label",
+      "Team",
+    );
+  });
+
+  it("a consumer using ONLY the template can collapse and expand", async () => {
+    render(<ControlledShell />);
+    const collapse = screen.getByRole("button", { name: SIDEBAR_LABELS.collapse });
+    expect(collapse).toHaveAttribute("aria-expanded", "true");
+    // aria-controls resolves to the nav landmark — the id is minted inside
+    // Sidebar (`useId`), so nothing at template level could fake this.
+    const navId = collapse.getAttribute("aria-controls")!;
+    expect(document.getElementById(navId)).toBe(screen.getByRole("navigation"));
+
+    await userEvent.click(collapse);
+    const expand = await screen.findByRole("button", { name: SIDEBAR_LABELS.expand });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+
+    await userEvent.click(expand);
+    expect(
+      await screen.findByRole("button", { name: SIDEBAR_LABELS.collapse }),
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("hands the REQUESTED state to onCollapsedChange, never the old one", async () => {
+    const onCollapsedChange = vi.fn();
+    renderCollapsible({ collapsed: false, onCollapsedChange });
+    await userEvent.click(screen.getByRole("button", { name: SIDEBAR_LABELS.collapse }));
+    expect(onCollapsedChange).toHaveBeenCalledWith(true);
+    // Controlled: the parent ignored the request, so nothing moved.
+    expect(
+      screen.getByRole("button", { name: SIDEBAR_LABELS.collapse }),
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("keeps every nav row's accessible name across the collapse — the same string", async () => {
+    render(<ControlledShell />);
+    const expandedNames = ["Team", "Berichte", USER_MENU_NAME];
+    for (const name of expandedNames) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+
+    await userEvent.click(screen.getByRole("button", { name: SIDEBAR_LABELS.collapse }));
+    await screen.findByRole("button", { name: SIDEBAR_LABELS.expand });
+
+    // Same query, same strings — that is the assertion. Where the name now
+    // comes from differs per row (aria-label / visible text / sr-only text),
+    // and that is exactly what must NOT be visible from out here.
+    for (const name of expandedNames) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("does not collapse a NavItem that was given no label", async () => {
+    render(<ControlledShell start />);
+    // „Berichte" has no `label`, so it keeps its text and gains no aria-label:
+    // the row refuses rather than dropping the only text it has.
+    const withoutLabel = screen.getByRole("button", { name: "Berichte" });
+    expect(withoutLabel).not.toHaveAttribute("aria-label");
+    expect(withoutLabel).toHaveTextContent("Berichte");
+    // Its labelled neighbour did collapse, in the same column.
+    expect(screen.getByRole("button", { name: "Team" })).toHaveAttribute(
+      "aria-label",
+      "Team",
+    );
+  });
+
+  it("leaves the mobile drawer expanded and toggle-less", async () => {
+    const { baseElement } = render(<ControlledShell start />);
+    // The desktop column is collapsed from the start.
+    expect(
+      screen.getByRole("button", { name: SIDEBAR_LABELS.expand }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Navigation öffnen" }));
+    const drawer = await screen.findByRole("dialog");
+
+    // No toggle in the drawer copy, the brand is back, and the labelled row
+    // shows its text instead of being named by aria-label.
+    for (const name of Object.values(SIDEBAR_LABELS)) {
+      expect(within(drawer).queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+    expect(within(drawer).getByText("Marke")).toBeInTheDocument();
+    expect(within(drawer).getByRole("button", { name: "Team" })).not.toHaveAttribute(
+      "aria-label",
+    );
+
+    // …while the desktop column stayed collapsed. Queried through the DOM:
+    // Radix marks everything outside an open modal `aria-hidden`, so that
+    // column is (correctly) absent from the accessible tree right now.
+    const asides = [...baseElement.querySelectorAll("aside")];
+    expect(asides).toHaveLength(2);
+    const desktop = asides.find((a) => !drawer.contains(a))!;
+    expect(desktop.querySelector(`[aria-label='${SIDEBAR_LABELS.expand}']`)).not.toBeNull();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("forwards collapseLabel/expandLabel — no German default survives", async () => {
+    // The gap 0.26.0 closed for `ThemeToggle` by *deletion* cannot be closed
+    // that way here: the template owns the `Sidebar` instance, so a bilingual
+    // app has no other route to these two strings than forwarding.
+    const onCollapsedChange = vi.fn();
+    const { rerender } = renderCollapsible({
+      collapsed: false,
+      onCollapsedChange,
+      collapseLabel: "Collapse navigation",
+      expandLabel: "Expand navigation",
+    });
+    expect(
+      screen.getByRole("button", { name: "Collapse navigation" }),
+    ).toBeInTheDocument();
+
+    rerender(
+      <AppShellLayout
+        logo={<span>Marke</span>}
+        nav={collapsibleNav}
+        sidebarFooter={collapsibleFooter}
+        pageLabel="Dashboard"
+        collapsed
+        onCollapsedChange={onCollapsedChange}
+        collapseLabel="Collapse navigation"
+        expandLabel="Expand navigation"
+      >
+        Inhalt
+      </AppShellLayout>,
+    );
+    expect(screen.getByRole("button", { name: "Expand navigation" })).toBeInTheDocument();
+    for (const name of Object.values(SIDEBAR_LABELS)) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
   });
 });

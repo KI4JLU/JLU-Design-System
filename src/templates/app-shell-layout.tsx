@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AppShell, type AppShellProps } from "../components/app-shell";
 import { Container } from "../components/container";
-import { Sidebar } from "../components/sidebar";
+import { Sidebar, type SidebarProps } from "../components/sidebar";
 
 /**
  * Template „App-Shell": the complete app chrome — branded sidebar (logo,
@@ -9,10 +9,32 @@ import { Sidebar } from "../components/sidebar";
  * Sidebar; consuming apps only inject content into the slots and never
  * rebuild the frame. No business logic: routing/active state live in the
  * injected NavItems.
+ *
+ * **The collapsible column is forwarded, not re-slotted.** `collapsed` /
+ * `onCollapsedChange` (plus the two toggle labels) reach the internal
+ * `Sidebar` unchanged, and the template mounts no control of its own. That is
+ * deliberately *not* the `headerActions` pattern: a template opens a slot when
+ * it would otherwise decide which control belongs in a chrome position it
+ * owns, and the sidebar's toggle is not such a decision — `Sidebar` owns it
+ * (0.27.0), because it must survive collapsing and it carries
+ * `aria-expanded` + `aria-controls` pointing at a `<nav>` id that only
+ * `Sidebar` knows (`useId`, per mount). A slot here could not be held to that
+ * contract and could not reach that id. Everything the slot pattern exists to
+ * protect is still true: omitting `onCollapsedChange` renders no toggle at
+ * all, and `collapseLabel` / `expandLabel` make it localizable.
  */
 export interface AppShellLayoutProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    Pick<AppShellProps, "menuLabel" | "drawerLabel"> {
+    Pick<AppShellProps, "menuLabel" | "drawerLabel">,
+    // Forwarded verbatim, names included, exactly as `menuLabel`/`drawerLabel`
+    // are: a consumer reading `Sidebar`'s documentation finds the same four
+    // props here, and the descriptions in the Controls table cannot drift from
+    // the component's. All four are optional and none changes behaviour by
+    // default, so every existing call site renders exactly as before.
+    Pick<
+      SidebarProps,
+      "collapsed" | "onCollapsedChange" | "collapseLabel" | "expandLabel"
+    > {
   /** Brand block — shown in the sidebar header and the mobile top bar. */
   logo: React.ReactNode;
   /** Navigation content, typically a list of <NavItem>s. */
@@ -47,14 +69,35 @@ export interface AppShellLayoutProps
 
 const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
   (
-    { logo, nav, sidebarFooter, navLabel, pageLabel, headerActions, children, ...props },
+    {
+      logo,
+      nav,
+      sidebarFooter,
+      navLabel,
+      pageLabel,
+      headerActions,
+      collapsed,
+      onCollapsedChange,
+      collapseLabel,
+      expandLabel,
+      children,
+      ...props
+    },
     ref,
   ) => (
     <AppShell
       ref={ref}
       topBar={logo}
       sidebar={
-        <Sidebar header={logo} footer={sidebarFooter} label={navLabel}>
+        <Sidebar
+          header={logo}
+          footer={sidebarFooter}
+          label={navLabel}
+          collapsed={collapsed}
+          onCollapsedChange={onCollapsedChange}
+          collapseLabel={collapseLabel}
+          expandLabel={expandLabel}
+        >
           {nav}
         </Sidebar>
       }
