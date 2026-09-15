@@ -9,6 +9,7 @@ import { SectionedGridLayout, type SectionedGridSection } from "./sectioned-grid
 import { TableLayout } from "./table-layout";
 import { WorkspaceLayout } from "./workspace-layout";
 import { PageHeader } from "../components/page-header";
+import { ThemeToggle } from "../components/theme-toggle";
 import { ThemeProvider } from "../theme/ThemeContext";
 
 /**
@@ -137,6 +138,27 @@ describe("the page-heading rule — defaults every consumer already ships agains
     );
     expect(screen.queryAllByRole("heading")).toHaveLength(0);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
+  });
+
+  it("AppShellLayout's headerActions is chrome too — filling it adds no heading", () => {
+    stubMatchMedia();
+    render(
+      <ThemeProvider>
+        <AppShellLayout
+          logo="Marke"
+          nav="Navigation"
+          pageLabel="Dashboard"
+          headerActions={<ThemeToggle />}
+        >
+          Inhalt
+        </AppShellLayout>
+      </ThemeProvider>,
+    );
+    // The slot added in 0.26.0 is a second chrome location in the same bar,
+    // not a route around the rule: the template still contributes no heading,
+    // so the content template hung in as `children` keeps the only <h1>.
+    expect(screen.queryAllByRole("heading")).toHaveLength(0);
+    expect(screen.getByRole("group", { name: "Farbschema" })).toBeInTheDocument();
   });
 
   it("ChatLayout contributes no heading — its header is a free-form slot", () => {

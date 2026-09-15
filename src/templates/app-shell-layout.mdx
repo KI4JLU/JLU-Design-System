@@ -21,10 +21,62 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 | `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
 | `menuLabel` | `string` | — | Zugänglicher Name des mobilen Menü-Buttons (Default „Navigation öffnen") — überschreibbar für mehrsprachige Apps. |
 | `drawerLabel` | `string` | — | Screenreader-Titel des mobilen Drawer-Dialogs (Default „Navigation"). |
-| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt; rechts daneben sitzt der `ThemeToggle`. |
+| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt. |
+| `headerActions` | `ReactNode` | — | Chrome-Bedienelemente in derselben Zeile, rechts vom `pageLabel`: `ThemeToggle`, Suchfeld, mehrere davon — oder nichts. **Seit 0.26.0**; davor rendete das Template hier fest einen `<ThemeToggle />`. |
 | `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
 
 <Controls />
+
+## `headerActions` — die Label-Zeile gehört der App
+
+Das Template rendert in dieser Zeile **kein eigenes** Bedienelement mehr. Was
+dort steht, entscheidet die App:
+
+<Canvas of={AppShellLayoutStories.WithSearchAndEnglishToggle} />
+
+- **Ein Element** (der klassische Fall) sitzt rechtsbündig genau dort, wo bis
+  0.25.0 der feste `ThemeToggle` saß.
+- **Mehrere** kommen als Fragment und stehen in einer Reihe (`gap-2`).
+- **Breite/Zentrierung** bestimmt das eingehängte Element selbst: der Slot
+  bekommt den Platz, den das Label übrig lässt (`flex-1`), und richtet rechts
+  aus. `className="w-full max-w-md mx-auto"` auf dem Suchfeld zentriert es
+  darin — Auto-Margins schlagen `justify-end`. Zentriert heißt damit
+  **zentriert in der Fläche nach dem Label**, nicht im Viewport.
+- **Leer** (`headerActions` weggelassen) heißt: nur das Label, kein Kasten im
+  DOM. Für Apps, die den Theme-Umschalter woanders führen — z. B. im
+  Nutzermenü der Sidebar.
+
+**`ThemeProvider` braucht seit 0.26.0 nicht mehr die Shell, sondern der
+Umschalter.** Vorher rendete das Template den `ThemeToggle` selbst und
+erzwang damit den Provider — ohne ihn flog zur Laufzeit `useTheme must be used
+within a ThemeProvider`, aus einem Template, dessen Props von Theming nichts
+erzählen. Wer jetzt einen `ThemeToggle` (ob hier oder im Nutzermenü) einhängt,
+braucht den Provider darüber; wer keinen einhängt, braucht ihn nicht.
+
+### Migration von 0.25.0 → 0.26.0 (**breaking**)
+
+Bis 0.25.0 rendete das Template den `ThemeToggle` unbedingt. Wer ihn behalten
+will, hängt ihn jetzt selbst ein — eine Zeile:
+
+```tsx
+import { AppShellLayout, ThemeToggle } from "@ki4jlu/design-system";
+
+<AppShellLayout
+  logo={logo}
+  nav={nav}
+  pageLabel={label}
+  headerActions={<ThemeToggle />}   {/* NEU: vorher implizit */}
+>
+  {page}
+</AppShellLayout>
+```
+
+Wer nichts ändert, verliert den Umschalter — **stillschweigend**, ohne
+Typfehler, weil der Slot optional ist. Zwei Dinge fallen damit weg, die vorher
+fehlten: die vier Label-Props des `ThemeToggle`
+(`themeLabel`/`lightLabel`/`systemLabel`/`darkLabel`) sind jetzt direkt am
+eigenen Element erreichbar — das Template muss sie nicht mehr durchreichen —
+und `id` adressiert die `role="group"`-Gruppe.
 
 ## Responsives Verhalten
 
@@ -41,6 +93,13 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 - ❌ **Nicht** jedes Template passt hinein: `WorkspaceLayout` ist eigenständig
   und besitzt den ganzen Viewport — verschachtelt zeigt der Bildschirm zwei
   Sidebars. Maßgeblich ist die Inventarliste in DESIGN_SYSTEM.md §4.
+- ✅ `headerActions` nimmt **Chrome**: Umschalter, Suche, kleine Werkzeuge der
+  Seitenleiste. Kein Seiteninhalt, keine Formulare, keine Business-Logik.
+- ❌ **Keine Überschrift in `headerActions`.** Der Slot ist eine zweite
+  Chrome-Position in derselben Zeile, kein Weg um die `pageLabel`-Regel herum:
+  ein `<h1>` dort stünde genauso neben der Überschrift des Inhalts-Templates.
+  Abgesichert in `heading-owner.test.tsx` — das Template selbst liefert mit
+  gefülltem Slot weiterhin **null** Überschriften.
 - ❌ `pageLabel` ist **nicht** die Seitenüberschrift. Es ist Chrome: eine
   Standortanzeige, deshalb ein `<p>`. Die Überschrift der Seite gehört dem
   Inhalts-Template, das hier als `children` hängt (`DashboardLayout` &

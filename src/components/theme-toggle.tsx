@@ -10,6 +10,15 @@ const ICONS: { value: Theme; Icon: typeof Sun }[] = [
 
 export interface ThemeToggleProps {
   className?: string;
+  /**
+   * Id of the `role="group"` element. The group is the only element a consumer
+   * has a reason to address from outside — `aria-controls`/`aria-describedby`
+   * pointing at the switch, a skip link, or a scroll target — and without this
+   * prop it is unreachable, because the component renders its own DOM. The
+   * option buttons stay unaddressable on purpose: they are the component's
+   * internals, and an id per button would be an API for them.
+   */
+  id?: string;
   /** Accessible name of the whole switch group. Default "Farbschema". */
   themeLabel?: string;
   /** Accessible name of the light option. Default "Helles Design". */
@@ -24,10 +33,12 @@ export interface ThemeToggleProps {
  * Segmented light / system / dark switch. Fully visible (discoverable) and
  * keyboard-accessible; the active option is announced via `aria-pressed`.
  * All labels are overridable props (defaults in German) so bilingual
- * consumers can localize them.
+ * consumers can localize them, and `id` lands on the group so a consumer can
+ * address it from outside.
  */
 export function ThemeToggle({
   className,
+  id,
   themeLabel = "Farbschema",
   lightLabel = "Helles Design",
   systemLabel = "Systemdesign",
@@ -41,6 +52,7 @@ export function ThemeToggle({
   };
   return (
     <div
+      id={id}
       role="group"
       aria-label={themeLabel}
       className={cn(
