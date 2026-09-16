@@ -161,6 +161,25 @@ describe("the page-heading rule — defaults every consumer already ships agains
     expect(screen.getByRole("group", { name: "Farbschema" })).toBeInTheDocument();
   });
 
+  it("AppShellLayout contributes no heading WITHOUT a pageLabel either — the vacancy is not an invitation", () => {
+    stubMatchMedia();
+    // 0.29.0 makes `pageLabel` optional. The rule that must not re-open with
+    // it: the bar is chrome, so losing the `<p>` may not turn the remaining
+    // slot into „where the page heading goes". The content template hung in
+    // as `children` still owns the only <h1> — here that is literally the
+    // JustRAG shape that asked for the optional label.
+    render(
+      <ThemeProvider>
+        <AppShellLayout logo="Marke" nav="Navigation" headerActions={<ThemeToggle />}>
+          <PageHeader title="Wissensbasen" />
+        </AppShellLayout>
+      </ThemeProvider>,
+    );
+    expect(outline()).toEqual(["1: Wissensbasen"]);
+    // …and the bar still holds its chrome, unchanged.
+    expect(screen.getByRole("group", { name: "Farbschema" })).toBeInTheDocument();
+  });
+
   it("ChatLayout contributes no heading — its header is a free-form slot", () => {
     render(
       <ChatLayout header={<span>Bot</span>} composer={<span>Eingabe</span>}>

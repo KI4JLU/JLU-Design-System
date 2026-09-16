@@ -21,7 +21,7 @@ befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 | `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
 | `menuLabel` | `string` | — | Zugänglicher Name des mobilen Menü-Buttons (Default „Navigation öffnen") — überschreibbar für mehrsprachige Apps. |
 | `drawerLabel` | `string` | — | Screenreader-Titel des mobilen Drawer-Dialogs (Default „Navigation"). |
-| `pageLabel` | `ReactNode` | ✅ | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt. |
+| `pageLabel` | `ReactNode` | — | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt. **Seit 0.29.0 optional**: weggelassen rendert das Template dafür **kein Element** — auch kein leeres `<p>`. |
 | `headerActions` | `ReactNode` | — | Chrome-Bedienelemente in derselben Zeile, rechts vom `pageLabel`: `ThemeToggle`, Suchfeld, mehrere davon — oder nichts. **Seit 0.26.0**; davor rendete das Template hier fest einen `<ThemeToggle />`. |
 | `collapsed` | `boolean` | — | Sidebar eingeklappt (Icon-Breite) oder voll. **Seit 0.28.0**, unverändert an die interne `Sidebar` durchgereicht. Ohne `onCollapsedChange` rein darstellend. |
 | `onCollapsedChange` | `(collapsed: boolean) => void` | — | Der Schalter wurde gedrückt; bekommt den **gewünschten** Zustand. Erst dieses Prop lässt die Spalte den Schalter rendern. **Seit 0.28.0.** |
@@ -43,9 +43,17 @@ dort steht, entscheidet die App:
 - **Mehrere** kommen als Fragment und stehen in einer Reihe (`gap-2`).
 - **Breite/Zentrierung** bestimmt das eingehängte Element selbst: der Slot
   bekommt den Platz, den das Label übrig lässt (`flex-1`), und richtet rechts
-  aus. `className="w-full max-w-md mx-auto"` auf dem Suchfeld zentriert es
-  darin — Auto-Margins schlagen `justify-end`. Zentriert heißt damit
-  **zentriert in der Fläche nach dem Label**, nicht im Viewport.
+  aus. `className="w-full max-w-md mx-auto"` zentriert darin — Auto-Margins
+  schlagen `justify-end`. Mit Label heißt zentriert **zentriert in der Fläche
+  nach dem Label**; ohne Label ist diese Fläche die ganze Zeile (siehe unten).
+- **Die Klassen gehören an den Knoten, der das Flex-Item ist.** Bei
+  `<Input leadingIcon={…} className="w-full max-w-md mx-auto" />` landen sie am
+  inneren `<input>`, das ein Icon-Feld in ein volle Breite spannendes `<span>`
+  wickelt — dort ist das Feld inline-block, und `margin: auto` rechnet sich zu
+  `0px`. Gemessen in Chromium: 207,5px links an der Mitte vorbei. Ein
+  Icon-Suchfeld kommt deshalb in einen eigenen
+  `<div className="w-full max-w-md mx-auto">`. *(Bis 0.28.0 stand es in der
+  Story hier falsch — die Doku behauptete eine Zentrierung, die nie stattfand.)*
 - **Leer** (`headerActions` weggelassen) heißt: nur das Label, kein Kasten im
   DOM. Für Apps, die den Theme-Umschalter woanders führen — z. B. im
   Nutzermenü der Sidebar.
@@ -81,6 +89,65 @@ fehlten: die vier Label-Props des `ThemeToggle`
 (`themeLabel`/`lightLabel`/`systemLabel`/`darkLabel`) sind jetzt direkt am
 eigenen Element erreichbar — das Template muss sie nicht mehr durchreichen —
 und `id` adressiert die `role="group"`-Gruppe.
+
+## Zeile ohne Label (seit 0.29.0)
+
+`pageLabel` ist **optional**. Weggelassen rendert das Template dafür **kein
+Element** — kein leeres `<p>` —, und die Zeile gehört den `headerActions`:
+
+<Canvas of={AppShellLayoutStories.WithCenteredSearchOnly} />
+
+```tsx
+<AppShellLayout
+  logo={logo}
+  nav={nav}
+  /* kein pageLabel: der Titel steht im Inhalts-Template darunter */
+  headerActions={
+    <div className="w-full max-w-md mx-auto">
+      <Input type="search" aria-label={t("search")} leadingIcon={<Search />} />
+    </div>
+  }
+>
+  <SectionedGridLayout title={t("myKBs")} … />
+</AppShellLayout>
+```
+
+- **Wofür.** Ein Inhalts-Template, das seinen Seitentitel selbst rendert
+  (`SectionedGridLayout` → `PageHeader`), stand bis 0.28.0 zwangsläufig unter
+  einer Chrome-Zeile mit derselben Zeichenkette: dasselbe Wort zweimal,
+  übereinander. Die Alternative — `title` am Inhalts-Template weglassen — gibt
+  es weiterhin (`sectioned-grid-layout.mdx`); welche der beiden passt,
+  entscheidet, **wer die Überschrift der Seite besitzt**: das Label ist ein
+  `<p>` und zählt nicht im Dokument-Outline, der Titel des Inhalts-Templates
+  schon. Wer die Seite barrierefrei überschrieben haben will, lässt das Label
+  weg und behält den Titel — nicht umgekehrt.
+- **Zentriert heißt jetzt zentriert in der Zeile.** Kein neues Prop: der Slot
+  bekommt mit `flex-1` die ganze Breite, und dieselben zwei Utilities
+  (`w-full max-w-md`, `mx-auto`) zentrieren darin. Gemessen in Chromium, auf
+  den Pixel — `WithCenteredSearchOnly` vergleicht Feldmitte und Zeilenmitte
+  aus den Layout-Boxen, nicht aus Klassennamen. Ein leeres `<p>` hätte genau
+  das verhindert: als Flex-Item verschöbe es die Mitte um die halbe
+  `gap-4`-Lücke (gemessen: 8px).
+- **Die Zeile bleibt 64px hoch** — mit Label, nur mit Aktionen, mit beidem und
+  mit nichts:
+
+<Canvas of={AppShellLayoutStories.WithoutPageLabelOrActions} />
+
+  Das ist bewusst so und es steht außerhalb dieses Repos unter Vertrag:
+  JustRAG legt seine Toasts mit `top: 76px` (= 64 + 12) unter diese Kante und
+  misst dieselbe 64 in einem eigenen Chromium-Test. Eine Zeile, die beim
+  Weglassen der letzten Prop zusammenfiele, wäre für eine Aufrufstelle, die
+  nichts geändert hat, eine **brechende Geometrie-Änderung**. Wer die Zeile
+  wirklich loswerden will, bekommt dafür ein eigenes Prop — mit Karte und
+  Migration, nicht stillschweigend hier.
+- **Rein additiv.** Pflicht → optional bricht keine Aufrufstelle, und es
+  erscheint nirgends ein Default-Label, wo vorher keins war: ohne `pageLabel`
+  ist der Textinhalt der Zeile leer (`app-shell-layout.test.tsx`). Ein falsy
+  Wert — `pageLabel={t("…")}` mit leerer Übersetzung — zählt als „kein Label",
+  dieselbe Truthiness-Prüfung wie bei `headerActions`.
+- **Die Regel „die Zeile ist Chrome" bleibt.** Ohne `<p>` ist der Platz nicht
+  frei geworden: keine Überschrift in `headerActions`, auch jetzt nicht.
+  `heading-owner.test.tsx` prüft die label-lose Variante mit.
 
 ## Einklappbare Sidebar (seit 0.28.0)
 
@@ -169,6 +236,11 @@ einzige Weg an diese Props.
   ein `<h1>` dort stünde genauso neben der Überschrift des Inhalts-Templates.
   Abgesichert in `heading-owner.test.tsx` — das Template selbst liefert mit
   gefülltem Slot weiterhin **null** Überschriften.
+- ✅ `pageLabel` **weglassen**, wenn das Inhalts-Template den Seitentitel schon
+  rendert — sonst steht dasselbe Wort zweimal untereinander. Seit 0.29.0.
+- ❌ **Kein leeres `pageLabel` als Platzhalter** (`pageLabel={<span />}`, ein
+  `&nbsp;`): das wäre wieder ein Flex-Item und verschöbe die Zentrierung der
+  `headerActions`. Prop weglassen.
 - ❌ `pageLabel` ist **nicht** die Seitenüberschrift. Es ist Chrome: eine
   Standortanzeige, deshalb ein `<p>`. Die Überschrift der Seite gehört dem
   Inhalts-Template, das hier als `children` hängt (`DashboardLayout` &

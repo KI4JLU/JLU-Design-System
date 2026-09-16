@@ -154,6 +154,95 @@ describe("AppShellLayout — the page-label bar", () => {
 });
 
 /**
+ * The optional `pageLabel` (0.29.0) — the *structural* half. What the bar
+ * contains is checkable in jsdom; where it puts it is not (jsdom applies no
+ * stylesheet, every box is 0×0), so the centring and the 64px height are
+ * measured in Chromium by `app-shell-layout.stories.tsx`
+ * (`WithCenteredSearchOnly`, `WithoutPageLabelOrActions`) instead of asserted
+ * from class strings here.
+ *
+ * Oracles, outside the code under test:
+ *
+ * 1. **The DOM itself**, read through the `<main>` landmark that `AppShell`
+ *    renders — an element type (`p`) and a text content, not a class or a
+ *    React internal. „Renders nothing" is the difference between zero
+ *    paragraphs and one empty one, and that distinction is the whole point of
+ *    the card: an empty `<p>` is still a flex item, and it shifts the
+ *    centring of `headerActions` by half the row's `gap-4` (measured in
+ *    Chromium: 8px, `WithCenteredSearchOnly` fails at 736.5 vs 728.5 when the
+ *    element is rendered unconditionally).
+ * 2. **The two shipped call sites**, which both pass a label
+ *    (JustRAG `AppChrome.tsx`, CampusAgents `AppLayout.tsx`, both read
+ *    2026-09-16): required → optional may not move them, so the labelled case
+ *    is re-asserted unchanged next to the new one.
+ */
+describe("AppShellLayout — the optional pageLabel (0.29.0)", () => {
+  /** The page-label bar: the first element inside AppShell's `<main>`. */
+  const bar = (container: HTMLElement) =>
+    container.querySelector("main")!.firstElementChild!;
+
+  it("renders NO element for the label when it is omitted — not an empty <p>", () => {
+    const { container } = render(
+      <AppShellLayout logo="Marke" nav="Navigation">
+        Inhalt
+      </AppShellLayout>,
+    );
+    expect(bar(container).querySelectorAll("p")).toHaveLength(0);
+  });
+
+  it("invents no default label — the bar is empty, not filled with a guess", () => {
+    const { container } = render(
+      <AppShellLayout logo="Marke" nav="Navigation">
+        Inhalt
+      </AppShellLayout>,
+    );
+    // No string at all, so a future default could not slip in unnoticed: the
+    // template puts in what it was given, and it was given nothing.
+    expect(bar(container).textContent).toBe("");
+  });
+
+  it("keeps the labelled bar exactly as it was — the change is additive", () => {
+    // Both consumers audited for this card pass `pageLabel`; required →
+    // optional must be invisible to them.
+    const { container } = render(
+      <AppShellLayout logo="Marke" nav="Navigation" pageLabel="Dashboard">
+        Inhalt
+      </AppShellLayout>,
+    );
+    const paragraphs = bar(container).querySelectorAll("p");
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]).toHaveTextContent("Dashboard");
+  });
+
+  it("treats an empty label as no label — the i18n case, not a blank slot", () => {
+    // `pageLabel={t("…")}` that resolves to "" is the realistic way a falsy
+    // label arrives. The test is truthiness, the same one `headerActions`
+    // uses, so the two props of this bar behave alike.
+    const { container } = render(
+      <AppShellLayout logo="Marke" nav="Navigation" pageLabel="">
+        Inhalt
+      </AppShellLayout>,
+    );
+    expect(bar(container).querySelectorAll("p")).toHaveLength(0);
+  });
+
+  it("hands the bar to headerActions alone — the case the card was opened for", () => {
+    render(
+      <AppShellLayout
+        logo="Marke"
+        nav="Navigation"
+        headerActions={<Input type="search" aria-label="Suche" />}
+      >
+        Inhalt
+      </AppShellLayout>,
+    );
+    // The control is mounted and reachable by its accessible name; nothing
+    // about the label's absence costs it its slot.
+    expect(screen.getByRole("searchbox", { name: "Suche" })).toBeInTheDocument();
+  });
+});
+
+/**
  * The collapsible sidebar, reached **through the template** — 0.28.0 forwards
  * `collapsed` / `onCollapsedChange` / `collapseLabel` / `expandLabel` to the
  * `Sidebar` the template constructs internally.

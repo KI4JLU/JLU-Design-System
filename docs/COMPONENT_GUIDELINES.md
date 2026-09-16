@@ -494,6 +494,11 @@ fresh WCAG 1.3.1 failure created by using the library as documented.
    (0.26.0) sits in the same bar as `pageLabel`, so its content is chrome too:
    a toggle, a search field, small tools, never a heading. Opening a slot is
    not a way around the rule; it only moves *who* fills the position.
+   **Nor does removing the label reopen it** — `pageLabel` is optional since
+   0.29.0 (a page whose content template renders the title would otherwise
+   show it twice), and the bar then renders no element for it at all. The bar
+   stays chrome with the label gone: the vacancy is not an invitation, and
+   `heading-owner.test.tsx` asserts the label-less combination too.
 
 **A template nested in a page that already has an `<h1>` is normal, not an edge
 case.** An admin frame, a CMS page or a portal owns the page title and the
@@ -523,7 +528,7 @@ additive everywhere.
 | `TableLayout` | `<h1>` via `PageHeader` | forwarded, default `1` |
 | `SectionedGridLayout` | `<h1>` title (when `title` is set) + one `<h2>` per section | default `1`; sections are `+1` |
 | `AuthLayout` | **no heading** — `title` is styled text in `CardTitle` | **omitted** by default; set it to opt in |
-| `AppShellLayout` | no heading (`pageLabel` is a `<p>`) | none — no `title` prop |
+| `AppShellLayout` | no heading (`pageLabel` is a `<p>`; optional since 0.29.0, and omitted it renders no element at all) | none — no `title` prop |
 | `ChatLayout` | no heading | none — no `title` prop |
 | `WorkspaceLayout` | no heading | none — no `title` prop |
 
