@@ -277,7 +277,9 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   the prop existed. A template with a second heading role *derives* it
   (`SectionedGridLayout`'s sections are `headingLevel + 1`) and never hardcodes
   a second level; a template with no `title` prop contributes no heading, and
-  its text slots (`AppShellLayout.pageLabel`) are chrome, not the page heading.
+  its text slots (`AppShellLayout.pageLabel`) are chrome, not the page heading
+  — and since 0.29.0 that slot may be left out entirely (the bar then renders
+  no element for it), which changes who *shows* the title, never who owns it.
   A new template answers this in its MDX. The rule, the reasoning and the
   frozen per-template defaults live in one place —
   [COMPONENT_GUIDELINES.md → „Page headings: who owns
@@ -295,6 +297,16 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   would have kept exactly the case the slot exists to solve (the app that
   wants the position *empty*) impossible. The slot inherits the position's
   rules, heading ownership included: chrome stays chrome.
+- **A chrome position keeps its geometry when it is empty.** Making a slot
+  optional is additive; making the *box* around it disappear is not. Consumers
+  measure a chrome bar's height once and position their own overlays against
+  it (JustRAG derives `top: 76px` from `AppShellLayout`'s 64px page-label bar),
+  so a bar that collapsed once every slot in it was omitted would move their
+  UI without any call site changing a line — a breaking change arriving
+  through an *unchanged* call site, which is the kind that is found in
+  production. Rendering nothing for the missing content and keeping the
+  position is the default (0.29.0, `pageLabel`); removing the position is a
+  separate, explicitly migrated decision.
 - **A control that belongs to a *component* the template composes is
   forwarded, not re-slotted.** The previous rule is about a position the
   *template* would otherwise fill with an opinion of its own. Where the
@@ -435,6 +447,67 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.29.0** — **`AppShellLayout.pageLabel` is optional.** KI-798.
+
+  One prop changed type: `pageLabel: React.ReactNode` → `pageLabel?:
+  React.ReactNode`. Omitted (or falsy), the page-label bar renders **no
+  element** for it — not an empty `<p>`. Nothing else moved; no new prop.
+
+  **The gap.** A consumer whose content template renders the page title
+  itself (`SectionedGridLayout` → `PageHeader`) had no way to suppress the
+  chrome label, so the same words appeared twice, stacked: JustRAG's
+  `AppChrome` passes `pageLabel={t('myKBs')}` with `title={t('myKBs')}`
+  directly beneath it, and asked for the bar to hold its search field instead.
+
+  **No `centered` prop, because the existing escape hatch already does it —
+  measured, not assumed.** `headerActions` gets `flex-1`, so with the label
+  gone the slot region *is* the bar; the `w-full max-w-md mx-auto` the prop
+  doc has recommended since 0.26.0 then centres on the bar's own centre.
+  Measured in Chromium at 1200px: field centre 728.5 vs bar centre 728.5, to
+  the pixel (`WithCenteredSearchOnly`, asserted from layout boxes rather than
+  class names, with the labelled story as the falsifying counter-case). This
+  is also why rendering an **empty** `<p>` was not an option: as a flex item
+  it re-introduces half the row's `gap-4` on the left, and the same
+  measurement comes out 736.5 — 8px off centre.
+
+  **The classes must sit on the flex item, and one DS component makes that
+  easy to get wrong.** `<Input leadingIcon={…} className="w-full max-w-md
+  mx-auto" />` puts them on the inner `<input>`, which an icon field wraps in
+  a full-width `<span>`; the input is inline-block there, so `margin: auto`
+  computes to `0px` and the field lands 207.5px left of centre (measured).
+  Wrap such a field in the call site's own `<div className="w-full max-w-md
+  mx-auto">`. The `WithSearchAndEnglishToggle` story carried exactly that
+  mistake since 0.26.0 while its prose claimed a centring that never happened;
+  it is corrected in this release. Whether `Input` should forward layout
+  classes to its icon wrapper (a `containerClassName`, say) is **not** decided
+  here — no consumer has asked, and it would be a second component's API.
+
+  **The bar keeps `h-16` / 64px in all four combinations** — label only,
+  actions only, both, neither. That height is under contract outside this
+  repo: JustRAG positions toasts beneath it with `top: 76px` (= 64 + 12,
+  `web/src/components/Toast.css`) and measures the same 64 in its own Chromium
+  story. A bar that collapsed when empty would therefore be a **breaking
+  geometry change** for a call site that changed nothing, which is why it was
+  not done silently. An explicit „no bar" prop remains available as a separate,
+  migrated decision.
+
+  **The chrome rule is unchanged.** The bar is still chrome with the label
+  gone: `headerActions` may not hold a heading, and the label-less combination
+  is asserted in `heading-owner.test.tsx` alongside the eight it already
+  covers.
+
+  *Known consumers, audited 2026-09-16 (read-only, at that moment).* Both pass
+  `pageLabel` explicitly, so required → optional reaches neither of them:
+  **JustRAG** — one call site, `web/src/components/AppChrome.tsx:402`, pinned
+  `github:KI4JLU/JLU-Design-System#v0.28.0`; it is the consumer that asked, and
+  its KI-787 will drop the prop and put a live, debounced catalog search in the
+  slot. **CampusAgents** — one call site, `src/components/AppLayout.tsx:33`,
+  pinned `^0.22.0`, so seven minors behind and unaffected until the pin moves.
+
+  *Version.* Purely additive (a required prop became optional; no removal, no
+  renamed export, no changed default), so a minor. The `package.json` bump
+  belongs in its own `chore(release): 0.29.0` commit, as in 0.22.0–0.28.0.
+
 - **0.28.0** — **`AppShellLayout` forwards the collapsible column.** KI-793.
 
   New on `AppShellLayoutProps`: `collapsed`, `onCollapsedChange`,

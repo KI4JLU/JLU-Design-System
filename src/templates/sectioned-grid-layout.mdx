@@ -23,7 +23,7 @@ Theme-Umschalter und Nutzermenü gehören dem Shell.
 | `label` | `string` | ✅ | Zugänglicher Name des `region`-Landmarks um den gesamten Inhalt. Pflicht: ein `<section>` **ohne** Namen ist laut HTML-AAM `generic`, also gar kein Landmark. |
 | `sections` | `SectionedGridSection[]` | ✅ | Die Sektionen in Anzeigereihenfolge (siehe Tabellen unten). |
 | `headingLevel` | `1`–`6` | — | **Eine** Zahl für beide Überschriften-Rollen: der Seitentitel sitzt auf dieser Stufe, jede Sektions-Überschrift eine Stufe darunter. Standard `1` ⇒ `h1` + `h2`, genau wie vorher. Gilt auch **ohne** `title` — die Prop sagt, *wo* der Seitentitel steht, nicht nur, ob dieses Template ihn zeichnet. Über Stufe 6 wird geklemmt. |
-| `title` | `ReactNode` | — | Seitentitel. Gesetzt ⇒ `PageHeader` auf `headingLevel` über den Sektionen, wie in `DashboardLayout`. Weglassen, wenn der Titel nur in `AppShellLayout`s `pageLabel`-Zeile steht. |
+| `title` | `ReactNode` | — | Seitentitel. Gesetzt ⇒ `PageHeader` auf `headingLevel` über den Sektionen, wie in `DashboardLayout`. Weglassen, wenn der Titel nur in `AppShellLayout`s `pageLabel`-Zeile steht. **Oder umgekehrt** (seit 0.29.0): `title` hier behalten und `pageLabel` am Shell weglassen — das ist die barrierefreiere Wahl, denn nur diese Überschrift steht im Outline, das Label ist ein `<p>`. |
 | `description` | `ReactNode` | — | Gedämpfte Zeile unter dem Titel (braucht `title`). |
 | `actions` | `ReactNode` | — | Rechtsbündige Aktionen neben dem Titel (braucht `title`). |
 | `cols` | `1 \| 2 \| 3 \| 4` | — | Default `3`. Spaltenzahl **aller** Sektions-Grids auf dem Desktop; der Kollaps kommt von `Grid`. Ein Regler für die ganze Seite — Sektionen mit unterschiedlicher Spaltenzahl lesen sich wie verschiedene Seiten. |
