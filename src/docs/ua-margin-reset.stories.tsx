@@ -154,7 +154,17 @@ export const NothingMoves: Story = {
         </div>
 
         <div data-testid="app-shell">
-          <AppShellLayout logo="Marke" nav={<span>Navigation</span>} pageLabel="Dashboard">
+          <AppShellLayout
+            logo="Marke"
+            nav={<span>Navigation</span>}
+            pageLabel="Dashboard"
+            leftOpen
+            onLeftOpenChange={() => {}}
+            mobileTabs={[]}
+            activeMobileTab="page"
+            onMobileTabChange={() => {}}
+            mobileTabBarLabel="Bereichswechsel"
+          >
             <span>Inhalt</span>
           </AppShellLayout>
         </div>

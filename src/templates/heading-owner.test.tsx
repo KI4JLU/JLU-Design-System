@@ -37,15 +37,33 @@ import { ThemeProvider } from "../theme/ThemeContext";
  *    `AuthLayout`, whose title is deliberately *not* a heading by default.
  *
  * `matchMedia` is stubbed for `ThemeProvider` (it reads
- * `prefers-color-scheme`) and for `WorkspaceLayout` (it reads
- * `--breakpoint-lg`); jsdom implements neither.
+ * `prefers-color-scheme`) and for `WorkspaceLayout` / `AppShell` (they read
+ * `--breakpoint-lg`); jsdom implements neither. `matches` answers the
+ * *viewport* query only, so `prefers-color-scheme` still resolves to „no"
+ * while a shell renders its wide arrangement.
  */
+/**
+ * Everything `AppShellLayout` requires since 0.30.0 and this file is not about:
+ * the controlled left column and the narrow-screen tab table. Spelled once so
+ * the heading assertions below stay about headings.
+ */
+const SHELL_PROPS = {
+  logo: "Marke",
+  nav: "Navigation",
+  leftOpen: true,
+  onLeftOpenChange: () => {},
+  mobileTabs: [],
+  activeMobileTab: "page",
+  onMobileTabChange: () => {},
+  mobileTabBarLabel: "Bereichswechsel",
+};
+
 function stubMatchMedia(matches = false) {
   vi.stubGlobal(
     "matchMedia",
     (query: string) =>
       ({
-        matches,
+        matches: matches || query === "(min-width: 64rem)",
         media: query,
         onchange: null,
         addEventListener: () => {},
@@ -131,7 +149,7 @@ describe("the page-heading rule — defaults every consumer already ships agains
     stubMatchMedia();
     render(
       <ThemeProvider>
-        <AppShellLayout logo="Marke" nav="Navigation" pageLabel="Dashboard">
+        <AppShellLayout {...SHELL_PROPS} pageLabel="Dashboard">
           Inhalt
         </AppShellLayout>
       </ThemeProvider>,
@@ -145,8 +163,7 @@ describe("the page-heading rule — defaults every consumer already ships agains
     render(
       <ThemeProvider>
         <AppShellLayout
-          logo="Marke"
-          nav="Navigation"
+          {...SHELL_PROPS}
           pageLabel="Dashboard"
           headerActions={<ThemeToggle />}
         >
@@ -170,7 +187,7 @@ describe("the page-heading rule — defaults every consumer already ships agains
     // JustRAG shape that asked for the optional label.
     render(
       <ThemeProvider>
-        <AppShellLayout logo="Marke" nav="Navigation" headerActions={<ThemeToggle />}>
+        <AppShellLayout {...SHELL_PROPS} headerActions={<ThemeToggle />}>
           <PageHeader title="Wissensbasen" />
         </AppShellLayout>
       </ThemeProvider>,

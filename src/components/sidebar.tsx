@@ -9,10 +9,16 @@ import {
 
 /**
  * Structural navigation column: optional header (logo/brand), a scrollable
- * <nav> for NavItems, optional footer (user menu). Purely the column itself
- * — positioning, the right-hand border, and the mobile drawer behavior
- * belong to AppShell, so the same Sidebar node can be rendered in both
- * places.
+ * <nav> for NavItems, optional footer (user menu). Purely the column itself —
+ * positioning, the border and any viewport behaviour belong to whatever
+ * composes it.
+ *
+ * **Standalone since 0.30.0.** `AppShell` no longer renders this component:
+ * its nav column is a `SidePanel` (collapsing to the 60px rail, with a
+ * `header` slot and its own toggle), so `Sidebar` is what an app reaches for
+ * when it needs a nav column *outside* the shell. Nothing here changed — the
+ * props, the 80px collapsed width and the toggle are exactly as in 0.29.0 —
+ * but the shell is no longer one of its call sites.
  *
  * **Collapsing is controlled, never remembered.** `collapsed` /
  * `onCollapsedChange` are consumer state, like `SidePanel`'s `isOpen` and
@@ -31,9 +37,12 @@ import {
  * inline with the brand node, and appears only when `onCollapsedChange` is
  * given — without a handler a toggle could not do anything.
  *
- * **Not in the mobile drawer.** `AppShell` renders this same node a second
- * time inside its drawer; there, both the toggle and the collapsed width are
- * suppressed (see `sidebar-context.ts` for the full reasoning).
+ * **The drawer case is gone (0.30.0).** `AppShell` used to render this same
+ * node a second time inside a mobile drawer and to suppress the toggle and the
+ * collapsed width there, via `SidebarSurfaceContext`. There is no drawer any
+ * more, so nothing produces that value and every mount behaves as
+ * „standalone"; the reader below is kept only so a `Sidebar` inside some other
+ * consumer's provider still behaves. See `sidebar-context.ts`.
  */
 export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
   /** Brand area above the navigation (logo, product name). Hidden while collapsed. */

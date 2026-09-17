@@ -84,9 +84,11 @@ const aside = (canvasElement: HTMLElement) =>
 /**
  * Die strukturelle Navigationsspalte: Header (Marke), scrollbare Navigation,
  * Footer (Nutzermenü: Avatar, Name/Rolle, Chevron). Positionierung und
- * Drawer-Verhalten liefert AppShell — dieselbe Sidebar-Instanz wird dort an
- * beiden Stellen gerendert. Der ThemeToggle sitzt in `AppShellLayout` rechts
- * in der Header-Leiste, nicht im Sidebar-Footer.
+ * Viewport-Verhalten liefert das komponierende Gerüst. **Seit 0.30.0 ist das
+ * nicht mehr `AppShell`** — dessen Navigationsspalte ist ein `SidePanel`;
+ * `Sidebar` ist die eigenständige Navigationsspalte außerhalb der Shell. Der
+ * ThemeToggle sitzt in `AppShellLayout` rechts in der Chrome-Zeile, nicht im
+ * Sidebar-Footer.
  */
 export const Complete: Story = {
   render: () => (

@@ -374,7 +374,19 @@ Pages are **assembled, not laid out by hand**:
 ```tsx
 import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-system";
 
-<AppShellLayout logo={<Brand />} nav={<NavItems />} sidebarFooter={<UserMenu />}>
+<AppShellLayout
+  logo={<Brand />}
+  nav={<NavItems />}
+  sidebarFooter={<UserMenu />}
+  // controlled column state + the narrow-screen tabs, both required since 0.30.0
+  leftOpen={leftOpen}
+  onLeftOpenChange={setLeftOpen}
+  mobileTabs={[{ id: "nav", icon: <Menu />, label: "Bereiche", pane: "left" },
+               { id: "page", icon: <Home />, label: "Seite", pane: "main" }]}
+  activeMobileTab={tab}
+  onMobileTabChange={setTab}
+  mobileTabBarLabel="Bereich wechseln"
+>
   <DashboardLayout title="Statistiken" actions={<RangeSwitch />} stats={<KpiCards />}>
     <Grid cols={2}>…</Grid>
   </DashboardLayout>
@@ -391,29 +403,45 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   `width` and the current mobile tab in as controlled props — never a
   breakpoint check or a pane frame of your own. Hiding a pane goes through
   `showRight`, never through its collapse state.
-- **A collapsible nav column is `Sidebar`'s `collapsed` / `onCollapsedChange`,
-  and the state lives in the app.** Hold it where the app already holds user
-  preferences (context, URL, `localStorage`) and pass it down; there is no
-  `defaultCollapsed`, and a second source of truth is the bug that prop
-  prevents. Do **not** put your own minimise button into the `header` slot —
-  the column renders one as soon as it has a handler, right-aligned next to the
-  brand, with the `aria-expanded`/`aria-controls` wiring already done. Every
-  row that should collapse needs a `label` on its `NavItem`: that string is the
-  icon-only row's accessible name and its tooltip, and a row without one stays
-  full width rather than losing its text. Inside `AppShell`'s mobile drawer the
-  same node renders expanded and without the toggle — that is handled for you,
-  so no breakpoint check at the call site. **Inside `AppShellLayout` you pass
-  the very same props to the template** (`collapsed`, `onCollapsedChange`,
-  `collapseLabel`, `expandLabel`, since 0.28.0); it forwards them to the
-  `Sidebar` it builds. Do not compose `AppShell` + `Sidebar` by hand to get a
-  collapsible column, and do not put a minimise button of your own into
-  `logo` or `headerActions`.
+- **The shell's nav column is `AppShellLayout`'s `leftOpen` /
+  `onLeftOpenChange` (0.30.0), and the state lives in the app.** Hold it where
+  the app already holds user preferences (context, URL, `localStorage`) and
+  pass it down; there is no `defaultOpen`, and a second source of truth is the
+  bug those props prevent. `leftOpen` is the **inverse** of the `collapsed`
+  prop it replaced — `collapsed={true}` is `leftOpen={false}`; a mechanical
+  rename inverts the UI silently. Collapsed is the 60px rail, not an icon
+  column: pass `collapsedPreview` on the panel if you want icons in it. Do
+  **not** put your own minimise button into `logo` — the column renders its
+  own toggle in the header row, on the edge facing the content, with the
+  `aria-expanded`/`aria-controls` wiring already done. Below `lg` the shell
+  shows **one area at a time** plus a `BottomTabBar`, so the four tab props
+  (`mobileTabs`, `activeMobileTab`, `onMobileTabChange`, `mobileTabBarLabel`)
+  are required and the call site still writes no breakpoint check: which tab
+  shows which area is data. There is no drawer and no burger button any more.
+  A second column on the right is `rightPanel` (an `AppShellPanel`, the same
+  shape `AppShell.left`/`.right` take). Do not compose `AppShell` +
+  `SidePanel` by hand to get any of this. **`Sidebar` is still exported** —
+  unchanged, with `collapsed`/`onCollapsedChange` — but only for a standalone
+  nav column outside the shell; every row that should collapse there still
+  needs a `label` on its `NavItem`.
 - **`WorkspaceLayout` is standalone — never a child of `AppShellLayout`.** It
   owns the full viewport and its panes *are* the page's chrome, so nesting it
   in the shell puts the shell's nav column next to the left pane: two chrome
   columns on one screen. Render it as the whole page, inside a frame that has a
   height (`h-dvh`), and put app navigation into its left pane; it contributes
   the page's `<main>` itself.
+
+  **Re-examined for 0.30.0, and it still holds.** `AppShell` now composes the
+  same `SidePanel` columns and the same narrow-screen arrangement (both frames
+  share `useIsDesktop` and the pane/tab types in `lib/pane-layout.ts`), so the
+  two templates look much more alike than they did. The rule survives because
+  it was never about the panes: nesting still produces two chrome columns and
+  two `<main>` landmarks, and that is unchanged. What the overlap *does* raise
+  is whether `WorkspaceLayout` should become a thin case of `AppShell` — it
+  would still need the two things the shell deliberately does not have
+  (`ResizeHandle`s and per-pane `minWidth`/`maxWidth`, plus `showRight`), so
+  this is a real design question and not a refactor. **Deliberately not decided
+  here: it needs its own card.**
 - **`SectionedGridLayout` is the opposite case — it *is* an `AppShellLayout`
   child.** It is page content, hung in as `children`, and keeps its own
   `<section aria-label>` inside the shell's single `<main>`. The dividing

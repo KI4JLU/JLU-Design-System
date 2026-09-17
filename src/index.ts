@@ -7,7 +7,11 @@
  *   @source "../node_modules/@ki4jlu/design-system";
  * (see README for full consumer setup, fonts, and the no-flash theme script)
  */
-export { AppShell, type AppShellProps } from "./components/app-shell";
+export {
+  AppShell,
+  type AppShellProps,
+  type AppShellPanel,
+} from "./components/app-shell";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Badge, type BadgeProps } from "./components/badge";
 export { badgeVariants } from "./components/badge-variants";
@@ -200,6 +204,13 @@ export {
   type WorkspaceMobileTab,
 } from "./templates/workspace-layout";
 export { cn } from "./lib/utils";
+/**
+ * The two shapes the responsive frames share (`AppShell`, `WorkspaceLayout`):
+ * which of the three areas a narrow-screen tab shows, and a tab that declares
+ * one. `WorkspacePaneId` / `WorkspaceMobileTab` are aliases of these and stay
+ * exported for the call sites that already import them.
+ */
+export { type PaneId, type MobilePaneTab } from "./lib/pane-layout";
 /**
  * The level type behind every template's `headingLevel` prop — exported so a
  * consumer wrapping a template can pass the prop through without restating
