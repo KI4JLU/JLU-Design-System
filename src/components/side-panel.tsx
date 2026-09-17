@@ -8,6 +8,7 @@ import {
 import { cn } from "../lib/utils";
 import { Button } from "./button";
 import { SIDE_PANEL_RAIL_WIDTH, sidePanelVariants } from "./side-panel-variants";
+import { SidebarCollapsedContext } from "./sidebar-context";
 
 /**
  * Collapsible pane frame: width, collapsed state and border edge for a
@@ -27,8 +28,17 @@ import { SIDE_PANEL_RAIL_WIDTH, sidePanelVariants } from "./side-panel-variants"
  * `[toggle … header]` — mirrored, so both panes put their control next to the
  * main column rather than against the window edge, and so the two headers plus
  * the main column's bar line up as one `h-16` chrome row. `header` is
- * expanded-only; there is deliberately **no** `footer` slot — a composing
- * shell pins its own footer inside `children`.
+ * expanded-only; `footer` is **not** — it is pinned under the body when
+ * expanded and moves into the rail when collapsed, because it is typically the
+ * only route to sign-out and a control that vanished on collapse would strand
+ * the user (0.30.0; it replaces the shell pinning its own footer inside
+ * `children`).
+ *
+ * **The pane publishes its collapsed state** on `SidebarCollapsedContext`, so
+ * `NavItem` and `SidebarUserMenu` hung into `children`/`footer` shrink to their
+ * icon form in the rail without being told twice. Before 0.30.0 only `Sidebar`
+ * provided it, which is why a nav column moved onto this frame rendered
+ * full-width labels inside a 60px rail.
  *
  * While collapsed the pane shrinks to a `SIDE_PANEL_RAIL_WIDTH` rail showing
  * the expand button and the optional `collapsedPreview`; `children` stay
@@ -68,6 +78,13 @@ export interface SidePanelProps extends React.HTMLAttributes<HTMLElement> {
   header?: React.ReactNode;
   /** Optional icon strip shown in the collapsed rail below the expand button. */
   collapsedPreview?: React.ReactNode;
+  /**
+   * Pinned below the scrolling body (a user menu). Unlike `header` it survives
+   * collapsing: it moves to the bottom of the rail, where a `SidebarUserMenu`
+   * renders as its avatar alone. Keep it to one or two controls — the rail is
+   * `SIDE_PANEL_RAIL_WIDTH` (60px) wide.
+   */
+  footer?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -83,6 +100,7 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
       collapseLabel,
       header,
       collapsedPreview,
+      footer,
       className,
       style,
       children,
@@ -121,6 +139,10 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
     );
 
     return (
+      // Provided around the WHOLE pane, rail included: the rail is exactly
+      // where `SidebarUserMenu` has to know it is collapsed, and `false` (the
+      // context default) is what made it render its full-width form there.
+      <SidebarCollapsedContext.Provider value={!isOpen}>
       <aside
         ref={ref}
         // Merged, not spread over: a consumer adding an unrelated style (a
@@ -130,18 +152,26 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
         {...props}
       >
         {!isOpen && (
-          <div className="flex min-h-0 flex-1 flex-col items-center gap-stack-md overflow-y-auto py-stack-md">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={expandLabel}
-              aria-expanded={false}
-              aria-controls={bodyId}
-              onClick={onExpand}
-            >
-              <ExpandIcon className="h-5 w-5" aria-hidden />
-            </Button>
-            {collapsedPreview}
+          // Two boxes, not one: the expand button and `collapsedPreview` scroll
+          // together while `footer` stays pinned to the bottom of the rail. On
+          // one scrolling box an `mt-auto` footer would ride off the end of a
+          // long preview strip — and the footer is the sign-out route, so it is
+          // the one thing in the rail that must always be reachable.
+          <div className="flex min-h-0 flex-1 flex-col items-center">
+            <div className="flex min-h-0 flex-1 flex-col items-center gap-stack-md overflow-y-auto py-stack-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={expandLabel}
+                aria-expanded={false}
+                aria-controls={bodyId}
+                onClick={onExpand}
+              >
+                <ExpandIcon className="h-5 w-5" aria-hidden />
+              </Button>
+              {collapsedPreview}
+            </div>
+            {footer && <div className="shrink-0 pb-stack-md">{footer}</div>}
           </div>
         )}
 
@@ -195,8 +225,22 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
             {side === "left" && collapseToggle}
           </div>
           {children}
+          {/* `isOpen &&`, not just `footer &&`: the collapsed rail renders the
+              same node, and the body is only HIDDEN, never unmounted — without
+              the guard the footer exists twice in the DOM, which duplicates any
+              `id` a consumer put in it (the drawer's old failure mode, removed
+              in 0.30.0 precisely because every node must be mounted once).
+              So the footer MOVES between the two mount points and, like
+              `header`, loses component state across a collapse; `children` are
+              the ones kept mounted, because a pane body holds scroll position
+              and half-typed input and a user menu holds neither.
+              `shrink-0` so a long `children` scrolls against the footer rather
+              than squeezing it — the body is a flex column and the footer is
+              the one row that must keep its height. */}
+          {isOpen && footer && <div className="shrink-0">{footer}</div>}
         </div>
       </aside>
+      </SidebarCollapsedContext.Provider>
     );
   },
 );

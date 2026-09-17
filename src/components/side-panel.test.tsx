@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SidePanel } from "./side-panel";
 import { SIDE_PANEL_RAIL_WIDTH } from "./side-panel-variants";
+import { useSidebarCollapsed } from "./sidebar-context";
 
 /**
  * Oracles used here are external to the component:
@@ -21,6 +22,13 @@ import { SIDE_PANEL_RAIL_WIDTH } from "./side-panel-variants";
  * 3. **lucide's own icon-class naming** (`lucide-<kebab-icon-name>`, added by
  *    the library, not by us) — pins that `side` selects PanelLeftClose vs
  *    PanelRightClose.
+ * 5. **The package's own published hook contract** (`useSidebarCollapsed`,
+ *    exported from the barrel and documented as "whether the surrounding nav
+ *    column is rendering its collapsed form") — read through a probe component
+ *    that is not part of the component under test. This is the contract
+ *    `NavItem` and `SidebarUserMenu` consume, so it is what actually decides
+ *    whether they shrink; asserting it directly is narrower and less brittle
+ *    than driving a tooltip or reading `sr-only` off a class.
  * 4. **DOM's `Node.compareDocumentPosition`** (WHATWG DOM §4.4) — a browser
  *    API, not ours, and the same order a screen reader and the tab sequence
  *    follow. It is what makes „the toggle is on the content-facing edge"
@@ -263,6 +271,83 @@ describe("SidePanel", () => {
       expect(headerFollowsToggle).toBe(side === "right");
     },
   );
+
+  /*
+    REGRESSION (0.30.0). `AppShell`'s nav column moved from `Sidebar` to this
+    frame, but only `Sidebar` provided `SidebarCollapsedContext` — so inside a
+    60px rail `NavItem` and `SidebarUserMenu` read the context DEFAULT, false,
+    and rendered their full-width form. The whole suite stayed green through
+    that, which is why these two tests exist: nothing here had ever asserted
+    what the frame publishes to its own subtree.
+  */
+  describe("publishes its collapsed state to the subtree", () => {
+    function Probe() {
+      return <span data-testid="probe">{String(useSidebarCollapsed())}</span>;
+    }
+
+    it.each([
+      ["collapsed", false, "true"],
+      ["expanded", true, "false"],
+    ])("a %s pane", (_name, isOpen, expected) => {
+      render(
+        <SidePanel
+          side="left"
+          isOpen={isOpen}
+          width={320}
+          onExpand={() => {}}
+          onCollapse={() => {}}
+          {...LABELS}
+          footer={<Probe />}
+        >
+          <p>Inhalt</p>
+        </SidePanel>,
+      );
+
+      expect(screen.getByTestId("probe")).toHaveTextContent(expected);
+    });
+  });
+
+  describe("footer", () => {
+    function renderWithFooter(isOpen: boolean) {
+      return render(
+        <SidePanel
+          side="left"
+          isOpen={isOpen}
+          width={320}
+          onExpand={() => {}}
+          onCollapse={() => {}}
+          {...LABELS}
+          footer={<button type="button">Abmelden</button>}
+        >
+          <p>Inhalt</p>
+        </SidePanel>,
+      );
+    }
+
+    /*
+      The point of the slot: `header` is dropped from the rail, `footer` is not.
+      `toBeVisible` is the `hidden`-attribute oracle (oracle 1) — a footer left
+      inside the collapsed body would still be IN the document, so
+      `getByRole` alone would pass while the control was unreachable.
+    */
+    it.each([
+      ["expanded", true],
+      ["collapsed", false],
+    ])("stays reachable while %s", (_name, isOpen) => {
+      renderWithFooter(isOpen);
+      expect(screen.getByRole("button", { name: "Abmelden" })).toBeVisible();
+    });
+
+    it("is outside the region the toggle collapses", () => {
+      renderWithFooter(false);
+      const body = document.getElementById(
+        screen.getByRole("button", { name: LABELS.expandLabel }).getAttribute("aria-controls")!,
+      );
+      const footer = screen.getByRole("button", { name: "Abmelden" });
+      expect(body).not.toBeNull();
+      expect(body!.contains(footer)).toBe(false);
+    });
+  });
 
   it("points aria-controls at the region that holds the children", () => {
     render(
