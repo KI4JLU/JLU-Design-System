@@ -244,6 +244,21 @@ describe("AppShell — desktop arrangement", () => {
     expect(screen.getByText("Quellen-Inhalt")).toBeVisible();
   });
 
+  /*
+    The shell-level half of the same 0.30.0 regression: a collapsed nav column
+    must still carry its footer, because that is typically the only route to
+    sign-out. Before the fix the shell pinned `footer` inside `SidePanel`'s
+    children, i.e. inside the region the collapse hides — the control was in the
+    document and unreachable, so only a visibility oracle catches it.
+  */
+  it("keeps the collapsed column's footer reachable in the rail", () => {
+    stubViewport(true);
+    renderShell({ left: leftPanel({ isOpen: false }) });
+
+    const leftColumn = screen.getByRole("complementary", { name: "Navigationsspalte" });
+    expect(within(leftColumn).getByRole("button", { name: "Abmelden" })).toBeVisible();
+  });
+
   it("collapses a column to the rail and leaves the other one expanded", async () => {
     stubViewport(true);
     const left = leftPanel({ isOpen: false });

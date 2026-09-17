@@ -2,10 +2,7 @@ import * as React from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Button } from "./button";
-import {
-  SidebarCollapsedContext,
-  SidebarSurfaceContext,
-} from "./sidebar-context";
+import { SidebarCollapsedContext } from "./sidebar-context";
 
 /**
  * Structural navigation column: optional header (logo/brand), a scrollable
@@ -40,9 +37,8 @@ import {
  * **The drawer case is gone (0.30.0).** `AppShell` used to render this same
  * node a second time inside a mobile drawer and to suppress the toggle and the
  * collapsed width there, via `SidebarSurfaceContext`. There is no drawer any
- * more, so nothing produces that value and every mount behaves as
- * „standalone"; the reader below is kept only so a `Sidebar` inside some other
- * consumer's provider still behaves. See `sidebar-context.ts`.
+ * more, so that context had no producer left and is deleted; every mount now
+ * behaves as it did standalone. See `sidebar-context.ts`.
  */
 export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
   /** Brand area above the navigation (logo, product name). Hidden while collapsed. */
@@ -89,9 +85,8 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     // controlled region unidentified (same reasoning as SidePanel's bodyId).
     // useId is per mount, so AppShell's two copies cannot collide.
     const navId = React.useId();
-    const inDrawer = React.useContext(SidebarSurfaceContext) === "drawer";
-    const isCollapsed = collapsed && !inDrawer;
-    const showToggle = onCollapsedChange !== undefined && !inDrawer;
+    const isCollapsed = collapsed;
+    const showToggle = onCollapsedChange !== undefined;
 
     return (
       <SidebarCollapsedContext.Provider value={isCollapsed}>

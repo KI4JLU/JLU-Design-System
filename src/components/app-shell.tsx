@@ -46,9 +46,8 @@ export interface AppShellPanel {
   header?: React.ReactNode;
   /**
    * Pinned to the bottom of the column, below the scrolling `content` (a user
-   * menu). `SidePanel` has deliberately no `footer` slot of its own; the shell
-   * pins this one inside its `children`, which is the composition that slot's
-   * absence was left open for.
+   * menu). Forwarded to `SidePanel.footer`, so it stays reachable in the
+   * collapsed rail — a `SidebarUserMenu` there renders as its avatar alone.
    */
   footer?: React.ReactNode;
   /**
@@ -112,7 +111,7 @@ export interface AppShellPanel {
  * was open (JustRAG hit exactly this and documented it in `AppChrome.tsx`).
  * With the drawer gone there is one mount per node in every state — which is
  * also why `SidebarSurfaceContext`, the mechanism that told the two copies
- * apart, has no producer any more.
+ * apart, is deleted.
  *
  * **One `<main>` per arrangement, never two** — and when a side column is the
  * area on screen below `lg`, there is no `main` landmark at all: the main
@@ -127,6 +126,12 @@ export interface AppShellPanel {
  * (which must be gone there) and the brand (which `topBar` already shows),
  * while the footer is typically the only route to sign-out. Reasoned from
  * those two facts, not confirmed with the design-system owner.
+ *
+ * **The collapsed rail keeps the footer** (0.30.0): `SidePanel` renders it
+ * below the rail's scrolling strip, and publishes its collapsed state on
+ * `SidebarCollapsedContext`, so a `SidebarUserMenu` there shrinks to its
+ * avatar. Without both halves a collapsed column had no route to sign-out and
+ * rendered full-width nav labels in 60px.
  */
 export interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Left column, usually the navigation. Omit it for a shell without one. */
@@ -186,11 +191,11 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
     ) : null;
 
     /*
-      A column, as the desktop arrangement renders it. `content` scrolls,
-      `footer` is pinned under it — `SidePanel`'s body is a flex column, so the
-      two split the height between them rather than the footer riding on the
-      end of a long list. Both stay mounted while collapsed (hidden by
-      `SidePanel`), so scroll position and half-typed input survive.
+      A column, as the desktop arrangement renders it. `content` scrolls and
+      `footer` is pinned under it — both are `SidePanel`'s own slots since
+      0.30.0, so the footer also survives into the collapsed rail instead of
+      disappearing with the hidden body. `content` stays mounted while
+      collapsed, so scroll position and half-typed input survive.
     */
     const column = (panel: AppShellPanel, side: "left" | "right") => (
       <SidePanel
@@ -203,10 +208,10 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
         collapseLabel={panel.collapseLabel}
         header={panel.header}
         collapsedPreview={panel.collapsedPreview}
+        footer={panel.footer}
         aria-label={panel.label}
       >
         <div className="min-h-0 flex-1 overflow-y-auto">{panel.content}</div>
-        {panel.footer && <div className="shrink-0">{panel.footer}</div>}
       </SidePanel>
     );
 
