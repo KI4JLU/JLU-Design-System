@@ -21,6 +21,11 @@ import { SIDE_PANEL_RAIL_WIDTH } from "./side-panel-variants";
  * 3. **lucide's own icon-class naming** (`lucide-<kebab-icon-name>`, added by
  *    the library, not by us) — pins that `side` selects PanelLeftClose vs
  *    PanelRightClose.
+ * 4. **DOM's `Node.compareDocumentPosition`** (WHATWG DOM §4.4) — a browser
+ *    API, not ours, and the same order a screen reader and the tab sequence
+ *    follow. It is what makes „the toggle is on the content-facing edge"
+ *    checkable without reading a class name or a computed style (jsdom has no
+ *    layout, so a geometric oracle is not available at all here).
  */
 
 const LABELS = {
@@ -147,6 +152,117 @@ describe("SidePanel", () => {
       expect(screen.queryByText("3 Einträge")).not.toBeInTheDocument();
     });
   });
+
+  /**
+   * `header` — Oracle 1 (the accessibility tree: the collapsed body carries
+   * the `hidden` attribute, so „only the expand control exists while
+   * collapsed" is a tree question) plus Oracle 4 for the order. Every query is
+   * by role or by the consumer's own text; no class name and no style is read,
+   * so the assertions survive any restyling of the row.
+   */
+  describe("header slot", () => {
+    it("renders the header inline with the collapse toggle while expanded", () => {
+      render(
+        <SidePanel
+          side="left"
+          isOpen
+          width={320}
+          onExpand={() => {}}
+          onCollapse={() => {}}
+          header={<h2>Verlauf</h2>}
+          {...LABELS}
+        >
+          <p>Panel-Inhalt</p>
+        </SidePanel>,
+      );
+      const title = screen.getByRole("heading", { name: "Verlauf" });
+      expect(title).toBeVisible();
+      // Inline WITH the toggle, not stacked above it: both are children of the
+      // same row element. Asserted through the DOM's own parent relation.
+      const collapse = screen.getByRole("button", { name: LABELS.collapseLabel });
+      expect(title.parentElement?.parentElement).toBe(collapse.parentElement);
+    });
+
+    it("drops the header entirely while collapsed", () => {
+      render(
+        <SidePanel
+          side="left"
+          isOpen={false}
+          width={320}
+          onExpand={() => {}}
+          onCollapse={() => {}}
+          header={<h2>Verlauf</h2>}
+          collapsedPreview={<span>3 Einträge</span>}
+          {...LABELS}
+        >
+          <p>Panel-Inhalt</p>
+        </SidePanel>,
+      );
+      // Not merely invisible: absent. The rail holds the expand button and
+      // `collapsedPreview` and nothing else — the same contract
+      // `collapsedPreview` is held to in the opposite direction above.
+      expect(screen.queryByRole("heading", { name: "Verlauf" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Verlauf")).not.toBeInTheDocument();
+      expect(screen.getByText("3 Einträge")).toBeVisible();
+      expect(screen.getAllByRole("button")).toEqual([
+        screen.getByRole("button", { name: LABELS.expandLabel }),
+      ]);
+    });
+
+    it("renders no header wrapper when none is given", () => {
+      render(
+        <SidePanel side="left" isOpen width={320} onExpand={() => {}} onCollapse={() => {}} {...LABELS}>
+          <p>Panel-Inhalt</p>
+        </SidePanel>,
+      );
+      // The row still exists and still holds exactly one control — the slot is
+      // additive, an omitted `header` changes nothing.
+      const collapse = screen.getByRole("button", { name: LABELS.collapseLabel });
+      expect(collapse.parentElement?.childElementCount).toBe(1);
+    });
+  });
+
+  /**
+   * Oracle 4. The toggle is the control that faces the main content, so on a
+   * LEFT pane it must come after the header (trailing edge) and on a RIGHT
+   * pane before it (leading edge). `compareDocumentPosition` returns
+   * `DOCUMENT_POSITION_FOLLOWING` (4) when the argument follows the node it is
+   * called on — a DOM-spec constant, not a number of ours.
+   */
+  it.each([
+    { side: "left", order: "toggle follows the header" },
+    { side: "right", order: "toggle precedes the header" },
+  ] as const)(
+    "puts the $side pane's toggle on the content-facing edge ($order)",
+    ({ side }) => {
+      render(
+        <SidePanel
+          side={side}
+          isOpen
+          width={320}
+          onExpand={() => {}}
+          onCollapse={() => {}}
+          header={<h2>Verlauf</h2>}
+          {...LABELS}
+        >
+          <p>Panel-Inhalt</p>
+        </SidePanel>,
+      );
+      const title = screen.getByRole("heading", { name: "Verlauf" });
+      const collapse = screen.getByRole("button", { name: LABELS.collapseLabel });
+      const toggleFollowsHeader = Boolean(
+        title.compareDocumentPosition(collapse) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(toggleFollowsHeader).toBe(side === "left");
+
+      // And the mirror image, so a change that made BOTH true (or both false)
+      // cannot pass: exactly one of the two relations holds.
+      const headerFollowsToggle = Boolean(
+        collapse.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(headerFollowsToggle).toBe(side === "right");
+    },
+  );
 
   it("points aria-controls at the region that holds the children", () => {
     render(

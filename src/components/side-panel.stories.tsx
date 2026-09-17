@@ -19,6 +19,7 @@ const meta = {
   argTypes: {
     onExpand: { control: false },
     onCollapse: { control: false },
+    header: { control: false },
     collapsedPreview: { control: false },
     children: { control: false },
   },
@@ -42,6 +43,15 @@ const panelBody = (
   </ul>
 );
 
+/**
+ * Titel-Knoten für den `header`-Slot. `truncate` steht am Knoten des
+ * Konsumenten, nicht im Rahmen: der Slot ist `min-w-0`, entscheiden muss die
+ * Anwendung, ob ihr Titel kürzt, umbricht oder gar nicht schrumpft.
+ */
+const paneTitle = (text: string) => (
+  <h2 className="truncate font-body-base text-body-base text-on-surface">{text}</h2>
+);
+
 const preview = (
   <>
     <History className="h-5 w-5 text-on-surface-variant" aria-hidden />
@@ -57,7 +67,13 @@ const Frame = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-const Interactive = ({ side }: { side: "left" | "right" }) => {
+const Interactive = ({
+  side,
+  title = "Verlauf",
+}: {
+  side: "left" | "right";
+  title?: string;
+}) => {
   const [isOpen, setIsOpen] = useState(true);
   const panel = (
     <SidePanel
@@ -68,6 +84,7 @@ const Interactive = ({ side }: { side: "left" | "right" }) => {
       onCollapse={() => setIsOpen(false)}
       expandLabel="Verlauf ausklappen"
       collapseLabel="Verlauf einklappen"
+      header={paneTitle(title)}
       collapsedPreview={preview}
       aria-label="Verlauf"
     >
@@ -90,24 +107,52 @@ const Interactive = ({ side }: { side: "left" | "right" }) => {
 /**
  * Kontrolliert: `isOpen` und `width` liegen beim Konsumenten. Der
  * Einklapp-Knopf gehört zum Rahmen — er ist im zugeklappten Zustand das
- * einzige Bedienelement.
+ * einzige Bedienelement. Links steht er am **nachlaufenden** Rand, also dem
+ * zum Inhalt zeigenden; `header` füllt den Rest der Zeile.
  */
 export const Playground: Story = {
   render: () => <Interactive side="left" />,
 };
 
-/** Rechte Leiste: Rand und Chevron spiegeln sich über `side`. */
+/**
+ * Rechte Leiste: Rand und Chevron spiegeln sich über `side` — und der
+ * Umschalter wandert mit. Er steht **vor** dem `header`, wieder am zum Inhalt
+ * zeigenden Rand, so dass die beiden Kopfzeilen eines Workspace zur Mitte hin
+ * spiegelsymmetrisch sind.
+ */
 export const RightSide: Story = {
   render: () => <Interactive side="right" />,
 };
 
 /**
+ * Langer Titel: Der `header`-Slot ist `min-w-0`, ein `truncate`-Knoten kürzt
+ * deshalb mit Ellipse, statt den Umschalter aus der Zeile zu drängen. Die
+ * Zeile ist in beiden Richtungen `h-16` hoch — dieselbe Chrome-Einheit wie die
+ * Leiste von `AppShellLayout`, damit die Kopfzeilen auf einer Linie liegen.
+ */
+export const LongHeaderTitle: Story = {
+  render: () => (
+    <Interactive
+      side="left"
+      title="Gesprächsverlauf zur Prüfungsordnung des Fachbereichs 07"
+    />
+  ),
+};
+
+/**
  * Zugeklappt: 60px-Schiene mit Ausklapp-Knopf und optionaler
  * `collapsedPreview`. Der Inhalt bleibt montiert, ist aber ausgeblendet —
- * Scrollposition und halb getippte Eingaben überleben das Einklappen.
+ * Scrollposition und halb getippte Eingaben überleben das Einklappen. Der
+ * `header` dagegen wird **gar nicht** gerendert: in der Schiene ist Platz für
+ * genau ein Bedienelement (hier mit gesetztem `header`, der trotzdem fehlt).
  */
 export const Collapsed: Story = {
-  args: { isOpen: false, collapsedPreview: preview, children: panelBody },
+  args: {
+    isOpen: false,
+    header: paneTitle("Verlauf"),
+    collapsedPreview: preview,
+    children: panelBody,
+  },
   render: (args) => (
     <Frame>
       <SidePanel {...args} aria-label="Verlauf" />
