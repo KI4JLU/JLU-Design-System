@@ -67,7 +67,9 @@ const noop = () => {};
 /** See the oracle note: this is `ThemeProvider`'s dependency, not ours. */
 function stubMatchMedia(): void {
   vi.stubGlobal("matchMedia", (query: string) => ({
-    matches: false,
+    // The viewport query answers „desktop" so the shell renders its wide
+    // arrangement; `prefers-color-scheme` (ThemeProvider's) still answers „no".
+    matches: query === "(min-width: 64rem)",
     media: query,
     onchange: null,
     addEventListener: () => {},
@@ -130,6 +132,14 @@ describe("SectionedGridLayout — landmarks and nesting", () => {
           pageLabel="Sammlungen"
           navLabel="Hauptnavigation"
           nav={<NavItem active>Übersicht</NavItem>}
+          // Required since 0.30.0 and not what this test is about: the
+          // controlled left column plus the narrow-screen tab table.
+          leftOpen
+          onLeftOpenChange={noop}
+          mobileTabs={[]}
+          activeMobileTab="page"
+          onMobileTabChange={noop}
+          mobileTabBarLabel="Bereichswechsel"
         >
           <SectionedGridLayout label="Sammlungen" sections={[alpha()]} />
         </AppShellLayout>

@@ -64,6 +64,16 @@ export default defineConfig({
           enabled: true,
           headless: true,
           provider: playwright({}),
+          // Vitest's own default is 414x896 (`resolved.browser.viewport.width
+          // ??= 414` in vitest's config resolution), i.e. a phone — below the
+          // `lg` boundary (1024px) that `AppShell` and `WorkspaceLayout` ask
+          // `matchMedia` for. Story tests would therefore all run the
+          // narrow-screen arrangement, and every desktop geometry a `play`
+          // function measures (the 64px chrome bar, the centred search slot,
+          // the three columns) would be measured on a layout no desktop user
+          // sees. 1280x800 is a desktop window; a story that wants the narrow
+          // arrangement says so per story.
+          viewport: { width: 1280, height: 800 },
           instances: [{
             browser: 'chromium'
           }]

@@ -1,57 +1,22 @@
 import * as React from "react";
-import { BottomTabBar, type BottomTabBarItem } from "../components/bottom-tab-bar";
+import { BottomTabBar } from "../components/bottom-tab-bar";
 import { ResizeHandle } from "../components/resize-handle";
 import { SidePanel } from "../components/side-panel";
-import { SIDE_PANEL_RAIL_WIDTH } from "../components/side-panel-variants";
+import {
+  MOBILE_PANE_STYLE,
+  PANE_FILL,
+  useIsDesktop,
+  type MobilePaneTab,
+  type PaneId,
+} from "../lib/pane-layout";
 import { cn } from "../lib/utils";
 
 /**
- * Tailwind's `lg` breakpoint, as a media query: `--breakpoint-lg: 64rem` in
- * `node_modules/tailwindcss/theme.css` (this repo adds no `--breakpoint-*`
- * override). One breakpoint for the whole workspace, and the same value the
- * `lg:` utilities elsewhere in this library use, so no template invents a
- * second boundary. It is also the boundary the source implementation uses
- * (JustRAG's `useIsMobile`: `max-width: 1023px` = 1024px = 64rem at the 16px
- * default root size).
+ * Which of the three areas a mobile tab shows. An alias of the shared
+ * `PaneId` (`lib/pane-layout.ts`), which `AppShell` uses for the
+ * same arrangement — the name stays for the call sites that import it.
  */
-const DESKTOP_QUERY = "(min-width: 64rem)";
-
-function subscribeToViewport(onStoreChange: () => void): () => void {
-  // `matchMedia` is missing in jsdom (verified: jsdom 29 does not implement
-  // it), so a consumer's unit test would otherwise crash on rendering this
-  // template. Degrading to the desktop arrangement keeps the pane content in
-  // the tree, which is the more useful default for a test or a non-browser
-  // renderer.
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return () => {};
-  }
-  const query = window.matchMedia(DESKTOP_QUERY);
-  query.addEventListener("change", onStoreChange);
-  return () => query.removeEventListener("change", onStoreChange);
-}
-
-function readViewport(): boolean {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return true;
-  }
-  return window.matchMedia(DESKTOP_QUERY).matches;
-}
-
-function assumeDesktop(): boolean {
-  return true;
-}
-
-/**
- * `true` from `lg` up. `useSyncExternalStore` rather than an effect + state:
- * the first render already reads the real viewport, so the layout does not
- * flash the wrong arrangement.
- */
-function useIsDesktop(): boolean {
-  return React.useSyncExternalStore(subscribeToViewport, readViewport, assumeDesktop);
-}
-
-/** Which of the three areas a mobile tab shows. */
-export type WorkspacePaneId = "left" | "main" | "right";
+export type WorkspacePaneId = PaneId;
 
 /**
  * One side pane: its content plus the controlled state it shares with the
@@ -97,15 +62,11 @@ export interface WorkspacePane {
 }
 
 /**
- * A tab of the narrow-screen bar plus the pane it shows. The mapping is
- * **declared by the consumer**, not derived here: an app may well have two
- * tabs that show the same pane (JustRAG's „Chat" and „Workspace" both render
- * the main area and are told apart by its own view state).
+ * A tab of the narrow-screen bar plus the pane it shows — an alias of the
+ * shared `MobilePaneTab` (`lib/pane-layout.ts`), where the reasoning lives.
+ * The mapping is **declared by the consumer**, not derived here.
  */
-export interface WorkspaceMobileTab extends BottomTabBarItem {
-  /** Which area this tab shows below `lg`. */
-  pane: WorkspacePaneId;
-}
+export type WorkspaceMobileTab = MobilePaneTab;
 
 export interface WorkspaceLayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Left pane. Omit it entirely for a workspace without one. */
@@ -139,21 +100,6 @@ export interface WorkspaceLayoutProps extends React.HTMLAttributes<HTMLDivElemen
   /** Accessible name of the tab bar's `navigation` landmark. */
   mobileTabBarLabel: string;
 }
-
-/** Fills its column and scrolls on its own — one per area, all three alike. */
-const PANE_FILL = "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto";
-
-/**
- * `BottomTabBar` is `fixed`, so the pane below `lg` has to reserve its height
- * or the last row of content sits behind it. The bar is one „chrome unit"
- * tall — the same number as the collapsed rail, which is why
- * `SIDE_PANEL_RAIL_WIDTH` is reused here instead of a second literal 60 (see
- * the notes in `side-panel-variants.ts` and `bottom-tab-bar-variants.ts`) —
- * plus the iOS safe area the bar itself pads with.
- */
-const MOBILE_PANE_STYLE: React.CSSProperties = {
-  paddingBottom: `calc(${SIDE_PANEL_RAIL_WIDTH}px + env(safe-area-inset-bottom, 0px))`,
-};
 
 /**
  * Template „Workspace": the three-column workspace — `left` pane, main area,

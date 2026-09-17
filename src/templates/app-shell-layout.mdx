@@ -5,221 +5,217 @@ import * as AppShellLayoutStories from "./app-shell-layout.stories";
 
 # AppShellLayout
 
-Das komplette App-Gerüst: gebrandete Sidebar (Logo, Navigation, gepinnter
-Footer) plus responsiver Hauptbereich. Apps importieren dieses Template und
+Das komplette App-Gerüst: eine einklappbare, gebrandete **linke Spalte** (Logo,
+Navigation, gepinnter Footer), darüber eine dreiteilige Chrome-Zeile und
+optional eine **zweite Spalte rechts**. Apps importieren dieses Template und
 befüllen nur die Slots — das Gerüst wird **nie** in der App nachgebaut.
 
 <Canvas of={AppShellLayoutStories.WithDashboard} />
+
+```
+| linke SidePanel-Spalte  | Hauptspalte                             | rechte Spalte (optional) |
+| Kopfzeile: Logo+Schalter| Zeile h-16: pageLabel | search | actions | Kopfzeile: Schalter+Titel|
+| nav … sidebarFooter     | <main> scrollt selbst                   | content … footer         |
+```
+
+Seit **0.30.0** sind beide Spalten `SidePanel` — dieselbe Komponente, die
+`WorkspaceLayout` komponiert. Eingeklappt ist die **60px-Schiene**, nicht mehr
+eine 80px-Icon-Spalte, und unter `lg` zeigt die Shell **einen** Bereich plus
+eine `BottomTabBar`. Der mobile Drawer ist weg. Was das für bestehende
+Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
 
 ## Slots & Props
 
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
-| `logo` | `ReactNode` | ✅ | Markenblock — erscheint im Sidebar-Header **und** in der mobilen Top-Bar. |
-| `nav` | `ReactNode` | ✅ | Navigations-Einträge, typischerweise `<NavItem>`s (mit `asChild` für Router-Links). |
-| `sidebarFooter` | `ReactNode` | — | Gepinnter Sidebar-Fuß: Nutzermenü. |
-| `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks (Default „Hauptnavigation"). |
-| `menuLabel` | `string` | — | Zugänglicher Name des mobilen Menü-Buttons (Default „Navigation öffnen") — überschreibbar für mehrsprachige Apps. |
-| `drawerLabel` | `string` | — | Screenreader-Titel des mobilen Drawer-Dialogs (Default „Navigation"). |
-| `pageLabel` | `ReactNode` | — | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, linksbündig zum Seiteninhalt, in eigener Header-Zeile über dem Seiteninhalt. **Seit 0.29.0 optional**: weggelassen rendert das Template dafür **kein Element** — auch kein leeres `<p>`. |
-| `headerActions` | `ReactNode` | — | Chrome-Bedienelemente in derselben Zeile, rechts vom `pageLabel`: `ThemeToggle`, Suchfeld, mehrere davon — oder nichts. **Seit 0.26.0**; davor rendete das Template hier fest einen `<ThemeToggle />`. |
-| `collapsed` | `boolean` | — | Sidebar eingeklappt (Icon-Breite) oder voll. **Seit 0.28.0**, unverändert an die interne `Sidebar` durchgereicht. Ohne `onCollapsedChange` rein darstellend. |
-| `onCollapsedChange` | `(collapsed: boolean) => void` | — | Der Schalter wurde gedrückt; bekommt den **gewünschten** Zustand. Erst dieses Prop lässt die Spalte den Schalter rendern. **Seit 0.28.0.** |
-| `collapseLabel` | `string` | — | Zugänglicher Name des Schalters im ausgeklappten Zustand (Default „Navigation einklappen"). **Seit 0.28.0.** |
-| `expandLabel` | `string` | — | Zugänglicher Name des Schalters im eingeklappten Zustand (Default „Navigation ausklappen"). **Seit 0.28.0.** |
+| `logo` | `ReactNode` | ✅ | Markenblock — in der Kopfzeile der linken Spalte **und** in der schmalen Top-Bar. |
+| `nav` | `ReactNode` | ✅ | Navigations-Einträge, typischerweise `<NavItem>`s (mit `asChild` für Router-Links). Landen in einem `<nav aria-label={navLabel}>`. |
+| `sidebarFooter` | `ReactNode` | — | Gepinnter Fuß der linken Spalte: Nutzermenü. |
+| `navLabel` | `string` | — | Zugänglicher Name des `<nav>`-Landmarks **und** der Spalte darum (Default „Hauptnavigation"). |
+| `pageLabel` | `ReactNode` | — | Aktueller Standort (z. B. „Dashboard") — H1-**groß** und fett, aber ein `<p>` und **keine** Überschrift, links in der Chrome-Zeile. **Seit 0.29.0 optional**: weggelassen rendert das Template dafür **kein Element**. Seit 0.30.0 `truncate` — die Label-Region ist eine von zwei gleich breiten Hälften. |
+| `search` | `ReactNode` | — | **Neu in 0.30.0**: die **Mitte** der Zeile, auf `max-w-md` gedeckelt und auf der Mitte der *Zeile* zentriert — mit und ohne Label. |
+| `headerActions` | `ReactNode` | — | Chrome-Bedienelemente am **rechten** Ende der Zeile: `ThemeToggle`, Menü, mehrere davon — oder nichts. **Seit 0.26.0**; davor rendete das Template hier fest einen `<ThemeToggle />`. Unter `lg` steht dieser Bereich neben dem Logo in der schmalen Zeile. |
+| `leftOpen` | `boolean` | ✅ | Linke Spalte ausgeklappt (`true`) oder Schiene (`false`). **Ersetzt `collapsed` und bedeutet das Gegenteil davon.** |
+| `onLeftOpenChange` | `(isOpen: boolean) => void` | ✅ | Der Schalter wurde gedrückt; bekommt den **gewünschten** Zustand. |
+| `collapseLabel` | `string` | — | Name des Schalters im ausgeklappten Zustand (Default „Navigation einklappen"). |
+| `expandLabel` | `string` | — | Name des Schalters im eingeklappten Zustand (Default „Navigation ausklappen"). |
+| `rightPanel` | `AppShellPanel` | — | **Neu in 0.30.0**: zweite Spalte rechts, als Ganzes übergeben (dieselbe Form, die `AppShell.left`/`.right` nehmen). Weggelassen gibt es weder Landmark noch Schiene. |
+| `mobileTabs` | `MobilePaneTab[]` | ✅ | **Neu in 0.30.0**: Reiter der schmalen Anordnung, jeder mit `pane: "left" \| "main" \| "right"`. |
+| `activeMobileTab` | `string` | ✅ | Id des aktuellen Reiters — die **einzige** Eingabe, die entscheidet, welcher Bereich unter `lg` zu sehen ist. |
+| `onMobileTabChange` | `(id: string) => void` | ✅ | Ein Reiter wurde getippt. |
+| `mobileTabBarLabel` | `string` | ✅ | Zugänglicher Name des `navigation`-Landmarks der Reiter-Leiste. |
 | `children` | `ReactNode` | ✅ | Seiteninhalt — typischerweise ein weiteres Template (`DashboardLayout`, `TableLayout`, …). |
 
 <Controls />
 
-## `headerActions` — die Label-Zeile gehört der App
+## Die Chrome-Zeile: drei Regionen
 
-Das Template rendert in dieser Zeile **kein eigenes** Bedienelement mehr. Was
-dort steht, entscheidet die App:
+<Canvas of={AppShellLayoutStories.WithCenteredSearch} />
 
-<Canvas of={AppShellLayoutStories.WithSearchAndEnglishToggle} />
+- **Links** das `pageLabel`, **in der Mitte** `search`, **rechts**
+  `headerActions`. Die beiden Randregionen sind gleich breite Flex-Kinder
+  (`flex-1 basis-0`) — genau das zentriert die Mitte auf der **Zeile** und
+  nicht auf der Fläche, die das Label übrig lässt.
+- **Gemessen in Chromium** (1280px-Fenster, `play`-Funktion der Story): Zeile
+  256–1200 → Mitte 728, Feld 504–952 → Mitte 728, obwohl Label (125,4px) und
+  Umschalter (102px) links und rechts davon 23px unterschiedlich breit sind.
+- **Das `mx-auto`-Rezept von 0.29.0 ist damit überholt.** Es zentrierte den
+  Inhalt von `headerActions` in der Fläche *nach* dem Label — mit Label stand
+  das Feld daneben, und es wanderte, sobald sich der Seitenname änderte. Wer
+  ein Suchfeld hat, benutzt jetzt `search`.
+- **Die Zeile bleibt 64px hoch** — mit Label, nur mit Suche, nur mit Aktionen,
+  mit allem und mit nichts:
+
+<Canvas of={AppShellLayoutStories.WithoutPageLabelOrActions} />
+
+  Das steht außerhalb dieses Repos unter Vertrag: JustRAG legt seine Toasts mit
+  `top: 76px` (= 64 + 12) unter diese Kante. Eine Zeile, die beim Weglassen der
+  letzten Prop zusammenfiele, wäre für eine unveränderte Aufrufstelle eine
+  **brechende Geometrie-Änderung**.
+
+### Zeile ohne Label (seit 0.29.0)
+
+`pageLabel` ist **optional** — für Inhalts-Templates, die ihren Seitentitel
+selbst rendern (`SectionedGridLayout` → `PageHeader`); sonst stünde dasselbe
+Wort zweimal untereinander. Weggelassen rendert das Template **kein Element**
+dafür. Die Mitte bleibt dieselbe:
+
+<Canvas of={AppShellLayoutStories.WithCenteredSearchOnly} />
+
+### `headerActions` — die rechte Position gehört der App
+
+Das Template rendert dort **kein eigenes** Bedienelement. Was dort steht,
+entscheidet die App:
 
 - **Ein Element** (der klassische Fall) sitzt rechtsbündig genau dort, wo bis
   0.25.0 der feste `ThemeToggle` saß.
 - **Mehrere** kommen als Fragment und stehen in einer Reihe (`gap-2`).
-- **Breite/Zentrierung** bestimmt das eingehängte Element selbst: der Slot
-  bekommt den Platz, den das Label übrig lässt (`flex-1`), und richtet rechts
-  aus. `className="w-full max-w-md mx-auto"` zentriert darin — Auto-Margins
-  schlagen `justify-end`. Mit Label heißt zentriert **zentriert in der Fläche
-  nach dem Label**; ohne Label ist diese Fläche die ganze Zeile (siehe unten).
-- **Die Klassen gehören an den Knoten, der das Flex-Item ist.** Bei
-  `<Input leadingIcon={…} className="w-full max-w-md mx-auto" />` landen sie am
-  inneren `<input>`, das ein Icon-Feld in ein volle Breite spannendes `<span>`
-  wickelt — dort ist das Feld inline-block, und `margin: auto` rechnet sich zu
-  `0px`. Gemessen in Chromium: 207,5px links an der Mitte vorbei. Ein
-  Icon-Suchfeld kommt deshalb in einen eigenen
-  `<div className="w-full max-w-md mx-auto">`. *(Bis 0.28.0 stand es in der
-  Story hier falsch — die Doku behauptete eine Zentrierung, die nie stattfand.)*
-- **Leer** (`headerActions` weggelassen) heißt: nur das Label, kein Kasten im
-  DOM. Für Apps, die den Theme-Umschalter woanders führen — z. B. im
-  Nutzermenü der Sidebar.
+- **Leer** heißt: kein Kasten im DOM. Für Apps, die den Theme-Umschalter
+  woanders führen — z. B. im Nutzermenü der Spalte.
 
 **`ThemeProvider` braucht seit 0.26.0 nicht mehr die Shell, sondern der
-Umschalter.** Vorher rendete das Template den `ThemeToggle` selbst und
-erzwang damit den Provider — ohne ihn flog zur Laufzeit `useTheme must be used
-within a ThemeProvider`, aus einem Template, dessen Props von Theming nichts
-erzählen. Wer jetzt einen `ThemeToggle` (ob hier oder im Nutzermenü) einhängt,
-braucht den Provider darüber; wer keinen einhängt, braucht ihn nicht.
+Umschalter.** Vorher rendete das Template den `ThemeToggle` selbst und erzwang
+damit den Provider — ohne ihn flog zur Laufzeit `useTheme must be used within a
+ThemeProvider`, aus einem Template, dessen Props von Theming nichts erzählen.
 
-### Migration von 0.25.0 → 0.26.0 (**breaking**)
+## Die linke Spalte
 
-Bis 0.25.0 rendete das Template den `ThemeToggle` unbedingt. Wer ihn behalten
-will, hängt ihn jetzt selbst ein — eine Zeile:
+<Canvas of={AppShellLayoutStories.WithCollapsibleColumns} />
 
 ```tsx
-import { AppShellLayout, ThemeToggle } from "@ki4jlu/design-system";
+const [leftOpen, setLeftOpen] = useState(true);   // oder URL, Context, localStorage
 
 <AppShellLayout
   logo={logo}
   nav={nav}
   pageLabel={label}
-  headerActions={<ThemeToggle />}   {/* NEU: vorher implizit */}
->
-  {page}
-</AppShellLayout>
-```
-
-Wer nichts ändert, verliert den Umschalter — **stillschweigend**, ohne
-Typfehler, weil der Slot optional ist. Zwei Dinge fallen damit weg, die vorher
-fehlten: die vier Label-Props des `ThemeToggle`
-(`themeLabel`/`lightLabel`/`systemLabel`/`darkLabel`) sind jetzt direkt am
-eigenen Element erreichbar — das Template muss sie nicht mehr durchreichen —
-und `id` adressiert die `role="group"`-Gruppe.
-
-## Zeile ohne Label (seit 0.29.0)
-
-`pageLabel` ist **optional**. Weggelassen rendert das Template dafür **kein
-Element** — kein leeres `<p>` —, und die Zeile gehört den `headerActions`:
-
-<Canvas of={AppShellLayoutStories.WithCenteredSearchOnly} />
-
-```tsx
-<AppShellLayout
-  logo={logo}
-  nav={nav}
-  /* kein pageLabel: der Titel steht im Inhalts-Template darunter */
-  headerActions={
-    <div className="w-full max-w-md mx-auto">
-      <Input type="search" aria-label={t("search")} leadingIcon={<Search />} />
-    </div>
-  }
->
-  <SectionedGridLayout title={t("myKBs")} … />
-</AppShellLayout>
-```
-
-- **Wofür.** Ein Inhalts-Template, das seinen Seitentitel selbst rendert
-  (`SectionedGridLayout` → `PageHeader`), stand bis 0.28.0 zwangsläufig unter
-  einer Chrome-Zeile mit derselben Zeichenkette: dasselbe Wort zweimal,
-  übereinander. Die Alternative — `title` am Inhalts-Template weglassen — gibt
-  es weiterhin (`sectioned-grid-layout.mdx`); welche der beiden passt,
-  entscheidet, **wer die Überschrift der Seite besitzt**: das Label ist ein
-  `<p>` und zählt nicht im Dokument-Outline, der Titel des Inhalts-Templates
-  schon. Wer die Seite barrierefrei überschrieben haben will, lässt das Label
-  weg und behält den Titel — nicht umgekehrt.
-- **Zentriert heißt jetzt zentriert in der Zeile.** Kein neues Prop: der Slot
-  bekommt mit `flex-1` die ganze Breite, und dieselben zwei Utilities
-  (`w-full max-w-md`, `mx-auto`) zentrieren darin. Gemessen in Chromium, auf
-  den Pixel — `WithCenteredSearchOnly` vergleicht Feldmitte und Zeilenmitte
-  aus den Layout-Boxen, nicht aus Klassennamen. Ein leeres `<p>` hätte genau
-  das verhindert: als Flex-Item verschöbe es die Mitte um die halbe
-  `gap-4`-Lücke (gemessen: 8px).
-- **Die Zeile bleibt 64px hoch** — mit Label, nur mit Aktionen, mit beidem und
-  mit nichts:
-
-<Canvas of={AppShellLayoutStories.WithoutPageLabelOrActions} />
-
-  Das ist bewusst so und es steht außerhalb dieses Repos unter Vertrag:
-  JustRAG legt seine Toasts mit `top: 76px` (= 64 + 12) unter diese Kante und
-  misst dieselbe 64 in einem eigenen Chromium-Test. Eine Zeile, die beim
-  Weglassen der letzten Prop zusammenfiele, wäre für eine Aufrufstelle, die
-  nichts geändert hat, eine **brechende Geometrie-Änderung**. Wer die Zeile
-  wirklich loswerden will, bekommt dafür ein eigenes Prop — mit Karte und
-  Migration, nicht stillschweigend hier.
-- **Rein additiv.** Pflicht → optional bricht keine Aufrufstelle, und es
-  erscheint nirgends ein Default-Label, wo vorher keins war: ohne `pageLabel`
-  ist der Textinhalt der Zeile leer (`app-shell-layout.test.tsx`). Ein falsy
-  Wert — `pageLabel={t("…")}` mit leerer Übersetzung — zählt als „kein Label",
-  dieselbe Truthiness-Prüfung wie bei `headerActions`.
-- **Die Regel „die Zeile ist Chrome" bleibt.** Ohne `<p>` ist der Platz nicht
-  frei geworden: keine Überschrift in `headerActions`, auch jetzt nicht.
-  `heading-owner.test.tsx` prüft die label-lose Variante mit.
-
-## Einklappbare Sidebar (seit 0.28.0)
-
-Die Spalte, die 0.27.0 der `Sidebar` gegeben hat, ist jetzt **aus dem Template
-heraus** erreichbar. Der Zustand gehört der App — es gibt bewusst kein
-`defaultCollapsed`, weil die Sidebar-Breite genau die Art Wert ist, die eine
-App pro Nutzer speichert:
-
-```tsx
-const [collapsed, setCollapsed] = useState(false);   // oder URL, Context, localStorage
-
-<AppShellLayout
-  logo={logo}
-  nav={nav}
-  pageLabel={label}
-  collapsed={collapsed}
-  onCollapsedChange={setCollapsed}
+  leftOpen={leftOpen}
+  onLeftOpenChange={setLeftOpen}
   collapseLabel={t("collapseNavigation")}   // optional, Default ist deutsch
   expandLabel={t("expandNavigation")}
+  mobileTabs={TABS}
+  activeMobileTab={tab}
+  onMobileTabChange={setTab}
+  mobileTabBarLabel={t("switchArea")}
 >
   {page}
 </AppShellLayout>
 ```
 
-<Canvas of={AppShellLayoutStories.WithCollapsibleSidebar} />
+- **Den Schalter rendert die Spalte selbst**, in der Kopfzeile auf der Kante,
+  die zum Inhalt zeigt — das Template bringt hier **kein** eigenes
+  Bedienelement mit und öffnet auch keinen Slot. Der Schalter ist das einzige
+  Bedienelement, das den eingeklappten Zustand überlebt, und er trägt
+  `aria-expanded` + `aria-controls` auf eine `id`, die nur `SidePanel` kennt
+  (`useId`, pro Montierung). Ein Slot käme an diese `id` nicht heran.
+- **Der Zustand gehört der App.** Es gibt bewusst kein `defaultOpen`: die
+  Spaltenbreite ist genau die Art Wert, die eine App pro Nutzer speichert.
+- **Eingeklappt ist die Schiene** (60px, `SIDE_PANEL_RAIL_WIDTH`) — es gibt
+  keinen Icon-Navigationsmodus mehr. Wer Icons in der Schiene will, gibt sie
+  über `collapsedPreview` am `AppShellPanel` mit (an der rechten Spalte; für
+  die linke ist das eine Erweiterung, die eine Karte braucht).
+- **Beide Label-Props sind übersetzbar** — die Defaults sind deutsch.
 
-- **Den Schalter rendert die Spalte selbst**, rechtsbündig in der Header-Zeile
-  neben dem `logo` — das Template bringt hier **kein** eigenes Bedienelement
-  mit und öffnet auch keinen Slot. Warum das kein Widerspruch zu
-  `headerActions` ist, steht unten.
-- **Ohne `onCollapsedChange` gibt es keinen Schalter.** Jede Aufrufstelle von
-  vor 0.28.0 rendert deshalb exakt wie vorher: die Ergänzung ist rein additiv,
-  vier optionale Props, kein geändertes Standardverhalten.
-- **Jede Zeile, die einklappen soll, braucht ein `label` am `NavItem`.** Dieser
-  String ist der zugängliche Name der Icon-Zeile und ihr Tooltip; eine Zeile
-  ohne `label` bleibt in voller Breite stehen, statt ihren einzigen Text zu
-  verlieren.
-- **Im mobilen Drawer passiert nichts davon.** Dieselbe Sidebar-Instanz wird
-  dort ein zweites Mal gerendert und ist immer ausgeklappt und ohne Schalter —
-  ein „Spalte verkleinern" in einem modalen Drawer wäre sinnlos. Das entscheidet
-  `AppShell` in JavaScript (welche der beiden Montierungen), nicht ein
-  Breakpoint; die App schreibt dafür keine Abfrage.
-- **Beide Label-Props sind übersetzbar** — die Defaults sind deutsch, wie bei
-  `menuLabel`/`drawerLabel`.
+## Zweite Spalte rechts (seit 0.30.0)
 
-### Warum durchgereicht und nicht als Slot (im Gegensatz zu `headerActions`)
+<Canvas of={AppShellLayoutStories.WithRightPanel} />
 
-Ein Template öffnet einen Slot, wenn es sonst **selbst entscheiden würde**,
-welches Bedienelement in eine Chrome-Position gehört, die ihm gehört — das war
-`headerActions` (KI-784). Der Sidebar-Schalter ist keine solche Entscheidung:
-er gehört seit 0.27.0 der `Sidebar`, weil er das Einklappen **überleben** muss
-(er ist der einzige Weg zurück) und weil er einen Vertrag trägt, den ein
-beliebig eingehängter Knoten nicht einhalten könnte — `aria-expanded` plus
-`aria-controls` auf das `<nav>`, dessen `id` nur die `Sidebar` kennt (`useId`,
-pro Montierung). Ein Slot an dieser Stelle käme an diese `id` gar nicht heran.
-
-Was der Slot-Pattern schützt, gilt trotzdem weiter: **unterdrückbar** (Prop
-weglassen → kein Schalter), **übersetzbar** (`collapseLabel`/`expandLabel`),
-und die *Position* ist keine Meinung des Templates, sondern Teil des
-Sidebar-Vertrags — in 80px Breite ist Platz für genau ein Element.
-
-Anders als 0.26.0 beim `ThemeToggle` kann diese Lücke hier **nicht durch
-Löschen** geschlossen werden: den `ThemeToggle` baut die App seitdem selbst,
-die `Sidebar`-Instanz dagegen gehört dem Template. Durchreichen ist der
-einzige Weg an diese Props.
+`rightPanel` nimmt ein ganzes `AppShellPanel` statt sechs flacher Props: es ist
+exakt die Form, die `AppShell` selbst nimmt, also kein zweites Vokabular für
+dieselbe Sache. `content`, `header`, `footer`, `label`, `isOpen`,
+`onOpenChange`, `width` (Default 256), `expandLabel`, `collapseLabel`,
+`collapsedPreview`.
 
 ## Responsives Verhalten
 
-- **ab `lg`**: feste, sticky Sidebar (volle Höhe, rechter Rand), Inhalt daneben.
-- **unter `lg`**: Sidebar wird zum linken **Drawer** (Radix Dialog: Fokusfalle,
-  Escape schließt, Scroll-Lock), geöffnet über den Menü-Button der sticky
-  Top-Bar. Ein Klick auf einen Link im Drawer schließt ihn automatisch.
+- **ab `lg`**: linke Spalte | Hauptspalte | rechte Spalte, jede Spalte über die
+  volle Höhe, `<main>` scrollt für sich.
+- **unter `lg`**: Top-Bar (Logo + `headerActions`), **ein** Bereich,
+  `BottomTabBar` — kein Burger-Button, kein Drawer, kein Dialog.
+
+<Canvas of={AppShellLayoutStories.Mobile} />
+
+- **Warum in JavaScript und nicht per `lg:`-Utility.** Unter `lg` ist ein
+  Bereich keine schmalere Version seiner selbst: er füllt den Bildschirm, er
+  ignoriert den Einklapp-Zustand, und sein Einklapp-Schalter muss weg (ein
+  Schalter, der den einzigen sichtbaren Bereich einklappt, ließe einen leeren
+  Bildschirm zurück und zerstörte nebenbei die Desktop-Einstellung). Keine der
+  drei Aussagen ist als Klasse an derselben Markup-Stelle formulierbar. Die
+  App schreibt trotzdem keine Breakpoint-Abfrage: welcher Reiter welchen
+  Bereich zeigt, sind Daten (`mobileTabs`).
+- **Keine Fokusfalle, kein Escape, kein Scroll-Lock — und das ist kein
+  Versäumnis.** Diese drei gehören zu einem **Overlay**: Inhalt hinter einem
+  modalen Dialog darf nicht erreichbar sein, und ein Dialog braucht einen Weg
+  hinaus. Die Reiter-Anordnung überlagert nichts — der gezeigte Bereich **ist**
+  die Seite. Mit dem Dialog fällt die Anforderung weg, statt unerfüllt zu
+  bleiben. Was bleibt, ist der Vertrag der Leiste: ein `navigation`-Landmark
+  mit genau einem `aria-current="page"`.
+- **Ein `<main>` pro Anordnung, nie zwei** — und wenn unter `lg` eine
+  *Seiten*spalte der gezeigte Bereich ist, gibt es **gar kein** `main`: die
+  Hauptspalte steht dann nicht im Baum, und ein `complementary` in ein `main`
+  zu wickeln wäre die schlechtere Lüge.
+- **Jeder Knoten hängt genau einmal im Dokument.** Der alte Drawer rendete
+  denselben Navigationsknoten ein zweites Mal — eine `id` darin existierte
+  doppelt, solange er offen war (KI-797, in JustRAGs `AppChrome.tsx`
+  dokumentiert). Das ist mit dem Drawer verschwunden.
+
+## Migration 0.29 → 0.30 (**breaking**)
+
+```tsx
+// vorher
+<AppShellLayout
+  logo={logo} nav={nav} sidebarFooter={userMenu}
+  menuLabel={t("openNavigation")}     // ENTFÄLLT — kein Burger-Button
+  drawerLabel={t("navigation")}       // ENTFÄLLT — kein Drawer
+  headerActions={searchField}
+  collapsed={collapsed}               // ENTFÄLLT
+  onCollapsedChange={setCollapsed}    // ENTFÄLLT
+>
+
+// nachher
+<AppShellLayout
+  logo={logo} nav={nav} sidebarFooter={userMenu}
+  search={searchField}                // NEU: Mitte der Zeile
+  headerActions={<ThemeToggle />}
+  leftOpen={leftOpen}                 // INVERTIERT: leftOpen === !collapsed
+  onLeftOpenChange={setLeftOpen}
+  mobileTabs={TABS}                   // NEU, Pflicht
+  activeMobileTab={tab}               // NEU, Pflicht
+  onMobileTabChange={setTab}          // NEU, Pflicht
+  mobileTabBarLabel={t("switchArea")} // NEU, Pflicht
+  rightPanel={sources}                // NEU, optional
+>
+```
+
+- `collapsed` → `leftOpen`, **mit umgekehrter Bedeutung**. Ein mechanisches
+  Umbenennen dreht die Oberfläche stillschweigend um.
+- Beide sind jetzt **Pflicht**, ebenso die vier Reiter-Props: unter `lg` zeigt
+  die Shell einen Bereich, und ohne Reiter wäre die Navigationsspalte gar nicht
+  erreichbar.
+- `menuLabel`/`drawerLabel`: löschen. Ersatz gibt es nicht; die Bereiche werden
+  über `mobileTabs` und `mobileTabBarLabel` benannt.
+- Sichtbar: die eingeklappte Spalte ist 60px statt 80px und zeigt ohne
+  `collapsedPreview` keine Icons. Die ausgeklappte Breite ist unverändert.
 
 ## Do's & Don'ts
 
@@ -228,32 +224,24 @@ einzige Weg an diese Props.
   `FormLayout`, `TableLayout`, `ChatLayout`, `SectionedGridLayout`).
 - ❌ **Nicht** jedes Template passt hinein: `WorkspaceLayout` ist eigenständig
   und besitzt den ganzen Viewport — verschachtelt zeigt der Bildschirm zwei
-  Sidebars. Maßgeblich ist die Inventarliste in DESIGN_SYSTEM.md §4.
-- ✅ `headerActions` nimmt **Chrome**: Umschalter, Suche, kleine Werkzeuge der
-  Seitenleiste. Kein Seiteninhalt, keine Formulare, keine Business-Logik.
-- ❌ **Keine Überschrift in `headerActions`.** Der Slot ist eine zweite
-  Chrome-Position in derselben Zeile, kein Weg um die `pageLabel`-Regel herum:
-  ein `<h1>` dort stünde genauso neben der Überschrift des Inhalts-Templates.
-  Abgesichert in `heading-owner.test.tsx` — das Template selbst liefert mit
-  gefülltem Slot weiterhin **null** Überschriften.
+  Chrome-Spalten und zwei `<main>`. Maßgeblich ist die Inventarliste in
+  DESIGN_SYSTEM.md §4.
+- ✅ `headerActions` und `search` nehmen **Chrome**: Umschalter, Suche, kleine
+  Werkzeuge. Kein Seiteninhalt, keine Formulare, keine Business-Logik.
+- ❌ **Keine Überschrift in `headerActions` oder `search`.** Beides sind
+  Chrome-Positionen in derselben Zeile, kein Weg um die `pageLabel`-Regel
+  herum. Abgesichert in `heading-owner.test.tsx` — das Template liefert mit
+  gefüllten Slots weiterhin **null** Überschriften.
 - ✅ `pageLabel` **weglassen**, wenn das Inhalts-Template den Seitentitel schon
-  rendert — sonst steht dasselbe Wort zweimal untereinander. Seit 0.29.0.
+  rendert.
 - ❌ **Kein leeres `pageLabel` als Platzhalter** (`pageLabel={<span />}`, ein
-  `&nbsp;`): das wäre wieder ein Flex-Item und verschöbe die Zentrierung der
-  `headerActions`. Prop weglassen.
-- ❌ `pageLabel` ist **nicht** die Seitenüberschrift. Es ist Chrome: eine
-  Standortanzeige, deshalb ein `<p>`. Die Überschrift der Seite gehört dem
-  Inhalts-Template, das hier als `children` hängt (`DashboardLayout` &
-  Verwandte, über `PageHeader`) — eine `h1` in dieser Zeile stünde neben der
-  des Inhalts und die Seite hätte zwei. Regel und Standardwerte je Template:
-  COMPONENT_GUIDELINES.md → „Page headings: who owns them".
-- ❌ Keine eigene Sidebar/Top-Bar in der App bauen oder das Template per
+  `&nbsp;`). Prop weglassen.
+- ❌ Keine eigene Spalte/Top-Bar in der App bauen oder das Template per
   `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
-- ❌ **Nicht** `AppShell` + `Sidebar` von Hand komponieren, nur um die Spalte
-  einklappbar zu machen — genau diese Lücke schließt 0.28.0. Wer ein weiteres
-  `Sidebar`-Prop braucht, meldet es hier an, statt das Gerüst nachzubauen.
+- ❌ **Nicht** `AppShell` + `SidePanel` von Hand komponieren, nur um eine
+  zweite Spalte oder einen Einklapp-Schalter zu bekommen.
 - ❌ **Keinen eigenen Einklapp-Button** in `logo` oder `headerActions` hängen:
-  die Spalte rendert ihren Schalter selbst, sobald sie `onCollapsedChange` hat,
-  samt `aria-expanded`/`aria-controls`. Zwei Schalter wären zwei Wahrheiten.
+  die Spalte rendert ihren Schalter selbst, samt
+  `aria-expanded`/`aria-controls`. Zwei Schalter wären zwei Wahrheiten.
 - ❌ Keine Business-Logik hinein reichen: Routing und Active-State leben in den
   injizierten `NavItem`s, nicht im Template.

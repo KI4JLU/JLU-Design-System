@@ -27,6 +27,15 @@ die hier `SidePanel` übernimmt). Hängt man es als `children` in
 Leiste: **zwei Chrome-Spalten auf einem Bildschirm**. Genau das war in der
 früheren Story `InAppShell` zu sehen, weshalb sie entfernt wurde.
 
+**Für 0.30.0 erneut geprüft — die Regel gilt weiter.** `AppShell` komponiert
+seit 0.30.0 dieselben `SidePanel`-Spalten und dieselbe schmale Anordnung, beide
+Templates sehen sich also deutlich ähnlicher als vorher. Das ändert nichts:
+verschachtelt stehen weiterhin zwei Chrome-Spalten nebeneinander und zwei
+`<main>` im Dokument. Offen — und **bewusst hier nicht entschieden, das braucht
+eine eigene Karte** — ist die andere Richtung: ob `WorkspaceLayout` ein dünner
+Spezialfall von `AppShell` werden sollte. Dafür fehlen der Shell die
+`ResizeHandle`s, `minWidth`/`maxWidth` pro Leiste und `showRight`.
+
 Daraus folgt der Rest:
 
 - Der Hauptbereich ist ein **`<main>`** (nicht `<section>`): über dem Template
@@ -111,8 +120,9 @@ Schirm und zerstört dabei die Desktop-Vorliebe des Nutzers. Keine der drei
 Punkte ist als Klasse auf derselben Markup-Struktur ausdrückbar (`isOpen`
 steuert ein `hidden`-Attribut, kein Styling). Deshalb fragt das Template
 `matchMedia` **einmal** — `(min-width: 64rem)`, also genau Tailwinds
-`--breakpoint-lg` und dieselbe Grenze, an der `AppShell` seinen Drawer
-umschaltet — und rendert die Anordnung, die gilt. Genau das tut auch die
+`--breakpoint-lg` und dieselbe Grenze, an der `AppShell` seine Anordnung
+wechselt (seit 0.30.0 über denselben Hook `useIsDesktop` aus
+`lib/pane-layout.ts`) — und rendert die Anordnung, die gilt. Genau das tut auch die
 Vorlage (JustRAG `useIsMobile`, 1024px).
 
 Der Konsument schreibt trotzdem keine Breakpoint-Leiter: welchen Bereich ein

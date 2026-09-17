@@ -38,10 +38,11 @@ import { SIDE_PANEL_RAIL_WIDTH, sidePanelVariants } from "./side-panel-variants"
  * inventing a second pattern. The `<aside>` is a `complementary` landmark: with
  * more than one pane on screen, pass an `aria-label` so they can be told apart.
  *
- * Viewport behaviour is **not** here. Like `Sidebar` (positioning/drawer live
- * in `AppShell`), deciding whether a pane is shown at all on a narrow screen —
- * typically one pane at a time plus a `BottomTabBar` — belongs to the
- * composing workspace template, so the same frame works in both places.
+ * Viewport behaviour is **not** here. Deciding whether a pane is shown at all
+ * on a narrow screen — typically one pane at a time plus a `BottomTabBar` —
+ * belongs to the composing template (`WorkspaceLayout`, and since 0.30.0
+ * `AppShell`, which share `useIsDesktop` in `lib/pane-layout.ts`), so the same
+ * frame works in every one of those places.
  */
 export interface SidePanelProps extends React.HTMLAttributes<HTMLElement> {
   /** Which edge the pane sits on — drives the border edge and the chevron direction. */

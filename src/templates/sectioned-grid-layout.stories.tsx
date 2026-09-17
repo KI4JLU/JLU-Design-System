@@ -230,6 +230,14 @@ export const InAppShell: Story = {
     <AppShellLayout
       logo={<Logo product="RAG" size="sm" />}
       pageLabel="Sammlungen"
+      // Seit 0.30.0 Pflicht und hier nicht das Thema: der kontrollierte
+      // Zustand der linken Spalte und die Reiter der schmalen Anordnung.
+      leftOpen
+      onLeftOpenChange={() => {}}
+      mobileTabs={[]}
+      activeMobileTab="page"
+      onMobileTabChange={() => {}}
+      mobileTabBarLabel="Bereichswechsel"
       nav={
         <>
           <NavItem active>
