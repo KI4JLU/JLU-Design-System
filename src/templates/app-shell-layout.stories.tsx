@@ -353,9 +353,24 @@ export const WithCollapsibleColumns: Story = {
 
     await userEvent.click(await canvas.findByRole("button", { name: "Navigation einklappen" }));
     await expect(column().getBoundingClientRect().width).toBe(SIDE_PANEL_RAIL_WIDTH);
-    // Eingeklappt ist die Schiene: die Navigation ist aus dem
-    // Accessibility-Baum, die Marke abgeräumt, nur der Weg zurück bleibt.
-    await expect(canvas.queryByRole("navigation", { name: "Hauptnavigation" })).toBeNull();
+    /* Eingeklappt ist die Schiene — und seit 0.31.0 WANDERT die Navigation
+       dorthin, statt mit dem Body zu verschwinden: „minimieren" heißt Icons,
+       nicht „keine Navigation". Die Marke bleibt abgeräumt, `header` wandert
+       nicht mit.
+
+       Genau EIN Landmark, nicht zwei: der Knoten wird verschoben, nicht
+       zusätzlich gerendert — zwei Kopien würden jede `id` und jedes
+       `aria-current` in einer `NavItem` verdoppeln. */
+    await expect(canvas.getAllByRole("navigation", { name: "Hauptnavigation" })).toHaveLength(1);
+    await expect(canvas.queryByText("Marke")).toBeNull();
+
+    /* Und die Zeilen passen wirklich in 60px — das ist die Messung, die nur der
+       Browser-Runner machen kann (jsdom hat kein Layout). Orakel: die
+       exportierte Designkonstante, nicht eine literale 60. */
+    const row = await canvas.findByRole("button", { name: "Team" });
+    await expect(row.getBoundingClientRect().width).toBeLessThanOrEqual(
+      SIDE_PANEL_RAIL_WIDTH,
+    );
 
     await userEvent.click(await canvas.findByRole("button", { name: "Navigation ausklappen" }));
     await expect(column().getBoundingClientRect().width).toBe(

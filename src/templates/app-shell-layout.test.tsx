@@ -362,9 +362,14 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
     await userEvent.click(collapse);
     const expand = await screen.findByRole("button", { name: COLUMN_LABELS.expand });
     expect(expand).toHaveAttribute("aria-expanded", "false");
-    // Collapsed IS the rail: the nav is out of the accessibility tree and the
-    // brand is unmounted, leaving only the way back out.
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    /* Collapsed IS the rail — and since 0.31.0 the nav MOVES there rather than
+       going out of the accessibility tree with the body. So it is still one
+       `navigation` landmark, just no longer inside the region `aria-controls`
+       names; the brand is still unmounted, because `header` does not move. */
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(document.getElementById(bodyId)).not.toContainElement(
+      screen.getByRole("navigation"),
+    );
     expect(screen.queryByText("Marke")).not.toBeInTheDocument();
 
     await userEvent.click(expand);
@@ -390,7 +395,46 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
     expect(
       screen.getByRole("button", { name: COLUMN_LABELS.expand }),
     ).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  /*
+    The nav MOVES into the rail; it is neither hidden with the body nor
+    duplicated. `SidePanel` hides its body while collapsed, so leaving the nav
+    there would make "minimise" mean "hide the navigation" — and rendering it in
+    both places would duplicate every `id` and `aria-current` a consumer put in
+    a row, the failure this release removed with the drawer.
+
+    Oracles: the ARIA `navigation` landmark mapping and `NavItem`'s documented
+    collapsed contract (it names itself with `aria-label` only while collapsed,
+    because expanded the visible text is already the name). Neither is asserted
+    off a class.
+  */
+  describe("the navigation in the collapsed rail", () => {
+    it("is present, and present exactly once", () => {
+      renderLayout({ nav: collapsibleNav, leftOpen: false });
+
+      const navs = screen.getAllByRole("navigation", { name: "Hauptnavigation" });
+      expect(navs).toHaveLength(1);
+      expect(navs[0]).toBeVisible();
+      expect(within(navs[0]).getByRole("button", { name: "Team" })).toBeVisible();
+    });
+
+    it("renders its rows in the icon-only form", () => {
+      renderLayout({ nav: collapsibleNav, leftOpen: false });
+
+      // Collapsed: the row's name comes from `aria-label`, not its visible text.
+      expect(screen.getByRole("button", { name: "Team" })).toHaveAttribute(
+        "aria-label",
+        "Team",
+      );
+    });
+
+    it("leaves the expanded column's rows in their full-width form", () => {
+      renderLayout({ nav: collapsibleNav, leftOpen: true });
+
+      expect(screen.getAllByRole("navigation", { name: "Hauptnavigation" })).toHaveLength(1);
+      expect(screen.getByRole("button", { name: "Team" })).not.toHaveAttribute("aria-label");
+    });
   });
 
   it("forwards collapseLabel/expandLabel — no German default survives", async () => {
@@ -428,10 +472,14 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
   });
 
   it("keeps every nav row's accessible name across the collapse — the same string", async () => {
-    // The row that carries a `label` is named by it while the column is a
-    // rail… except that the rail unmounts nothing: `SidePanel` hides the body,
-    // so the rows leave the accessibility tree entirely. Asserted as the
-    // before/after difference, with the names coming from accname.
+    /* 0.31.0 restores what the title always promised. Until 0.30.0 the rows left
+       the accessibility tree on collapse (the nav sat in the body `SidePanel`
+       hides) and this test asserted that disappearance; now the nav moves into
+       the rail, so the rows survive and keep the SAME accessible name — from
+       their visible text while expanded, from `aria-label` while collapsed.
+       Name equality is the point: a row whose name changed with the column
+       width would break a screen-reader user's mental map and any script that
+       addresses it. accname computes both sides, so neither is read off a class. */
     render(<ControlledShell />);
     for (const name of ["Team", "Berichte"]) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
@@ -439,8 +487,13 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
     await userEvent.click(screen.getByRole("button", { name: COLUMN_LABELS.collapse }));
     await screen.findByRole("button", { name: COLUMN_LABELS.expand });
     for (const name of ["Team", "Berichte"]) {
-      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+    /* The one row WITHOUT a `label` is the control case: `NavItem` refuses to
+       collapse a row it was never told the name of, so it keeps its visible
+       text and gains no `aria-label`. */
+    expect(screen.getByRole("button", { name: "Team" })).toHaveAttribute("aria-label", "Team");
+    expect(screen.getByRole("button", { name: "Berichte" })).not.toHaveAttribute("aria-label");
   });
 });
 

@@ -224,6 +224,14 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
       </Container>
     );
 
+    /* Is the nav being rendered as the rail's icon strip rather than as the
+       column body? `isDesktop &&`, not `!leftOpen` alone: below `lg` the shown
+       column IS the screen and deliberately ignores the collapse state (there
+       is no rail and no toggle there), so a stored "minimised" must not empty
+       it. Without the guard a user who had minimised the column on a desktop
+       got a narrow screen whose navigation tab showed nothing at all. */
+    const railNav = isDesktop && !leftOpen;
+
     /* The narrow bar: brand, plus whatever chrome controls the app placed. No
        burger button — there is no drawer to open since 0.30.0; the areas are
        reached through the `BottomTabBar` the shell renders. */
@@ -239,12 +247,42 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
         ref={ref}
         topBar={isDesktop ? wideBar : narrowBar}
         left={{
-          // `nav` keeps its own `<nav aria-label>` landmark, exactly as it had
-          // inside `Sidebar`; the column around it is the `complementary`
-          // landmark `SidePanel` renders, named by the same string so a
-          // screen-reader user meets one name for one column.
-          content: (
+          /* THE NAV MOVES INTO THE RAIL WHEN THE COLUMN COLLAPSES; it is not
+             rendered in both places, and it is not dropped.
+ 
+             `SidePanel` hides its whole BODY in the rail — deliberately, so a
+             pane's scroll position and half-typed input survive a collapse —
+             and the nav is the body. Left at that, minimising the column would
+             hide the navigation outright rather than shrink it to icons, which
+             is what `Sidebar`'s 80px column did before 0.30.0 and what an app
+             persisting "sidebar minimised" means by it.
+ 
+             So the SAME node is handed to `content` while open and to
+             `collapsedPreview` while collapsed. Two copies would have been the
+             easy shape and are the wrong one: a second mount duplicates every
+             `id` and every `aria-current` a consumer put in a `NavItem` — the
+             exact failure the drawer's removal fixed in this release. Moving it
+             costs the nav's own scroll position across a collapse, the same
+             trade `footer` makes, and a nav column has far less to lose than a
+             pane body.
+ 
+             `NavItem` shrinks itself: `SidePanel` publishes the collapsed state
+             on `SidebarCollapsedContext`, so the rows in the rail are the
+             icon-only form with their label on `aria-label`.
+ 
+             `nav` keeps its own `<nav aria-label>` landmark in both positions,
+             exactly as it had inside `Sidebar`; the column around it is the
+             `complementary` landmark `SidePanel` renders, named by the same
+             string so a screen-reader user meets one name for one column. */
+          content: railNav ? null : (
             <nav aria-label={navLabel} className="flex flex-col gap-2 p-4">
+              {nav}
+            </nav>
+          ),
+          collapsedPreview: !railNav ? undefined : (
+            // No horizontal padding: the rail is 60px and already centres its
+            // children, so the rows get the full width to sit an icon in.
+            <nav aria-label={navLabel} className="flex w-full flex-col items-center gap-2">
               {nav}
             </nav>
           ),
