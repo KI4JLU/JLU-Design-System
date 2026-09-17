@@ -390,13 +390,6 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
     ).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("renders the collapsed column from leftOpen={false} alone", () => {
-    renderLayout({ nav: collapsibleNav, leftOpen: false });
-    expect(
-      screen.getByRole("button", { name: COLUMN_LABELS.expand }),
-    ).toHaveAttribute("aria-expanded", "false");
-  });
-
   /*
     The nav MOVES into the rail; it is neither hidden with the body nor
     duplicated. `SidePanel` hides its body while collapsed, so leaving the nav
@@ -412,6 +405,14 @@ describe("AppShellLayout — the collapsible left column (0.30.0)", () => {
   describe("the navigation in the collapsed rail", () => {
     it("is present, and present exactly once", () => {
       renderLayout({ nav: collapsibleNav, leftOpen: false });
+
+      /* `leftOpen={false}` alone puts the column in the rail — no interaction
+         needed. (This absorbed a separate test that asserted only this line;
+         every case in this block renders from the prop, so it had become a
+         restatement of their setup.) */
+      expect(
+        screen.getByRole("button", { name: COLUMN_LABELS.expand }),
+      ).toHaveAttribute("aria-expanded", "false");
 
       const navs = screen.getAllByRole("navigation", { name: "Hauptnavigation" });
       expect(navs).toHaveLength(1);
