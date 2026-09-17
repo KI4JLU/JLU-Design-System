@@ -203,7 +203,7 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node. `AppShellLayout` forwards all four props (`collapsed`, `onCollapsedChange`, `collapseLabel`, `expandLabel`) since 0.28.0, so the template is the supported way to reach this |
 | `AppShell` | `app-shell.tsx` | responsive frame: sticky sidebar ≥ lg, below lg top bar + left drawer (Radix Dialog — focus trap, Escape); link click closes the drawer; a11y labels overridable (`menuLabel` default „Navigation öffnen", `drawerLabel` default „Navigation") — `AppShellLayout` forwards both. Marks its drawer copy of the sidebar node via `SidebarSurfaceContext`, which is how that copy renders expanded and without a collapse toggle |
 | `SidebarUserMenu` | `sidebar-user-menu.tsx` | sidebar-footer user menu: initials avatar, name over role, chevron; the whole row is the dropdown trigger. In a collapsed `Sidebar` it shrinks to the avatar alone (round, icon-sized, no chevron) — kept rather than hidden, because it is the only route to sign-out. Name and role stay as `sr-only`, so the trigger's accessible name is the same string in both states |
-| `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. No viewport awareness: which pane is rendered is the template's job |
+| `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. The toggle shares an `h-16` row with the optional `header` slot (title/brand, expanded-only, `min-w-0` so a `truncate`d title clips instead of pushing the toggle out — `header` is *unmounted* while collapsed, unlike `children`), and it sits on the **content-facing** edge in both directions: `[header … toggle]` on a left pane, `[toggle … header]` on a right one, carried by DOM order rather than an `order-*` utility so reading and tab order match the visual one. `h-16` is the same chrome unit as `AppShellLayout`'s bar, so both pane headers and the main column's bar align; the collapsed rail's 60px **width** is unchanged. No `footer` slot — a composing shell pins its own inside `children`. No viewport awareness: which pane is rendered is the template's job |
 | `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: focusable `role="separator"` (WAI-ARIA APG „Window Splitter") with `aria-valuemin/max/now`, clamped, and `aria-orientation="vertical"` for the bar itself (not the role's default). Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Entschieden: `separator` statt `slider`" in the MDX — role **and** vertical mirroring were one decision and are both settled (owner, 08/2026). `controls` (→ `aria-controls`, the pane root whose width `aria-valuenow` reports) completes the pattern: every *required* APG piece is present; of the *optional* keys, Home/End are in, `Enter` (collapse — `SidePanel`'s visible button) and F6 are deliberately out. In `WorkspaceLayout` the id is minted by the template and always wired; see „Entschieden: `aria-controls` zeigt auf die Leisten-Wurzel" in the MDX |
 | `BottomTabBar` | `bottom-tab-bar.tsx` / `bottom-tab-bar-variants.ts` | fixed bottom `navigation` landmark for narrow-screen pane switching: `items` of icon + label, exactly one `aria-current="page"`. Deliberately **not** `SegmentedControl` — that is a `role="group"` of `aria-pressed` toggles, an inline control rather than a landmark whose active item is the displayed view |
 
@@ -447,6 +447,55 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **Unreleased / 0.30.0** — **`SidePanel.header`, and the toggle moves to the
+  content-facing edge.** KI-808.
+
+  Additive: one new optional prop `header?: React.ReactNode`, rendered in the
+  existing toggle row while expanded. No prop changed type, none was removed,
+  `isOpen`/`width` semantics are untouched. Prerequisite for the AppShell
+  rewrite (KI-809).
+
+  **What moves.** Three things, all inside that one row:
+
+  1. `header` is rendered inline with the toggle, in a `min-w-0 flex-1`
+     wrapper. A consumer's `truncate`d title therefore clips with an ellipsis
+     instead of pushing the toggle off the row. The wrapper repeats the row's
+     gap, so a multi-node header (logo + wordmark) keeps its spacing — the
+     same shape as `Sidebar`'s brand slot.
+  2. **The toggle sits on the edge that faces the main content**, both sides:
+     a left pane reads `[header … toggle]` (unchanged), a right pane
+     `[toggle … header]`. The right pane's toggle used to sit against the
+     window edge; that is the one visible change for an existing call site,
+     `WorkspaceLayout` included. It is carried by **DOM order**, not an
+     `order-*` utility, so the tab sequence and a screen reader's reading
+     order agree with what is on screen.
+  3. The row is now `h-16 items-center` instead of `pt-stack-sm` + button
+     height — the same chrome unit as `AppShellLayout`'s page-label bar and
+     `Sidebar`'s header row, so a left pane's header, the main column's bar
+     and a right pane's header land on one baseline.
+
+  **`SIDE_PANEL_RAIL_WIDTH` is untouched at 60px.** The rail's *width* and the
+  header row's *height* are different measurements; only the second one became
+  64. The open TODO in `side-panel-variants.ts` about one shared chrome-unit
+  token across `AppShell`, `SidePanel` and `BottomTabBar` still stands and
+  still needs owner sign-off.
+
+  **`header` is unmounted while collapsed, `children` are not** — deliberately
+  opposite. A pane body holds scroll position and half-typed input, so it stays
+  mounted behind the `hidden` attribute; a header is chrome with nothing to
+  lose, and the collapsed rail must hold only the expand button and
+  `collapsedPreview`. Same rule as `Sidebar.header`. A consumer putting
+  stateful UI in `header` would lose that state across a collapse; put it in
+  `children`.
+
+  **No `footer` slot.** A composing shell pins its own footer inside
+  `children`; adding a second slot speculatively would pre-empt the AppShell
+  card's decision.
+
+  *Consumer impact.* A call site that passes no `header` sees only the row
+  height change (left pane) or the row height plus the toggle's side (right
+  pane). No migration, no code change required.
+
 - **0.29.0** — **`AppShellLayout.pageLabel` is optional.** KI-798.
 
   One prop changed type: `pageLabel: React.ReactNode` → `pageLabel?:

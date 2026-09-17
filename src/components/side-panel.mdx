@@ -20,11 +20,43 @@ Leiste" — die Position ist eine Prop, kein eigener Bestandteil der Komponente.
 | `width` | `number` | ✅ | Breite in px im ausgeklappten Zustand. **Konsumenten-Zustand.** |
 | `onExpand` / `onCollapse` | `() => void` | ✅ | Klick auf den Ausklapp- bzw. Einklapp-Knopf. |
 | `expandLabel` / `collapseLabel` | `string` | ✅ | Zugängliche Namen der beiden Knöpfe. |
+| `header` | `ReactNode` | — | Titel-/Marken-Knoten in der Kopfzeile, **nur ausgeklappt** — siehe „Kopfzeile" unten. |
 | `collapsedPreview` | `ReactNode` | — | Icon-Streifen in der zugeklappten Schiene, unter dem Ausklapp-Knopf. |
 | `children` | `ReactNode` | ✅ | Inhalt der Leiste. |
 | `aria-label` | `string` | (empfohlen) | `<aside>` ist ein `complementary`-Landmark; bei mehr als einer Leiste auf der Seite braucht jede einen eigenen Namen. |
 
 <Controls />
+
+## Kopfzeile
+
+Die Zeile mit dem Einklapp-Knopf trägt zusätzlich den optionalen
+`header`-Knoten, und der Knopf steht **auf der zum Inhalt zeigenden Kante** —
+in beide Richtungen:
+
+| `side` | Reihenfolge der Kopfzeile |
+|---|---|
+| `left` | `[header … Knopf]` — Knopf am nachlaufenden Rand |
+| `right` | `[Knopf … header]` — Knopf am führenden Rand |
+
+Zwei Leisten eines Workspace spiegeln sich damit zur Mitte hin: beide
+Bedienelemente stehen am Hauptbereich, nicht an den Fensterrändern. Getragen
+wird das von der **DOM-Reihenfolge** (nicht von einer `order-*`-Utility), damit
+Tab-Reihenfolge und Vorlesereihenfolge dem Bild entsprechen.
+
+Die Zeile ist `h-16` hoch — dieselbe Chrome-Einheit wie die Leiste von
+`AppShellLayout` und die Kopfzeile von `Sidebar`, so dass linke Kopfzeile,
+Hauptspalten-Leiste und rechte Kopfzeile auf einer Linie liegen. Die Höhe hängt
+an der Zeile, nicht am Knopf, also verschiebt ein höherer `header`-Knoten
+nichts.
+
+`header` sitzt in einem `min-w-0`-Wrapper: ein Titel mit `truncate` kürzt mit
+Ellipse, statt den Knopf aus der Zeile zu drängen. Ob gekürzt, umgebrochen oder
+gar nicht geschrumpft wird, entscheidet der Knoten des Konsumenten.
+
+<Canvas of={SidePanelStories.LongHeaderTitle} />
+
+Es gibt bewusst **keinen `footer`-Slot**: eine komponierende Shell heftet ihren
+Fuß selbst in `children` an.
 
 ## Chevrons
 
@@ -58,6 +90,12 @@ ausgeklappten Zustand rendert, sieht den Ausklapp-Knopf nie.
   Die **ausgeklappte** Breite ist dagegen Zustand (der Nutzer zieht sie) und
   deshalb eine Prop. Die Konstante wird exportiert, damit ein Template denselben
   Wert benutzt statt ihn zu wiederholen.
+- **`header` wird zugeklappt ausgehängt — `children` nicht.** Genau
+  entgegengesetzt, und mit Absicht: ein Leisten-Rumpf hält Scrollposition und
+  halb getippte Eingaben, eine Kopfzeile ist Chrome ohne Zustand, und in der
+  Schiene darf nur der Ausklapp-Knopf plus `collapsedPreview` stehen. Dieselbe
+  Regel wie bei `Sidebar.header`. Zustandsbehaftetes gehört deshalb in
+  `children`, nicht in `header`.
 - **Inhalt bleibt montiert.** Zugeklappt trägt der Rumpf das `hidden`-Attribut
   (und `display:none`): Scrollposition und halb getippte Eingaben überleben das
   Einklappen, und der Inhalt ist gleichzeitig aus dem
@@ -75,7 +113,10 @@ ausgeklappten Zustand rendert, sieht den Ausklapp-Knopf nie.
 - ✅ Randseite über `side` setzen — die Leiste zeichnet genau eine Linie, das
   `ResizeHandle` keine.
 - ✅ Alle Beschriftungen als Props übergeben (zweisprachige Konsumenten).
+- ✅ Titel im `header`-Slot mit `truncate` übergeben, nicht als erste Zeile in
+  `children` — sonst scrollt er mit weg und steht nicht auf der Chrome-Linie.
 - ❌ Kein eigener Einklapp-Knopf in `children`.
+- ❌ Kein zustandsbehaftetes UI in `header` (es wird beim Einklappen ausgehängt).
 - ❌ Keine Viewport-Logik hier erwarten: ob auf schmalen Bildschirmen überhaupt
   eine Leiste erscheint (üblich: eine Ansicht plus `BottomTabBar`), entscheidet
   das komponierende Workspace-Template — genau wie Positionierung und Drawer bei

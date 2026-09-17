@@ -22,6 +22,14 @@ import { SIDE_PANEL_RAIL_WIDTH, sidePanelVariants } from "./side-panel-variants"
  * is the only control that exists while the pane is collapsed. Passing it in
  * as content would make it disappear exactly when it is needed.
  *
+ * **The toggle row can carry a `header`, and the toggle sits on the edge that
+ * faces the content.** A left pane reads `[header … toggle]`, a right pane
+ * `[toggle … header]` — mirrored, so both panes put their control next to the
+ * main column rather than against the window edge, and so the two headers plus
+ * the main column's bar line up as one `h-16` chrome row. `header` is
+ * expanded-only; there is deliberately **no** `footer` slot — a composing
+ * shell pins its own footer inside `children`.
+ *
  * While collapsed the pane shrinks to a `SIDE_PANEL_RAIL_WIDTH` rail showing
  * the expand button and the optional `collapsedPreview`; `children` stay
  * mounted but hidden (attribute `hidden` + `display:none`), so scroll position
@@ -48,6 +56,15 @@ export interface SidePanelProps extends React.HTMLAttributes<HTMLElement> {
   expandLabel: string;
   /** Accessible name of the collapse button (shown while expanded). */
   collapseLabel: string;
+  /**
+   * Brand/title node rendered in the toggle row while expanded (a pane title,
+   * a logo, a small action pair). Hidden while collapsed — the rail holds only
+   * the expand button and `collapsedPreview`, exactly as `Sidebar.header` is
+   * dropped from the collapsed column. Pass a node that can shrink
+   * (`className="truncate"` on a title): the slot is `min-w-0`, so a long
+   * title clips instead of pushing the toggle off the row.
+   */
+  header?: React.ReactNode;
   /** Optional icon strip shown in the collapsed rail below the expand button. */
   collapsedPreview?: React.ReactNode;
   children: React.ReactNode;
@@ -63,6 +80,7 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
       onCollapse,
       expandLabel,
       collapseLabel,
+      header,
       collapsedPreview,
       className,
       style,
@@ -81,6 +99,25 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
     // right, and the Right pair mirrors that.
     const CollapseIcon = side === "left" ? PanelLeftClose : PanelRightClose;
     const ExpandIcon = side === "left" ? PanelLeftOpen : PanelRightOpen;
+
+    // Defined once and placed twice (see the header row below): only the
+    // POSITION differs per side, and the aria contract — label,
+    // `aria-expanded`, `aria-controls` — must not be able to drift between two
+    // copies of the same control. `ml-auto` is the left pane's only extra: it
+    // pins the toggle to the trailing edge when no `header` fills the row.
+    const collapseToggle = (
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn("shrink-0", side === "left" && "ml-auto")}
+        aria-label={collapseLabel}
+        aria-expanded={true}
+        aria-controls={bodyId}
+        onClick={onCollapse}
+      >
+        <CollapseIcon className="h-5 w-5" aria-hidden />
+      </Button>
+    );
 
     return (
       <aside
@@ -121,17 +158,40 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
           hidden={!isOpen}
           className={cn("min-h-0 flex-1 flex-col", isOpen ? "flex" : "hidden")}
         >
-          <div className="flex justify-end px-gutter pt-stack-sm">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={collapseLabel}
-              aria-expanded={true}
-              aria-controls={bodyId}
-              onClick={onCollapse}
-            >
-              <CollapseIcon className="h-5 w-5" aria-hidden />
-            </Button>
+          {/*
+            One fixed-height chrome row, `h-16` like `AppShellLayout`'s bar and
+            `Sidebar`'s header row, so the left pane's header, the main
+            column's bar and the right pane's header sit on one baseline. The
+            height is on the row, not derived from the button, so it does not
+            change when a taller or shorter `header` node is passed. (The
+            collapsed RAIL keeps its 60px width — that is
+            `SIDE_PANEL_RAIL_WIDTH`, a different measurement; see the TODO in
+            `side-panel-variants.ts`.)
+          */}
+          <div className="flex h-16 items-center gap-stack-sm px-gutter">
+            {/* The toggle sits on the edge that FACES THE CONTENT, in both
+                directions: a left pane's row reads [header … toggle], a right
+                pane's [toggle … header]. DOM order carries it — on a right
+                pane the toggle is emitted first — so the tab order and a
+                screen reader's reading order match what is on screen, which a
+                purely visual `order-*` utility would break. */}
+            {side === "right" && collapseToggle}
+            {/* Wrapped rather than spread into the row, like `Sidebar`'s brand
+                slot: a multi-node header keeps the row's gap, and `min-w-0`
+                lets a `truncate`d title clip instead of pushing the toggle out
+                of the row. */}
+            {/* Unmounted while collapsed, not just hidden — the opposite of
+                `children`, on purpose. `children` are kept mounted because a
+                pane body holds scroll position and half-typed input; a header
+                is chrome (a title, a logo), it has nothing to lose, and the
+                collapsed rail must contain *only* the expand button and
+                `collapsedPreview`. Same rule as `Sidebar.header`. */}
+            {isOpen && header && (
+              <span className="flex min-w-0 flex-1 items-center gap-stack-sm">
+                {header}
+              </span>
+            )}
+            {side === "left" && collapseToggle}
           </div>
           {children}
         </div>
