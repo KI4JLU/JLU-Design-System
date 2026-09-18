@@ -455,6 +455,11 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.34.0** — `FilterChips` is tighter: `h-8` / `px-3`, from `h-9` / `px-4`.
+  A filter strip is chrome above a list, and at the button scale it read as a
+  row of primary actions competing with the content it filters. Visual only —
+  no API change.
+
 - **0.33.0** — `SegmentedControl` options take an optional `icon`. With one, the
   segment is icon-only and square, and `label` is rendered `sr-only` rather than
   dropped — the accessible name is computed from the contents, so removing the
