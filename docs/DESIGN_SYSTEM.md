@@ -177,6 +177,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links. `label` (a plain string mirroring the visible text) is what lets a row collapse: inside a collapsed `Sidebar` it becomes the row's `aria-label` **and** a `Tooltip`, and the non-`<svg>` children are hidden. Without `label` a row does not collapse at all — the row cannot invent a name it was not told. The collapsed state comes from the `Sidebar` (context), never from a prop, so one column cannot end up half collapsed |
 | `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
+| `FilterChips` | `filter-chips.tsx` / `filter-chips-variants.ts` | single-select filter strip above a list — a row of pill chips, exactly one active, plus an optional trailing icon-only action chip (`onAdd` + `addLabel`, the „+“). Controlled `value`/`onValueChange`; a `value` matching no option renders every chip inactive rather than throwing, which is the readable failure when a stored filter outlives its category. Same ARIA as `SegmentedControl` (`role="group"` + `aria-pressed`) and deliberately NOT `tablist` (no panels to switch) or `radiogroup` (roving focus would make Tab skip the strip). Scrolls horizontally in ONE row rather than wrapping — wrapping would change the chrome's height as categories are added and move the list under the reader. Distinct from `FilterMenu`, which hides its options in a dropdown, and from `SegmentedControl`, whose joined border suits a fixed axis rather than a set the user extends at runtime |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime; all labels overridable (`themeLabel`, `lightLabel`, `systemLabel`, `darkLabel`; German defaults); `id` lands on the `role="group"` element, the one part a consumer has reason to address from outside (the option buttons stay internal) |
@@ -454,6 +455,24 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.32.0** — Added `FilterChips`: the single-select pill strip that sits above
+  a list, with an optional trailing „+“ action chip. Built for JustRAG's topic
+  filter bar („Alle · Favoriten · <Kategorie> · +“ across its four shell views),
+  and shipped ahead of the backend that will feed it so the UI can be reviewed
+  while the per-user favourites and categories are still being built.
+
+  Neither existing component fitted. `FilterMenu` hides its options behind a
+  dropdown — the opposite of a strip whose whole point is that the categories
+  are visible — and `SegmentedControl` is one joined border, which reads as a
+  single control with segments and suits a FIXED axis (Tag/Woche/Monat) rather
+  than a list the user extends at runtime.
+
+  It follows `SegmentedControl`'s ARIA rather than inventing its own: `role="group"`
+  with `aria-pressed` per chip. Not `tablist`, because tabs switch panels and owe
+  the reader roving focus while these chips filter one list in place; not
+  `radiogroup`, because APG's roving focus there would make Tab skip the whole
+  strip. One convention in the library, not two.
+
 - **0.30.0** — **BREAKING: `AppShell` is two `SidePanel` columns, a
   three-region chrome bar and a `BottomTabBar` below `lg`.** KI-809 (and
   KI-808, below, which ships in the same version).

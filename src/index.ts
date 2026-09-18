@@ -68,6 +68,8 @@ export {
   DropdownMenuSeparator,
 } from "./components/dropdown-menu";
 export { fieldVariants } from "./components/field-variants";
+export { FilterChips, type FilterChipsProps, type FilterChipsOption } from "./components/filter-chips";
+export { filterChipVariants } from "./components/filter-chips-variants";
 export { FilterMenu, type FilterMenuProps, type FilterMenuOption } from "./components/filter-menu";
 export { Grid, type GridProps } from "./components/grid";
 export { gridVariants } from "./components/grid-variants";
