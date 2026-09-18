@@ -22,7 +22,11 @@ export const filterChipVariants = cva(
   [
     // Shared frame. `shrink-0` is what makes the row scroll instead of
     // compressing its chips into unreadable slivers on a narrow screen.
-    "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border",
+    //
+    // h-8 / px-3, tightened from h-9 / px-4 (0.34.0): a filter strip sits ABOVE
+    // a list as chrome, and at the button scale it read as a row of primary
+    // actions competing with the content it filters.
+    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border",
     "font-label-sm text-label-sm whitespace-nowrap transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
     "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
@@ -31,9 +35,9 @@ export const filterChipVariants = cva(
   {
     variants: {
       kind: {
-        filter: "px-4",
-        // Square, so `rounded-full` is a circle. h-9 = 36px, w-9 matches it.
-        action: "w-9",
+        filter: "px-3",
+        // Square, so `rounded-full` is a circle. h-8 = 32px, w-8 matches it.
+        action: "w-8",
       },
       active: {
         true: "border-primary bg-primary/10 text-primary",
