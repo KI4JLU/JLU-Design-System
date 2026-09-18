@@ -1,0 +1,46 @@
+import { cva } from "class-variance-authority";
+
+/**
+ * Chip style variants (cva), in their own module so `filter-chips.tsx` exports
+ * only components (react-refresh's "only export components" rule — the same
+ * reason every other `*-variants.ts` here exists).
+ *
+ * TWO SHAPES, ONE ROW. A `filter` chip carries a label and is selectable; an
+ * `action` chip is the trailing icon-only control (the "+"), which is square by
+ * construction so the circle reads as a circle rather than a squashed pill.
+ * They share the height, the border and the focus ring so the row is one strip
+ * of controls and not two.
+ *
+ * WHY THE ACTIVE STATE IS A TINTED FILL AND NOT A SOLID ONE. A solid `bg-primary`
+ * chip has the visual weight of a primary BUTTON, and next to four of them the
+ * row would read as five calls to action rather than as one selected filter.
+ * `bg-primary/10` + `text-primary` + a primary border is the same treatment
+ * `Button`'s ghost variant already uses for `aria-pressed=true`, so a selected
+ * chip and a pressed ghost button look like the same idea — which they are.
+ */
+export const filterChipVariants = cva(
+  [
+    // Shared frame. `shrink-0` is what makes the row scroll instead of
+    // compressing its chips into unreadable slivers on a narrow screen.
+    "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border",
+    "font-label-sm text-label-sm whitespace-nowrap transition-colors",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+    "[&_svg]:shrink-0",
+  ],
+  {
+    variants: {
+      kind: {
+        filter: "px-4",
+        // Square, so `rounded-full` is a circle. h-9 = 36px, w-9 matches it.
+        action: "w-9",
+      },
+      active: {
+        true: "border-primary bg-primary/10 text-primary",
+        false:
+          "border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface",
+      },
+    },
+    defaultVariants: { kind: "filter", active: false },
+  },
+);

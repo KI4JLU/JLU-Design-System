@@ -177,6 +177,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links. `label` (a plain string mirroring the visible text) is what lets a row collapse: inside a collapsed `Sidebar` it becomes the row's `aria-label` **and** a `Tooltip`, and the non-`<svg>` children are hidden. Without `label` a row does not collapse at all — the row cannot invent a name it was not told. The collapsed state comes from the `Sidebar` (context), never from a prop, so one column cannot end up half collapsed |
 | `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
+| `FilterChips` | `filter-chips.tsx` / `filter-chips-variants.ts` | single-select filter strip above a list — a row of pill chips, exactly one active, plus an optional trailing icon-only action chip (`onAdd` + `addLabel`, the „+“). Controlled `value`/`onValueChange`; a `value` matching no option renders every chip inactive rather than throwing, which is the readable failure when a stored filter outlives its category. Same ARIA as `SegmentedControl` (`role="group"` + `aria-pressed`) and deliberately NOT `tablist` (no panels to switch) or `radiogroup` (roving focus would make Tab skip the strip). Scrolls horizontally in ONE row rather than wrapping — wrapping would change the chrome's height as categories are added and move the list under the reader. Distinct from `FilterMenu`, which hides its options in a dropdown, and from `SegmentedControl`, whose joined border suits a fixed axis rather than a set the user extends at runtime |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
 | `ThemeToggle` | `theme-toggle.tsx` | segmented light/system/dark switch on the theme runtime; all labels overridable (`themeLabel`, `lightLabel`, `systemLabel`, `darkLabel`; German defaults); `id` lands on the `role="group"` element, the one part a consumer has reason to address from outside (the option buttons stay internal) |
@@ -197,7 +198,7 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | Component | File | Notes |
 |-----------|------|-------|
 | `Stack` (+ `stackVariants`) | `stack.tsx` / `stack-variants.ts` | 1-D flex: `direction` column/row, `gap` = spacing tokens, align/justify/wrap; `asChild` for semantic elements |
-| `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid: `cols` 1–4 is the **desktop** count, the mobile collapse (→1) is built in |
+| `Grid` (+ `gridVariants`) | `grid.tsx` / `grid-variants.ts` | responsive grid. `cols` 1–4 is the **desktop** count and a BREAKPOINT ladder — the mobile collapse (→1) is built in, but the steps land where Tailwind's `md`/`xl` fall, so `cols={3}` renders two columns everywhere from 768 to 1279px. **`cols="auto"` (0.32.0) counts no columns at all**: `repeat(auto-fill, minmax(min(17.5rem,100%),1fr))` fills as many tracks as FIT, so the count follows the container and keeps following it inside a shell whose side columns collapse. That is the one a wall of cards wants. `auto-fill` not `auto-fit`, so a grid holding one card leaves it card-sized instead of stretching it across the row; the inner `min(…,100%)` keeps a 280px track from overflowing a narrower screen |
 | `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`; `size` names the page's role — `page` (1440px, default), `content` (1000px), `reading` (672px), all three from `--max-width-container-*`. Never a `max-w-*` at the call site |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
 | `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state on `SidebarCollapsedContext` to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node — **since 0.30.0 `SidePanel` publishes it too**, so the two frames are interchangeable to everything downstream. **Since 0.30.0 no shell renders it**: `AppShell`/`AppShellLayout` use `SidePanel` columns, so `Sidebar` is the standalone nav column only, unchanged and still exported; `SidebarSurfaceContext` is **deleted** (the drawer that produced the `"drawer"` value is gone, so nothing wrote it and only `Sidebar` read it). Open: the two frames now differ only in the collapsed width (80px icon column vs 60px rail), so `Sidebar` is a candidate for deletion in favour of `SidePanel` |
@@ -454,6 +455,33 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.32.0** — Added `Grid`'s `cols="auto"`. The numbered variants are a
+  breakpoint ladder, which is right for a designed column count and wrong for a
+  card wall: `cols={3}` reaches three columns only at `xl`, so every width from
+  768 to 1279px rendered two with room for three. JustRAG hit exactly that when
+  its topic pages moved from a hand-written
+  `repeat(auto-fill, minmax(280px, 1fr))` onto this component and lost a column.
+  `auto` restores that behaviour as a variant, so no call site writes its own
+  track list to get it. Additive — the numbered variants are unchanged.
+
+- **0.32.0** — Added `FilterChips`: the single-select pill strip that sits above
+  a list, with an optional trailing „+“ action chip. Built for JustRAG's topic
+  filter bar („Alle · Favoriten · <Kategorie> · +“ across its four shell views),
+  and shipped ahead of the backend that will feed it so the UI can be reviewed
+  while the per-user favourites and categories are still being built.
+
+  Neither existing component fitted. `FilterMenu` hides its options behind a
+  dropdown — the opposite of a strip whose whole point is that the categories
+  are visible — and `SegmentedControl` is one joined border, which reads as a
+  single control with segments and suits a FIXED axis (Tag/Woche/Monat) rather
+  than a list the user extends at runtime.
+
+  It follows `SegmentedControl`'s ARIA rather than inventing its own: `role="group"`
+  with `aria-pressed` per chip. Not `tablist`, because tabs switch panels and owe
+  the reader roving focus while these chips filter one list in place; not
+  `radiogroup`, because APG's roving focus there would make Tab skip the whole
+  strip. One convention in the library, not two.
+
 - **0.30.0** — **BREAKING: `AppShell` is two `SidePanel` columns, a
   three-region chrome bar and a `BottomTabBar` below `lg`.** KI-809 (and
   KI-808, below, which ships in the same version).
