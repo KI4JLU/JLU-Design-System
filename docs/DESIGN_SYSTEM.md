@@ -176,7 +176,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | Form field primitives | `form.tsx` | `FormItem/FormLabel/FormControl/FormDescription/FormMessage`; a11y label + `aria-describedby`/`aria-invalid` wiring; **no** react-hook-form (add later if forms need schema validation) |
 | `MenuItem` (+ `menuItemVariants`) | `menu-item.tsx` / `menu-item-variants.ts` | dropdown/listbox/popover row: `selected`, `highlighted` (keyboard), `destructive`; ARIA roles stay at call sites |
 | `NavItem` (+ `navItemVariants`) | `nav-item.tsx` / `nav-item-variants.ts` | sidebar/menu row: `level` top/sub, `active` sets `aria-current="page"`; `asChild` for router links. `label` (a plain string mirroring the visible text) is what lets a row collapse: inside a collapsed `Sidebar` it becomes the row's `aria-label` **and** a `Tooltip`, and the non-`<svg>` children are hidden. Without `label` a row does not collapse at all — the row cannot invent a name it was not told. The collapsed state comes from the `Sidebar` (context), never from a prop, so one column cannot end up half collapsed |
-| `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed` |
+| `SegmentedControl` | `segmented-control.tsx` | single-select segment row (e.g. Tag/Woche/Monat chart-range switch, or an icon-only card/list view toggle): controlled `value`/`onValueChange`, `role="group"`, active segment via `aria-pressed`. **`icon` per option (0.33.0)** makes that segment icon-only — the icon is shown, `label` goes `sr-only` and stays the accessible name. `label` is required either way, so an unnamed segment is not expressible; the segment also becomes square (`h-9 w-9`), since the text padding has no icon width to balance |
 | `FilterChips` | `filter-chips.tsx` / `filter-chips-variants.ts` | single-select filter strip above a list — a row of pill chips, exactly one active, plus an optional trailing icon-only action chip (`onAdd` + `addLabel`, the „+“). Controlled `value`/`onValueChange`; a `value` matching no option renders every chip inactive rather than throwing, which is the readable failure when a stored filter outlives its category. Same ARIA as `SegmentedControl` (`role="group"` + `aria-pressed`) and deliberately NOT `tablist` (no panels to switch) or `radiogroup` (roving focus would make Tab skip the strip). Scrolls horizontally in ONE row rather than wrapping — wrapping would change the chrome's height as categories are added and move the list under the reader. Distinct from `FilterMenu`, which hides its options in a dropdown, and from `SegmentedControl`, whose joined border suits a fixed axis rather than a set the user extends at runtime |
 | `Switch` | `switch.tsx` | Radix Switch — role="switch", keyboard toggle; pair with `Label`/`FormControl` |
 | `Textarea` (+ shared `fieldVariants`) | `textarea.tsx` / `field-variants.ts` | mirrors `Input` (tokens, focus ring, `aria-invalid`); `variant`: default / inline (composer in a Card); `min-h-24`/`resize-y` only in default |
@@ -455,6 +455,12 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.33.0** — `SegmentedControl` options take an optional `icon`. With one, the
+  segment is icon-only and square, and `label` is rendered `sr-only` rather than
+  dropped — the accessible name is computed from the contents, so removing the
+  text is how icon buttons end up announced as „button, button". Added for
+  JustRAG's card/list view toggle. Additive; text segments are unchanged.
+
 - **0.32.0** — Added `Grid`'s `cols="auto"`. The numbered variants are a
   breakpoint ladder, which is right for a designed column count and wrong for a
   card wall: `cols={3}` reaches three columns only at `xl`, so every width from

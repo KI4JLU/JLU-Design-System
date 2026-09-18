@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { LayoutGrid, List } from "lucide-react";
 import { SegmentedControl } from "./segmented-control";
 
 const OPTIONS = [
@@ -60,5 +61,72 @@ describe("SegmentedControl", () => {
     await userEvent.tab();
     await userEvent.keyboard("{Enter}");
     expect(onValueChange).toHaveBeenCalledWith("woche");
+  });
+
+  /* Icon-only segments (0.33.0), added for JustRAG's card/list view toggle.
+   *
+   * ORACLE: WAI-ARIA's accessible-name computation as testing-library resolves
+   * it. „The icon replaced the text" and „the button still has a name" are the
+   * two halves that must BOTH hold — an icon-only control whose label was
+   * dropped rather than hidden is announced as "button", which is the failure
+   * this pair exists to catch and which a screenshot would never show.
+   */
+  describe("icon-only segments", () => {
+    const ICONS = [
+      { value: "card", label: "Karten", icon: <LayoutGrid aria-hidden /> },
+      { value: "list", label: "Liste", icon: <List aria-hidden /> },
+    ];
+
+    it("keeps the label as the accessible name when an icon replaces it", () => {
+      render(
+        <SegmentedControl
+          options={ICONS}
+          value="card"
+          onValueChange={() => {}}
+          aria-label="Ansicht"
+        />,
+      );
+
+      // Named, and addressable by the word a user would say.
+      expect(screen.getByRole("button", { name: "Karten" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Liste" })).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("hides the label text rather than dropping it", () => {
+      const { container } = render(
+        <SegmentedControl
+          options={ICONS}
+          value="card"
+          onValueChange={() => {}}
+          aria-label="Ansicht"
+        />,
+      );
+
+      /* The text is IN the document — that is what names the button — but
+         carries the sr-only class, so it is not what the eye reads. Asserting
+         the class is unusual here and deliberate: it is the one mechanism that
+         distinguishes "hidden" from "deleted", and jsdom applies no stylesheet
+         to tell them apart any other way. */
+      const hidden = container.querySelector(".sr-only");
+      expect(hidden).not.toBeNull();
+      expect(hidden).toHaveTextContent("Karten");
+      // And the icon is there to be seen in its place.
+      expect(container.querySelector("svg")).not.toBeNull();
+    });
+
+    it("still reports the value when an icon segment is pressed", async () => {
+      const onValueChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={ICONS}
+          value="card"
+          onValueChange={onValueChange}
+          aria-label="Ansicht"
+        />,
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "Liste" }));
+      expect(onValueChange).toHaveBeenCalledWith("list");
+    });
   });
 });
