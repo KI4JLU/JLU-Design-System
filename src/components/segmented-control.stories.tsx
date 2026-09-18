@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
+import { LayoutGrid, List } from "lucide-react";
 import { SegmentedControl } from "./segmented-control";
 
 const OPTIONS = [
@@ -41,4 +42,19 @@ const InteractiveExample = () => {
 /** Typischer Einsatz: der Diagramm-Zeitraum-Umschalter (Tag/Woche/Monat). */
 export const Playground: Story = {
   render: () => <InteractiveExample />,
+};
+
+/**
+ * Icon-only segments: pass an `icon` and the `label` becomes the accessible
+ * name instead of the visible text. The card/list view toggle above a list.
+ */
+export const IconOnly: Story = {
+  args: {
+    "aria-label": "Ansicht",
+    value: "card",
+    options: [
+      { value: "card", label: "Karten", icon: <LayoutGrid className="h-4 w-4" aria-hidden /> },
+      { value: "list", label: "Liste", icon: <List className="h-4 w-4" aria-hidden /> },
+    ],
+  },
 };
