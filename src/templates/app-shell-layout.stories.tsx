@@ -188,7 +188,7 @@ export const WithDashboard: Story = {
  * also bei 256 + 24 = **280** statt bei 296. Die Mitte ändert sich nicht — sie
  * hängt an den zwei gleich breiten Randregionen, nicht an der Einrückung, und
  * genau das prüft die `play`-Funktion unten weiterhin. Die neue Einrückung
- * misst `BarInsetMatchesColumns`.
+ * misst `BarInsetIsTheColumnGutter`.
  */
 export const WithCenteredSearch: Story = {
   args: {
@@ -335,20 +335,26 @@ export const WithRightPanel: Story = {
  * **Seit 0.37.0: die Zeile nimmt den Spalten-Gutter.** Bis 0.36.0 steckten
  * beide Leisten in einem `Container` — dem **Seitenmaß** (`px-gutter
  * md:px-margin-page`, zentriert, gedeckelt), also 40px ab `md`. Die Zeile ist
- * aber keine Seiteninhalts-Spalte, sondern Chrome zwischen zwei `SidePanel`s,
- * deren `h-16`-Kopfzeile mit `px-gutter` (24px) eingerückt ist. Gemessen in
- * Chromium (1280px-Fenster, JustRAGs `KbWorkspaceLayout`, 2026-09-21): erster
- * Inhalt der Leiste 40px von der Spaltenkante, Logo der Spalte 24px — genau
- * die Lücke, die der Entwickler gesehen hat.
+ * aber keine Seiteninhalts-Spalte, sondern Chrome zwischen zwei `SidePanel`s.
+ * Gemessen in Chromium (1280px-Fenster, JustRAGs `KbWorkspaceLayout`,
+ * 2026-09-21): erster Inhalt der Leiste 40px von der Spaltenkante, Logo der
+ * Spalte 24px — genau die Lücke, die der Entwickler gesehen hat.
  *
- * **Das Orakel ist die Spalte, keine Zahl im Code.** Die `play`-Funktion misst
- * beide Einrückungen im selben Browser-Layout und vergleicht sie miteinander:
- * `pageLabel.left − aside.right` gegen `Kopfzeilen-Erstkind.left − aside.left`.
- * Würde jemand `px-gutter` hier gegen ein anderes Maß tauschen, ohne
- * `SidePanel` anzufassen, fällt der Vergleich — ein literales „24" wäre auch
- * dann grün, wenn die Spalte umzöge.
+ * **Seit 0.39.0 ist das Maß der Leiste ihr eigenes** (vorher hieß diese Story
+ * `BarInsetMatchesColumns` und verglich es mit der Kopfzeile der Spalte). Die
+ * `h-16`-Kopfzeile eines `SidePanel` ist jetzt `px-4` (16px), weil ihr
+ * Umschalter auf dem ersten Bedienelement des **Leisten-Rumpfs** steht und
+ * nicht auf dieser Zeile. Die beiden Einrückungen sind absichtlich
+ * verschieden, also kann die eine nicht mehr das Orakel der anderen sein.
+ *
+ * **Das Orakel ist der Token, keine Zahl im Code.** Die `play`-Funktion liest
+ * `--spacing-gutter` aus dem CSSOM zurück und misst die gerenderte Einrückung
+ * (`pageLabel.left − aside.right`) dagegen — ein literales „24" wäre auch dann
+ * grün, wenn das Utility zu nichts kompilierte oder der Token umzöge.
+ * Zusätzlich wird festgehalten, dass die Kopfzeile der Spalte **nicht**
+ * dasselbe Maß hat: 16px, das Maß des Rumpfs.
  */
-export const BarInsetMatchesColumns: Story = {
+export const BarInsetIsTheColumnGutter: Story = {
   args: { pageLabel: "Dashboard", headerActions: <ThemeToggle /> },
   render: (args) => (
     <Shell {...args}>
@@ -375,7 +381,24 @@ export const BarInsetMatchesColumns: Story = {
     const columnInset = columnFirst.getBoundingClientRect().left - column.left;
     const barInset = label.left - column.right;
 
-    await expect(barInset).toBeCloseTo(columnInset, 0);
+    // Orakel: der deklarierte Token, aus dem CSSOM zurückgelesen — nicht die
+    // Kopfzeile der Spalte (die seit 0.39.0 bewusst ein anderes Maß hat) und
+    // nicht die Zahl 24 im Test.
+    const gutter = getComputedStyle(document.documentElement)
+      .getPropertyValue("--spacing-gutter")
+      .trim();
+    await expect(gutter).toMatch(/^\d+(\.\d+)?px$/);
+    await expect(barInset).toBeCloseTo(parseFloat(gutter), 0);
+
+    // Und die Kopfzeile der Spalte ist ausdrücklich NICHT auf demselben Maß:
+    // sie folgt der Polsterung des Rumpfs (`p-4`), damit ihr Umschalter auf
+    // dem ersten Bedienelement des Rumpfs steht. Gegen die gerenderte
+    // Polsterung der Zeile geprüft, nicht gegen eine Zahl.
+    await expect(columnInset).toBeCloseTo(
+      parseFloat(getComputedStyle(headerRow).paddingLeft),
+      0,
+    );
+    await expect(columnInset).not.toBeCloseTo(parseFloat(gutter), 0);
 
     // Und die Zeile ist so breit wie die Hauptspalte: kein `max-w-*`-Deckel,
     // kein `mx-auto`. (Bei 1280px bände der alte 1440px-Deckel noch nicht —

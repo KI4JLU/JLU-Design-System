@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState, type ReactNode } from "react";
+import { expect } from "storybook/test";
 import { FileText, History, MessageSquare } from "lucide-react";
 import { SidePanel } from "./side-panel";
 
@@ -174,4 +175,65 @@ export const CollapsedWithoutPreview: Story = {
       </div>
     </Frame>
   ),
+};
+
+/**
+ * **Geometrie der Kopfzeile (0.39.0): der Umschalter steht auf dem ersten
+ * Bedienelement des Rumpfs.** Die Zeile ist `px-4` (16px) eingerückt und der
+ * Knopf 32px breit (`p-1.5` + 20px-Icon), sein Mittelpunkt liegt also 32px von
+ * der Kante der Leiste. Ein `p-4`-gepolsterter Rumpf — so polstert
+ * `AppShellLayout` seine Navigation — setzt ein 32px-Bedienelement am
+ * nachlaufenden Rand seiner ersten Zeile auf denselben Mittelpunkt: 16px
+ * Polsterung + 16px halbe Breite. Bis 0.38.0 waren es `px-gutter` (24px) und
+ * ein 36px-Knopf, also 42px, und die beiden verfehlten sich um 10px.
+ *
+ * **Das Orakel ist das Rechteck des Rumpf-Bedienelements, keine Zahl im
+ * Test.** Die `play`-Funktion misst beide Mittelpunkte im selben
+ * Browser-Layout und vergleicht sie miteinander — würde jemand `px-4` gegen
+ * ein anderes Maß tauschen oder den Knopf wieder auf `p-2` stellen, fällt der
+ * Vergleich. Nur die Breite des Knopfes (32px) und die Polsterung der Zeile
+ * (16px) sind zusätzlich als Zahl festgehalten, weil sonst zwei gemeinsam
+ * verschobene Maße gültig aussähen.
+ */
+export const ToggleAlignsWithBodyControl: Story = {
+  args: {
+    header: paneTitle("Verlauf"),
+    children: (
+      <div className="p-4">
+        <div className="flex">
+          <button className="ml-auto h-8 w-8" data-testid="body-control" />
+        </div>
+      </div>
+    ),
+  },
+  render: (args) => (
+    <Frame>
+      <SidePanel {...args} aria-label="Verlauf" />
+      <div className="flex flex-1 items-center justify-center font-body-base text-body-base text-on-surface-variant">
+        Seiteninhalt
+      </div>
+    </Frame>
+  ),
+  play: async ({ canvas }) => {
+    const centreX = (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    };
+
+    const toggle = await canvas.findByRole("button", { name: "Verlauf einklappen" });
+    const bodyControl = await canvas.findByTestId("body-control");
+
+    // Die eigentliche Zusicherung: beide Mittelpunkte auf einer senkrechten
+    // Linie, gemessen an den gerenderten Rechtecken.
+    await expect(Math.abs(centreX(toggle) - centreX(bodyControl))).toBeLessThan(1);
+
+    // Und die beiden Maße, aus denen sich das ergibt — ohne sie wären zwei
+    // gemeinsam verschobene Werte (etwa `px-6` plus ein 48px-Knopf) genauso
+    // grün.
+    await expect(toggle.getBoundingClientRect().width).toBeCloseTo(32, 0);
+    // Der Elternknoten des Umschalters IST die Kopfzeile — `SidePanel` rendert
+    // ihn direkt in die `h-16`-Zeile.
+    const headerRow = toggle.parentElement as HTMLElement;
+    await expect(getComputedStyle(headerRow).paddingLeft).toBe("16px");
+  },
 };
