@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { composeStories } from "@storybook/react-vite";
-import { expect } from "storybook/test";
+import { expect, waitFor } from "storybook/test";
 import {
   FileText,
   Home,
@@ -705,6 +705,116 @@ export const WithResizableColumns: Story = {
     );
     await expect(rightHandle.getBoundingClientRect().right).toBeLessThanOrEqual(
       rightColumn.getBoundingClientRect().left + 1,
+    );
+  },
+};
+
+/**
+ * **0.38.0 — der Trenner belegt keine Layout-Breite mehr.** Bis 0.37.0 war das
+ * `ResizeHandle` ein 6px breites, transparentes Flex-Element in der Reihe;
+ * durchgeschienen ist dabei der `bg-surface`-Hintergrund der Shell, also ein
+ * getönter Streifen zwischen zwei `bg-surface-container-lowest`-Flächen
+ * („da ist ein ganzer div zwischen Header und Sidebar", JustRAG-KB, 09/2026).
+ * Jetzt ist der Wirt `w-0` und die Greiffläche ein `::after`-Overlay, das mit
+ * 8px **über** der Randlinie liegt (je 4px in beide Nachbarn).
+ *
+ * Diese `play`-Funktion prüft in Chromium genau das, was jsdom nicht kann —
+ * **Orakel ist das Layout und das Hit-Testing des Browsers**, jede erwartete
+ * Zahl ist die gemessene Kante des *Nachbarn*, nie ein Literal:
+ *
+ * 1. die Box des Trenners ist 0px breit,
+ * 2. die rechte Kante der linken Spalte **ist** die linke Kante der
+ *    Hauptspalte — zwischen beiden liegt nichts mehr,
+ * 3. `elementFromPoint` liefert auf dieser Linie ±3px (also von beiden Seiten
+ *    her) den Trenner, ±5px dagegen nicht mehr: die 8px-Greiffläche ist real
+ *    und sie ist zentriert,
+ * 4. ein Zeiger-Zug, der an einem so *gefundenen* Punkt beginnt, verändert
+ *    Breite und `aria-valuenow` weiterhin um denselben Betrag.
+ *
+ * Der Zug-Zustand färbt das Overlay (`after:bg-primary`); der Ruhezustand ist
+ * durchsichtig. Der **Hover**-Ton (`hover:after:bg-outline-variant`) wird hier
+ * *nicht* geprüft: CSS-`:hover` hängt am echten Zeiger des Browsers und wird
+ * von per JavaScript verschickten Pointer-Events nicht ausgelöst.
+ */
+export const HandleHasNoLayoutWidth: Story = {
+  args: { pageLabel: "Wissensbasis", headerActions: <ThemeToggle /> },
+  render: (args) => <ResizableShell {...args} />,
+  play: async ({ canvas, userEvent }) => {
+    const column = await canvas.findByRole("complementary", {
+      name: "Hauptnavigation",
+    });
+    const handle = await canvas.findByRole("separator", {
+      name: "Breite der Navigation ändern",
+    });
+    const main = await canvas.findByRole("main");
+
+    // Definierter Startwert, egal was eine frühere Story im gemeinsamen
+    // `storyStorage` hinterlassen hat: `Home` ist das angekündigte Minimum.
+    handle.focus();
+    await userEvent.keyboard("{Home}");
+
+    // (1) Keine Layout-Breite.
+    await expect(handle.getBoundingClientRect().width).toBe(0);
+
+    // (2) Deshalb berühren sich die Nachbarn. Die erwartete Zahl ist die Kante
+    //     der Spalte, nicht eine aus dem Code abgelesene Breite.
+    const columnBox = column.getBoundingClientRect();
+    await expect(main.getBoundingClientRect().left).toBe(columnBox.right);
+
+    // (3) Die Greiffläche liegt über dieser Linie — von beiden Seiten
+    //     erreichbar, aber nicht breiter als 8px.
+    const borderX = columnBox.right;
+    const midY = columnBox.top + columnBox.height / 2;
+    await expect(document.elementFromPoint(borderX - 3, midY)).toBe(handle);
+    await expect(document.elementFromPoint(borderX + 3, midY)).toBe(handle);
+    await expect(document.elementFromPoint(borderX - 5, midY)).not.toBe(handle);
+    await expect(document.elementFromPoint(borderX + 5, midY)).not.toBe(handle);
+
+    // Im Ruhezustand ist das Overlay durchsichtig.
+    const restFill = getComputedStyle(handle, "::after").backgroundColor;
+    await expect(restFill).toBe("rgba(0, 0, 0, 0)");
+
+    // (4) Und ein Zug, der an einem per Hit-Test *gefundenen* Punkt beginnt,
+    //     zieht weiterhin — der Griff, den der Nutzer trifft, ist der Griff,
+    //     der die Schleife fährt.
+    const grab = document.elementFromPoint(borderX + 3, midY) as HTMLElement;
+    const widthBefore = column.getBoundingClientRect().width;
+    const valueBefore = Number(handle.getAttribute("aria-valuenow"));
+    grab.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        clientX: borderX + 3,
+        clientY: midY,
+      }),
+    );
+    // Gefüllt, sobald der Zug läuft (`after:transition-colors` blendet über,
+    // deshalb gepollt statt einmal gelesen).
+    await waitFor(async () => {
+      await expect(getComputedStyle(handle, "::after").backgroundColor).not.toBe(
+        restFill,
+      );
+    });
+    window.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        clientX: borderX + 43,
+        clientY: midY,
+      }),
+    );
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+
+    // 40px nach rechts, linke Spalte → 40px breiter. Handarithmetik auf der
+    // *gemessenen* Startbreite. Gepollt, weil der Zustandswechsel hier aus
+    // einem **nativen** `window`-Listener kommt (der Griff fährt die Schleife
+    // selbst) — React stapelt das und rendert erst danach.
+    await waitFor(async () => {
+      await expect(Number(handle.getAttribute("aria-valuenow"))).toBe(valueBefore + 40);
+    });
+    await expect(column.getBoundingClientRect().width).toBe(widthBefore + 40);
+    // Und die Kanten liegen nach dem Zug wieder aufeinander.
+    await expect(main.getBoundingClientRect().left).toBe(
+      column.getBoundingClientRect().right,
     );
   },
 };
