@@ -22,6 +22,7 @@ Leiste" — die Position ist eine Prop, kein eigener Bestandteil der Komponente.
 | `expandLabel` / `collapseLabel` | `string` | ✅ | Zugängliche Namen der beiden Knöpfe. |
 | `header` | `ReactNode` | — | Titel-/Marken-Knoten in der Kopfzeile, **nur ausgeklappt** — siehe „Kopfzeile" unten. |
 | `collapsedPreview` | `ReactNode` | — | Icon-Streifen in der zugeklappten Schiene, unter dem Ausklapp-Knopf. |
+| `footer` | `ReactNode` | — | Unter dem Rumpf angehefteter Knoten (z. B. `SidebarUserMenu`), **seit 0.30.0**; überlebt das Einklappen und rutscht an das untere Ende der Schiene. |
 | `children` | `ReactNode` | ✅ | Inhalt der Leiste. |
 | `aria-label` | `string` | (empfohlen) | `<aside>` ist ein `complementary`-Landmark; bei mehr als einer Leiste auf der Seite braucht jede einen eigenen Namen. |
 
@@ -55,8 +56,10 @@ gar nicht geschrumpft wird, entscheidet der Knoten des Konsumenten.
 
 <Canvas of={SidePanelStories.LongHeaderTitle} />
 
-Es gibt bewusst **keinen `footer`-Slot**: eine komponierende Shell heftet ihren
-Fuß selbst in `children` an.
+Seit 0.30.0 gibt es einen `footer`-Slot: er wird unter dem scrollenden Rumpf
+angeheftet und **wandert eingeklappt in die Schiene**, weil er typischerweise der
+einzige Weg zum Abmelden ist. (Bis 0.29.0 hieß es hier, eine komponierende Shell
+solle ihren Fuß selbst in `children` anheften — das stimmt nicht mehr.)
 
 ## Chevrons
 
@@ -92,16 +95,28 @@ ausgeklappten Zustand rendert, sieht den Ausklapp-Knopf nie.
   Wert benutzt statt ihn zu wiederholen.
 - **`header` wird zugeklappt ausgehängt — `children` nicht.** Genau
   entgegengesetzt, und mit Absicht: ein Leisten-Rumpf hält Scrollposition und
-  halb getippte Eingaben, eine Kopfzeile ist Chrome ohne Zustand, und in der
-  Schiene darf nur der Ausklapp-Knopf plus `collapsedPreview` stehen. Dieselbe
-  Regel wie bei `Sidebar.header`. Zustandsbehaftetes gehört deshalb in
-  `children`, nicht in `header`.
+  halb getippte Eingaben, eine Kopfzeile ist Chrome ohne Zustand, und von der
+  Chrome bleibt in der Schiene nur der Ausklapp-Knopf — neben
+  `collapsedPreview` und dem angehefteten `footer`. Dieselbe Regel wie bei
+  `Sidebar.header`. Zustandsbehaftetes gehört deshalb in `children`, nicht in
+  `header`.
 - **Inhalt bleibt montiert.** Zugeklappt trägt der Rumpf das `hidden`-Attribut
   (und `display:none`): Scrollposition und halb getippte Eingaben überleben das
   Einklappen, und der Inhalt ist gleichzeitig aus dem
   Accessibility-Baum entfernt.
 - **Kein Breiten-Übergang.** Dieselbe Breite wird auch per Maus gezogen; eine
   animierte Breite würde dem Zeiger nachlaufen.
+- **Die Schiene spiegelt die ausgeklappte Spalte senkrecht** (0.35.0). Sie baut
+  keinen eigenen Rhythmus, sondern dieselben drei Kästen: die `h-16`-Chrome-Zeile
+  für den Ausklapp-Knopf, darunter der scrollende Vorschau-Bereich mit der
+  Polsterung, die ein Spaltenkörper mitbringt, darunter der ungepolsterte
+  `footer`. Damit behält jedes Bedienelement beim Einklappen seine Höhe auf der
+  Seite. Vorher lag der Knopf in demselben gepolsterten Kasten wie die Vorschau:
+  der Icon-Streifen saß 12px zu hoch, der Knopf 2px neben der Kopfzeilenmitte und
+  der Fuß 16px zu hoch (in Chromium gemessen — die Story
+  `AppShellLayout` → `CollapsedRailKeepsVerticalPositions` gegen die alte
+  Schiene laufen gelassen: 68 statt 80, 34 statt 32, 32 statt 16, jeweils
+  relativ zum Kasten der Spalte).
 - **`collapsedPreview` ist kein Knopf-Inhalt.** Der Ausklapp-Knopf ist ein
   eigenes, kleines Bedienelement über der Vorschau — nicht die ganze Schiene.
   Eine Schiene-als-Knopf würde interaktive Elemente in der Vorschau verschachteln

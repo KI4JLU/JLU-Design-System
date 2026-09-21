@@ -412,3 +412,68 @@ export const Mobile: Story = {
     </Shell>
   ),
 };
+
+/**
+ * **Die Schiene ist der senkrechte Spiegel der ausgeklappten Spalte** — jedes
+ * Bedienelement behält beim Einklappen seine Höhe auf der Seite.
+ *
+ * Das war bis 0.34.0 nicht so: die Schiene baute ihren eigenen senkrechten
+ * Rhythmus (`py-stack-md` + `gap-stack-md`) statt die `h-16`-Chrome-Zeile und
+ * die Polsterung des Spaltenkörpers zu spiegeln, also sprangen der Schalter
+ * und die ganze Icon-Leiste beim Einklappen nach oben. Gemessen in Chromium,
+ * relativ zur Oberkante der Spalte, damit weder Scrollposition noch
+ * Fenstergröße eingehen.
+ *
+ * Das Orakel ist der AUSGEKLAPPTE Zustand, nicht eine im Code abgelesene Zahl:
+ * die ausgeklappte Spalte ist die, an der sich die eingeklappte auszurichten
+ * hat, und beide Messungen kommen aus demselben Browser-Layout.
+ */
+export const CollapsedRailKeepsVerticalPositions: Story = {
+  args: { pageLabel: "Dashboard", headerActions: <ThemeToggle /> },
+  render: (args) => (
+    <Shell {...args}>
+      <DashboardPage />
+    </Shell>
+  ),
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const column = () => canvasElement.querySelector("aside") as HTMLElement;
+    // Alles relativ zur Spaltenoberkante: absolute Viewport-Koordinaten wären
+    // von der Fenstergröße des Runners abhängig, die Differenz nicht.
+    const offsetTop = (el: Element) =>
+      el.getBoundingClientRect().top - column().getBoundingClientRect().top;
+    const centreY = (el: Element) => {
+      const box = el.getBoundingClientRect();
+      return box.top + box.height / 2 - column().getBoundingClientRect().top;
+    };
+
+    // Der gepinnte Fuß wird von unten gemessen — er hängt an der Unterkante der
+    // Spalte, nicht an deren Oberkante.
+    const offsetBottom = (el: Element) =>
+      column().getBoundingClientRect().bottom - el.getBoundingClientRect().bottom;
+
+    const toggleOpen = await canvas.findByRole("button", { name: "Navigation einklappen" });
+    const openToggleCentre = centreY(toggleOpen);
+    const openNavTop = offsetTop(await canvas.findByRole("button", { name: "Übersicht" }));
+    const openFootBottom = offsetBottom(
+      await canvas.findByRole("button", { name: /Jamie Lee/ }),
+    );
+
+    await userEvent.click(toggleOpen);
+
+    const toggleRail = await canvas.findByRole("button", { name: "Navigation ausklappen" });
+    await expect(centreY(toggleRail)).toBe(openToggleCentre);
+    // Dieselbe Zeile, jetzt in ihrer Icon-Form: `NavItem` behält seinen Namen
+    // über `aria-label`, deshalb findet sie derselbe Selektor.
+    await expect(offsetTop(await canvas.findByRole("button", { name: "Übersicht" }))).toBe(
+      openNavTop,
+    );
+    /* Und der Fuß: derselbe Knoten, derselbe Abstand zur Unterkante. Die
+       Schiene brachte hier bis 0.34.0 ein eigenes `pb-stack-md` mit, zusätzlich
+       zur Polsterung im Knoten des Konsumenten — der Nutzermenü-Knopf saß
+       eingeklappt 16px höher. Die Höhe des Knopfs ändert sich (`sm` → `icon`),
+       die Unterkante darf es nicht. */
+    await expect(offsetBottom(await canvas.findByRole("button", { name: /Jamie Lee/ }))).toBe(
+      openFootBottom,
+    );
+  },
+};
