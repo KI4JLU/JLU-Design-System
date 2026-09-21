@@ -142,11 +142,21 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
     // in full; this one is NOT flagged only because the rule does not look
     // inside a `cn(...)` call — treat it as the same exception, not as an
     // approval.
+    //
+    // `-mr-1.5` / `-ml-1.5` (0.40.0): optical alignment. A ghost button has no
+    // visible box, so the eye reads the GLYPH's edge, not the button's; a
+    // filled 32px control in the body below shows its box edge at the row's
+    // 16px inset. With both boxes at 16px the chevron's edge sat 6px further
+    // in than the filled circle's and read as misaligned (developer report,
+    // 21.09.2026). Pulling the toggle out by its own padding puts the glyph's
+    // outer edge on the inset line — the same trick as a text-aligned icon
+    // button — while the 32px hit area is unchanged. Content-facing edge only:
+    // a left pane's toggle moves right, a right pane's moves left.
     const collapseToggle = (
       <Button
         variant="ghost"
         size="icon"
-        className={cn("shrink-0 p-1.5", side === "left" && "ml-auto")}
+        className={cn("shrink-0 p-1.5", side === "left" ? "ml-auto -mr-1.5" : "-ml-1.5")}
         aria-label={collapseLabel}
         aria-expanded={true}
         aria-controls={bodyId}
