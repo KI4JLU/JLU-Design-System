@@ -1,14 +1,6 @@
 import * as React from "react";
-import { BottomTabBar } from "../components/bottom-tab-bar";
-import { ResizeHandle } from "../components/resize-handle";
-import { SidePanel } from "../components/side-panel";
-import {
-  MOBILE_PANE_STYLE,
-  PANE_FILL,
-  useIsDesktop,
-  type MobilePaneTab,
-  type PaneId,
-} from "../lib/pane-layout";
+import { AppShell, type AppShellPanel } from "../components/app-shell";
+import { type MobilePaneTab, type PaneId } from "../lib/pane-layout";
 import { cn } from "../lib/utils";
 
 /**
@@ -104,44 +96,55 @@ export interface WorkspaceLayoutProps extends React.HTMLAttributes<HTMLDivElemen
 /**
  * Template „Workspace": the three-column workspace — `left` pane, main area,
  * `right` pane, each side pane collapsible to a rail and drag-resizable;
- * below `lg` exactly one area at a time plus a `BottomTabBar`. Composes
- * `SidePanel` + `ResizeHandle` + `BottomTabBar`; the app injects content and
- * the controlled pane state and never rebuilds the frame.
+ * below `lg` exactly one area at a time plus a `BottomTabBar`. Since 0.37.0 it
+ * renders `AppShell` (see below), which owns that composition; the app injects
+ * content and the controlled pane state and never rebuilds the frame.
+ *
+ * **It IS an `AppShell` — without a bar** (0.37.0). Until 0.36.0 this
+ * template composed `SidePanel` + `ResizeHandle` + `BottomTabBar` itself,
+ * which was the same composition `AppShell` grew in 0.36.0 when it gained
+ * `AppShellPanel.resize`; at that point the last real difference between the
+ * two frames was gone and the duplication was the only thing left. So the
+ * body below is a **mapping**, not a frame: `WorkspacePane` →
+ * `AppShellPanel`, `minWidth`/`maxWidth`/`onWidthChange`/`resizeLabel` →
+ * `resize`, no `topBar`. One mechanism, one set of arrangement rules, one
+ * place where an accessibility fix lands.
+ *
+ * The export and `WorkspacePane` stay: they name the *case* („a workspace
+ * screen: two panes, both resizable, no chrome bar"), which is worth a name
+ * even when it is one call to the frame underneath.
  *
  * **Standalone — never inside `AppShellLayout`.** This template *is* the
  * chrome of its screen: its panes are the app's vertical chrome columns (the
  * source implementation frames both of them with its own `SidebarShell`, which
- * `SidePanel` replaces here), and it fills the whole viewport. Hung into
- * `AppShellLayout` as `children` it therefore puts a second sidebar next to
- * the shell's nav column — two vertical chrome columns on one screen, which is
- * what the `InAppShell` story showed before it was removed. That is also why
- * the main area is a `<main>` and not a `<section>`: no shell above it
- * contributes the page's `main` landmark, so this template has to. Contrast
- * `SectionedGridLayout`, which is page *content* and genuinely is an
- * `AppShellLayout` child — it stays a `<section aria-label>` inside the
- * shell's `<main>`. Two templates in this library, opposite answers; the
- * dividing question is „does this template own the viewport or fill a slot".
+ * `SidePanel` replaces here), and it fills its parent, which an app gives the
+ * viewport. Hung into `AppShellLayout` as `children` it therefore puts a
+ * second sidebar next to the shell's nav column — two vertical chrome columns
+ * on one screen, which is what the `InAppShell` story showed before it was
+ * removed. The warning did not weaken when the frames became one: nesting is
+ * now literally two `AppShell`s, i.e. two chrome column sets and two `<main>`
+ * candidates. That is also why the main area is a `<main>` and not a
+ * `<section>`: no shell above it contributes the page's `main` landmark, so
+ * this template has to — it passes `mainLabel` down, and `AppShell` names its
+ * `<main>` with it. Contrast `SectionedGridLayout`, which is page *content*
+ * and genuinely is an `AppShellLayout` child — it stays a
+ * `<section aria-label>` inside the shell's `<main>`. Two templates in this
+ * library, opposite answers; the dividing question is „does this template own
+ * the viewport or fill a slot".
  *
- * **Composition only.** No data fetching, no derivation, no state of its own
- * beyond „is this a desktop viewport". Pane open/width state and the current
- * mobile tab live in the app (typically one context, persisted), because a
- * pane, its resize handle and this template all have to read the same number.
+ * **Composition only.** No data fetching, no derivation, and since 0.37.0 no
+ * state at all — not even „is this a desktop viewport", which `AppShell` now
+ * asks. Pane open/width state and the current mobile tab live in the app
+ * (typically one context, persisted), because a pane, its resize handle and
+ * this template all have to read the same number.
  *
- * **The responsive split, and why it is where it is.** Inside a branch,
- * everything is CSS: pane widths are the panes' own inline width, the
- * collapsed rail is `SidePanel`, the main area flexes, a handle is only
- * rendered next to an expanded pane. What is *not* CSS is the choice of
- * branch. „One area at a time" cannot be a media query here, because below
- * `lg` a pane is not a narrower version of itself: it fills the screen, it
- * ignores the collapse state, and its collapse control must be gone (a
- * control that collapses the only visible area would leave an empty screen,
- * and it would destroy the desktop collapse preference on the way). None of
- * those three is expressible as a class on the same markup, so the template
- * asks `matchMedia` once (`useIsDesktop`) and renders the arrangement that
- * applies — the same breakpoint, and the same reason, as the source
- * implementation. The consumer still writes no breakpoint ladder: which pane
- * a tab shows is data (`mobileTabs`), and which tab is current is one
- * controlled prop.
+ * **The responsive split** — one area at a time plus a `BottomTabBar` below
+ * `lg` — is `AppShell`'s, where the reasoning now lives: below `lg` a pane is
+ * not a narrower version of itself (it fills the screen, ignores the collapse
+ * state, and loses its collapse control), so the choice of arrangement cannot
+ * be a media query and is taken once in JS. The consumer still writes no
+ * breakpoint ladder: which pane a tab shows is data (`mobileTabs`), and which
+ * tab is current is one controlled prop.
  *
  * **Hidden is not collapsed.** `showRight={false}` removes the right pane
  * from the desktop arrangement *without* touching `isOpen`, so the user's
@@ -151,7 +154,9 @@ export interface WorkspaceLayoutProps extends React.HTMLAttributes<HTMLDivElemen
  * **not** consulted: hiding a pane buys horizontal space, panes do not
  * compete for space when only one is on screen, and a tab whose pane refuses
  * to appear would be a dead control. Omitting the `right` prop is the other
- * thing — then the pane does not exist at all, in either arrangement.
+ * thing — then the pane does not exist at all, in either arrangement. The
+ * rule is unchanged; since 0.37.0 it is implemented once, by `AppShell`'s own
+ * `showRight`, on the frame that owns the arrangement.
  *
  * Swipe gestures are not implemented here: `onTouchStart`/`onTouchEnd` (and
  * any other root attribute) pass through to the root element, so the app's
@@ -180,144 +185,65 @@ const WorkspaceLayout = React.forwardRef<HTMLDivElement, WorkspaceLayoutProps>(
     },
     ref,
   ) => {
-    const isDesktop = useIsDesktop();
-    // Ids for the panes, so each handle's `aria-controls` can reference the
-    // pane it resizes (APG splitter). Minted HERE, not exposed by `SidePanel`:
-    // this template is the one place that composes pane and handle, so it is
-    // the one place that has to know both ends of the reference. The id goes
-    // on the pane ROOT (`SidePanel`'s `<aside>`, via the pass-through `id`) —
-    // the element whose width the handle actually changes and whose size
-    // `aria-valuenow` reports — not on the inner body region the collapse
-    // toggle points at (that reference is about visibility, this one is about
-    // size; see resize-handle.tsx).
-    const leftPaneId = React.useId();
-    const rightPaneId = React.useId();
+    /*
+      `WorkspacePane` → `AppShellPanel`, the whole of this template's body.
 
-    if (!isDesktop) {
-      // One lookup in the consumer's own table — not a derivation: the app
-      // decides which tab is active, the table says which pane that tab
-      // shows. A tab pointing at a pane this workspace does not have (and an
-      // id that is in no tab at all) falls back to the main area rather than
-      // to a blank screen.
-      const activePane = mobileTabs.find((tab) => tab.id === activeMobileTab)?.pane;
-      const pane = activePane === "left" ? left : activePane === "right" ? right : undefined;
+      Eight values are carried over verbatim; the four resize values become
+      the one `resize` object, which is `AppShellPanel`'s all-or-nothing
+      contract (a handle without bounds is not an APG splitter). A
+      `WorkspacePane` always has all four — `minWidth`, `maxWidth`,
+      `onWidthChange` and `resizeLabel` are required there — so the object is
+      always built and every workspace pane stays drag-resizable, exactly as
+      it was before 0.37.0.
 
-      return (
-        <div
-          ref={ref}
-          className={cn(
-            "flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden",
-            className,
-          )}
-          {...props}
-        >
-          {pane ? (
-            <aside
-              aria-label={pane.label}
-              className={cn(PANE_FILL, "bg-surface-container-lowest")}
-              style={MOBILE_PANE_STYLE}
-            >
-              {pane.content}
-            </aside>
-          ) : (
-            // The same `<main>` as the desktop branch — one per arrangement,
-            // never two. When a *side* pane is the shown area there is no
-            // `<main>` on screen at all: the main area is not in the tree, and
-            // wrapping a `complementary` in `main` would be a worse lie than
-            // its absence. The source implementation swaps the whole screen
-            // the same way.
-            // TODO: that a narrow screen showing a side pane has no `main`
-            // landmark is a consequence, not a confirmed decision with the
-            // design-system owner.
-            <main aria-label={mainLabel} className={PANE_FILL} style={MOBILE_PANE_STYLE}>
-              {children}
-            </main>
-          )}
-          <BottomTabBar
-            items={mobileTabs}
-            activeId={activeMobileTab}
-            onChange={onMobileTabChange}
-            label={mobileTabBarLabel}
-          />
-        </div>
-      );
-    }
+      `header` and `footer` are not mapped: `WorkspacePane` has neither, and
+      inventing them here would widen this template's API by the back door.
+      A workspace that wants a pane title passes it inside `content`, as it
+      always has; a screen that wants the shell's slots uses `AppShell`.
+    */
+    const toPanel = (pane: WorkspacePane): AppShellPanel => ({
+      content: pane.content,
+      label: pane.label,
+      isOpen: pane.isOpen,
+      onOpenChange: pane.onOpenChange,
+      width: pane.width,
+      expandLabel: pane.expandLabel,
+      collapseLabel: pane.collapseLabel,
+      collapsedPreview: pane.collapsedPreview,
+      resize: {
+        minWidth: pane.minWidth,
+        maxWidth: pane.maxWidth,
+        onWidthChange: pane.onWidthChange,
+        label: pane.resizeLabel,
+      },
+    });
 
     return (
-      <div
+      <AppShell
         ref={ref}
-        className={cn("flex h-full min-h-0 w-full flex-1 overflow-hidden", className)}
+        /* No `topBar`: a workspace screen has no chrome bar, and `AppShell`
+           renders neither the row nor a `banner` landmark when it is
+           omitted. That is the only structural difference between the two
+           templates. */
+        left={left && toPanel(left)}
+        right={right && toPanel(right)}
+        showRight={showRight}
+        mainLabel={mainLabel}
+        mobileTabs={mobileTabs}
+        activeMobileTab={activeMobileTab}
+        onMobileTabChange={onMobileTabChange}
+        mobileTabBarLabel={mobileTabBarLabel}
+        /* This template fills its PARENT (`h-full … flex-1`), while `AppShell`
+           takes the viewport (`h-dvh`) — the one sizing difference between
+           them, and the contract this template's stories and docs have had
+           since 0.23.1 („the app gives it the viewport"). `cn` resolves the
+           height utilities, so the consumer's own `className` still wins over
+           both. */
+        className={cn("h-full min-h-0 w-full flex-1", className)}
         {...props}
       >
-        {left && (
-          <>
-            <SidePanel
-              id={leftPaneId}
-              side="left"
-              isOpen={left.isOpen}
-              width={left.width}
-              onExpand={() => left.onOpenChange(true)}
-              onCollapse={() => left.onOpenChange(false)}
-              expandLabel={left.expandLabel}
-              collapseLabel={left.collapseLabel}
-              collapsedPreview={left.collapsedPreview}
-              aria-label={left.label}
-            >
-              {left.content}
-            </SidePanel>
-            {/* No handle next to a collapsed pane: the rail is a fixed width,
-                so a separator there would report a value with no visible
-                effect. */}
-            {left.isOpen && (
-              <ResizeHandle
-                side="left"
-                value={left.width}
-                min={left.minWidth}
-                max={left.maxWidth}
-                label={left.resizeLabel}
-                controls={leftPaneId}
-                onValueChange={left.onWidthChange}
-              />
-            )}
-          </>
-        )}
-
-        {/* The page's one `main` landmark. This template is standalone (see
-            the component doc), so nothing above it provides one. */}
-        <main aria-label={mainLabel} className={PANE_FILL}>
-          {children}
-        </main>
-
-        {right && showRight && (
-          <>
-            {right.isOpen && (
-              <ResizeHandle
-                side="right"
-                value={right.width}
-                min={right.minWidth}
-                max={right.maxWidth}
-                label={right.resizeLabel}
-                controls={rightPaneId}
-                onValueChange={right.onWidthChange}
-              />
-            )}
-            <SidePanel
-              id={rightPaneId}
-              side="right"
-              isOpen={right.isOpen}
-              width={right.width}
-              onExpand={() => right.onOpenChange(true)}
-              onCollapse={() => right.onOpenChange(false)}
-              expandLabel={right.expandLabel}
-              collapseLabel={right.collapseLabel}
-              collapsedPreview={right.collapsedPreview}
-              aria-label={right.label}
-            >
-              {right.content}
-            </SidePanel>
-          </>
-        )}
-      </div>
+        {children}
+      </AppShell>
     );
   },
 );

@@ -527,6 +527,93 @@ describe("AppShell — resizable columns", () => {
 });
 
 /**
+ * `mainLabel` and `showRight` (0.37.0) — the two additive props that made
+ * `WorkspaceLayout` expressible as a call to this component, so the library
+ * has one frame instead of two.
+ *
+ * Oracles, both outside the code under test:
+ *
+ * - **The accessible name computation** (aria-query + dom-accessibility-api
+ *   behind Testing Library's `getByRole(…, { name })`), which derives the
+ *   `main` landmark's name from `aria-label` per the ARIA in HTML mapping.
+ *   Nothing here reads a class, and the unnamed case is asserted as the
+ *   *absence* of the attribute, so „named" cannot pass by accident.
+ * - **„Hidden is not collapsed"**, `WorkspaceLayout`'s documented rule since
+ *   0.23.1 and asserted against that template in `workspace-layout.test.tsx`
+ *   (which this component now renders): hiding must not travel through the
+ *   consumer's `isOpen`, and must be ignored below `lg`, where one area fills
+ *   the screen and a tab whose column refused to appear would be dead. It is
+ *   an external contract here — written for, and still checked against, a
+ *   different call site.
+ */
+describe("AppShell — mainLabel (0.37.0)", () => {
+  it.each([
+    ["desktop", true, "page"],
+    ["below lg", false, "page"],
+  ] as const)("names the main landmark (%s)", (_name, isDesktop, activeMobileTab) => {
+    stubViewport(isDesktop);
+    renderShell({ mainLabel: "Arbeitsbereich", activeMobileTab });
+
+    const main = screen.getByRole("main", { name: "Arbeitsbereich" });
+    expect(main).toHaveTextContent("Inhalt");
+    // Exactly one, in either arrangement — the name must not arrive twice.
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+  });
+
+  it("leaves <main> unnamed when no label is given — no invented default", () => {
+    stubViewport(true);
+    renderShell();
+    const main = screen.getByRole("main");
+    expect(main).not.toHaveAttribute("aria-label");
+    expect(main).toHaveAccessibleName("");
+  });
+});
+
+describe("AppShell — showRight (0.37.0)", () => {
+  it("takes the right column out of the desktop arrangement without collapsing it", () => {
+    stubViewport(true);
+    const right = rightPanel();
+    renderShell({ right, showRight: false });
+
+    expect(screen.queryByRole("complementary", { name: "Quellen" })).not.toBeInTheDocument();
+    // Only the left column is left — the right one is gone, not collapsed to
+    // its rail (a rail would still be a `complementary` landmark).
+    const columns = screen.getAllByRole("complementary");
+    expect(columns).toHaveLength(1);
+    expect(columns[0]).toHaveAccessibleName("Navigationsspalte");
+    // The whole point: hiding must not travel through the consumer's state.
+    expect(right.onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("drops the hidden column's separator with it", () => {
+    stubViewport(true);
+    renderShell({
+      right: rightPanel({ resize: rightResize() }),
+      showRight: false,
+    });
+    expect(
+      screen.queryByRole("separator", { name: "Breite der Quellen ändern" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("is ignored below lg — the tab still shows the column", () => {
+    stubViewport(false);
+    const right = rightPanel();
+    renderShell({ right, showRight: false, activeMobileTab: "sources" });
+
+    expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
+    expect(screen.getByText("Quellen-Inhalt")).toBeVisible();
+    expect(right.onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("shows the column when the prop is omitted — the default is true", () => {
+    stubViewport(true);
+    renderShell();
+    expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
+  });
+});
+
+/**
  * The mechanism KI-797 reported and this card removes: the drawer mounted the
  * SAME node a second time, so a consumer's `id` inside the nav column existed
  * twice while it was open. With the drawer gone there is one mount per node.

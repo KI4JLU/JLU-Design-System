@@ -425,23 +425,27 @@ import { AppShellLayout, DashboardLayout, Grid, Stack } from "@ki4jlu/design-sys
   nav column outside the shell; every row that should collapse there still
   needs a `label` on its `NavItem`.
 - **`WorkspaceLayout` is standalone — never a child of `AppShellLayout`.** It
-  owns the full viewport and its panes *are* the page's chrome, so nesting it
+  owns the page and its panes *are* the page's chrome, so nesting it
   in the shell puts the shell's nav column next to the left pane: two chrome
   columns on one screen. Render it as the whole page, inside a frame that has a
   height (`h-dvh`), and put app navigation into its left pane; it contributes
-  the page's `<main>` itself.
+  the page's `<main>` itself, named by its required `mainLabel`.
 
-  **Re-examined for 0.30.0, and it still holds.** `AppShell` now composes the
-  same `SidePanel` columns and the same narrow-screen arrangement (both frames
-  share `useIsDesktop` and the pane/tab types in `lib/pane-layout.ts`), so the
-  two templates look much more alike than they did. The rule survives because
-  it was never about the panes: nesting still produces two chrome columns and
-  two `<main>` landmarks, and that is unchanged. What the overlap *does* raise
-  is whether `WorkspaceLayout` should become a thin case of `AppShell` — it
-  would still need the two things the shell deliberately does not have
-  (`ResizeHandle`s and per-pane `minWidth`/`maxWidth`, plus `showRight`), so
-  this is a real design question and not a refactor. **Deliberately not decided
-  here: it needs its own card.**
+  **Since 0.37.0 it IS an `AppShell` — without a `topBar`.** The open question
+  from 0.30.0 („should this become a thin case of the shell?") is answered and
+  implemented: 0.36.0 gave `AppShell` the resize contract
+  (`AppShellPanel.resize`), which was the last thing it lacked, and 0.37.0
+  added the two remaining props (`mainLabel`, `showRight`). `WorkspaceLayout`'s
+  body is now a mapping — `WorkspacePane` → `AppShellPanel`, the four resize
+  values into one `resize` object, no bar — and it composes no `SidePanel`,
+  `ResizeHandle` or `BottomTabBar` of its own. One frame, one set of
+  arrangement rules, one place where an accessibility fix lands.
+
+  **The standalone rule did not weaken with it — it got sharper.** Nesting is
+  now literally two `AppShell`s: two chrome column sets and two `<main>`
+  candidates on one screen. The export and `WorkspacePane` stay, because they
+  name the *case* (a workspace screen: two resizable panes, no chrome bar),
+  which is worth a name even when it is one call to the frame underneath.
 - **`SectionedGridLayout` is the opposite case — it *is* an `AppShellLayout`
   child.** It is page content, hung in as `children`, and keeps its own
   `<section aria-label>` inside the shell's single `<main>`. The dividing

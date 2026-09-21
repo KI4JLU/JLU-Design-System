@@ -635,6 +635,102 @@ describe("AppShellLayout — the left column's width (0.36.0)", () => {
   });
 });
 
+/**
+ * The bar's inset (0.37.0). Until 0.36.0 both bars were a `Container` — the
+ * PAGE measure: `mx-auto w-full px-gutter md:px-margin-page` plus a
+ * `max-w-(--max-width-container-max)` cap. The bar is chrome between two
+ * `SidePanel`s, whose `h-16` header row is inset by `px-gutter`, so from `md`
+ * up the bar's first item started 40px from the column edge while the
+ * column's own logo started 24px.
+ *
+ * **These assertions read class names on purpose, and that is the exception
+ * this suite otherwise avoids:** the utility IS the contract this card
+ * changes. There is no accessibility-tree fact and no jsdom box that can
+ * distinguish 24px from 40px — jsdom applies no stylesheet and every box is
+ * 0×0 — so the choice is a class assertion here or no jsdom coverage at all.
+ * The *measured* half lives in Chromium (`BarInsetMatchesColumns` in
+ * `app-shell-layout.stories.tsx`), where the inset is compared against the
+ * column header's, i.e. against another component's rendered geometry rather
+ * than against a number. This block pins the four utilities that decide it;
+ * the story pins the pixels.
+ */
+describe("AppShellLayout — the bar takes the column gutter (0.37.0)", () => {
+  /** The bar's own row: the single child of the `banner` landmark. */
+  const row = () => bar().firstElementChild as HTMLElement;
+
+  it.each([
+    ["wide", true],
+    ["narrow", false],
+  ] as const)("insets the %s bar by px-gutter, with no page measure", (_name, isDesktop) => {
+    stubViewport(isDesktop);
+    renderLayout({ pageLabel: "Dashboard", nav: collapsibleNav, activeMobileTab: "page" });
+
+    const classes = row().className.split(/\s+/);
+    // The column header row's inset (`side-panel.tsx`), spelled the same way.
+    expect(classes).toContain("px-gutter");
+    // …and nothing of the page measure the `Container` brought: no responsive
+    // step to 40px, no centring, no width cap.
+    expect(classes.some((c) => c.startsWith("md:px-"))).toBe(false);
+    expect(classes.some((c) => c.startsWith("max-w-"))).toBe(false);
+    expect(classes).not.toContain("mx-auto");
+  });
+
+  it("keeps the row a full-width flex row, so search stays centred on it", () => {
+    renderLayout({ pageLabel: "Dashboard" });
+    const classes = row().className.split(/\s+/);
+    for (const utility of ["flex", "w-full", "items-center"]) {
+      expect(classes).toContain(utility);
+    }
+  });
+});
+
+/**
+ * `showRight` (0.37.0) is `AppShell`'s prop, forwarded under the same name.
+ * What it *does* is asserted against `AppShell` itself; what matters here is
+ * that the template does not swallow it — a forwarded prop that never arrives
+ * leaves every component test green (the reason the left column's suite above
+ * exists next to `app-shell.test.tsx`).
+ */
+describe("AppShellLayout — showRight forwarding (0.37.0)", () => {
+  const sources = {
+    content: <p>Quellen-Inhalt</p>,
+    label: "Quellen",
+    isOpen: true,
+    onOpenChange: vi.fn(),
+    expandLabel: "Quellen ausklappen",
+    collapseLabel: "Quellen einklappen",
+  };
+
+  it("hides the right column on desktop without touching its collapse state", () => {
+    const onOpenChange = vi.fn();
+    renderLayout({
+      nav: collapsibleNav,
+      rightPanel: { ...sources, onOpenChange },
+      showRight: false,
+    });
+    expect(screen.queryByRole("complementary", { name: "Quellen" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("complementary")).toHaveLength(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("shows it when the prop is omitted — an untouched call site does not move", () => {
+    renderLayout({ nav: collapsibleNav, rightPanel: sources });
+    expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
+  });
+
+  it("still reaches the column through its tab below lg", () => {
+    stubViewport(false);
+    renderLayout({
+      nav: collapsibleNav,
+      rightPanel: sources,
+      showRight: false,
+      mobileTabs: [...TABS, { id: "sources", icon: <Home />, label: "Quellen", pane: "right" }],
+      activeMobileTab: "sources",
+    });
+    expect(screen.getByRole("complementary", { name: "Quellen" })).toBeInTheDocument();
+  });
+});
+
 describe("AppShellLayout — below lg", () => {
   it("shows the brand in the bar, a tab bar, and no dialog anywhere", () => {
     stubViewport(false);

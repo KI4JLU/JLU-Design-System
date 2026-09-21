@@ -4,7 +4,6 @@ import {
   type AppShellPanel,
   type AppShellProps,
 } from "../components/app-shell";
-import { Container } from "../components/container";
 import { useIsDesktop } from "../lib/pane-layout";
 
 /**
@@ -47,6 +46,13 @@ import { useIsDesktop } from "../lib/pane-layout";
  * label leaves — the difference to 0.29.0's `mx-auto` recipe, which centred
  * the content of `headerActions` only when there was no label at all. The
  * row's height is `AppShell`'s: 64px in every state.
+ *
+ * **The bar takes the column gutter since 0.37.0** — `px-gutter` (24px), the
+ * inset of a `SidePanel`'s own `h-16` header row, instead of the `Container`
+ * page measure it used until 0.36.0 (24px below `md`, 40px from `md` up,
+ * centred and capped). The bar is chrome between two columns, not page
+ * content, so its first item now lines up with the column header's, and the
+ * visible gap between the bar and the columns is gone.
  */
 export interface AppShellLayoutProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -168,6 +174,15 @@ export interface AppShellLayoutProps
    * shell renders no right column when it is omitted: no rail, no landmark.
    */
   rightPanel?: AppShellPanel;
+  /**
+   * Forwarded to `AppShell` verbatim (0.37.0): `false` keeps `rightPanel` out
+   * of the **desktop** arrangement without touching its `isOpen`, and is
+   * ignored below `lg`. Say what you mean instead of dropping `rightPanel`
+   * for a view — JustRAG's KB screen hides its sources column exactly this
+   * way, and omitting the prop instead destroyed the collapse state of the
+   * column each time the view came back.
+   */
+  showRight?: boolean;
 }
 
 const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
@@ -187,6 +202,7 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
       leftWidth,
       leftResize,
       rightPanel,
+      showRight,
       mobileTabs,
       activeMobileTab,
       onMobileTabChange,
@@ -250,15 +266,27 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
 
        `max-w-md` caps the centre at 28rem, so it stays a search field rather
        than a full-width bar, and `min-w-0` lets it shrink before the row
-       overflows. */
+       overflows.
+
+       **The row's inset is `px-gutter` (24px), not a page measure** (0.37.0).
+       Until 0.36.0 both bars were a `Container` — `mx-auto w-full px-gutter
+       md:px-margin-page` plus a `max-w-(--max-width-container-page)` cap, i.e.
+       the measure of the PAGE's content column. But this row is not page
+       content: it is chrome between two `SidePanel`s, and a `SidePanel`'s own
+       header row is inset by `px-gutter` (`side-panel.tsx`, the `h-16` row).
+       With the page measure the bar's first content therefore started 40px
+       from the column edge while the column's logo started 24px — the gap the
+       developer saw on JustRAG's KB screen, measured in Chromium at 1280px.
+       No `md:` step, no cap and no `mx-auto`: the three-region flex below is
+       what centres `search`, so the row wants the full width of its column. */
     const wideBar = (
-      <Container className="flex items-center gap-4">
+      <div className="flex w-full items-center gap-4 px-gutter">
         <div className="flex min-w-0 flex-1 items-center">{label}</div>
         {search ? <div className="w-full max-w-md min-w-0">{search}</div> : null}
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           {headerActions}
         </div>
-      </Container>
+      </div>
     );
 
     /* Is the nav being rendered as the rail's icon strip rather than as the
@@ -273,10 +301,10 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
        burger button — there is no drawer to open since 0.30.0; the areas are
        reached through the `BottomTabBar` the shell renders. */
     const narrowBar = (
-      <Container className="flex items-center gap-4">
+      <div className="flex w-full items-center gap-4 px-gutter">
         <div className="flex min-w-0 flex-1 items-center">{logo}</div>
         {actions}
-      </Container>
+      </div>
     );
 
     return (
@@ -338,6 +366,10 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
           resize: leftResize,
         }}
         right={rightPanel}
+        /* `undefined` unless the consumer said otherwise, so `AppShell`'s own
+           `true` default applies and no call site written before 0.37.0
+           changes. */
+        showRight={showRight}
         mobileTabs={mobileTabs}
         activeMobileTab={activeMobileTab}
         onMobileTabChange={onMobileTabChange}
