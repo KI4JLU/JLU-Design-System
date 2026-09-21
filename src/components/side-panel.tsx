@@ -128,11 +128,25 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
     // `aria-expanded`, `aria-controls` — must not be able to drift between two
     // copies of the same control. `ml-auto` is the left pane's only extra: it
     // pins the toggle to the trailing edge when no `header` fills the row.
+    //
+    // `p-1.5` (0.39.0) overrides the `icon` variant's `p-2` — `cn` is
+    // tailwind-merge, so the later padding utility wins — which makes the
+    // button 32px (6px + 20px icon + 6px) instead of 36px. Together with the
+    // row's `px-4` that puts the toggle's centre 32px from the pane edge; see
+    // the geometry note on the header row below. The RAIL's expand button
+    // carries the same class: one control, two placements, and a 4px
+    // difference between them would be visible across a collapse.
+    //
+    // The rail's copy carries an `eslint-disable` for
+    // `design-system/layout-only-classname` and the reasoning for the override
+    // in full; this one is NOT flagged only because the rule does not look
+    // inside a `cn(...)` call — treat it as the same exception, not as an
+    // approval.
     const collapseToggle = (
       <Button
         variant="ghost"
         size="icon"
-        className={cn("shrink-0", side === "left" && "ml-auto")}
+        className={cn("shrink-0 p-1.5", side === "left" && "ml-auto")}
         aria-label={collapseLabel}
         aria-expanded={true}
         aria-controls={bodyId}
@@ -177,9 +191,28 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
                 one control that stays put rather than two that nearly line up.
                 The height is the ROW's, not the button's — exactly as below. */}
             <div className="flex h-16 shrink-0 items-center justify-center">
+              {/* `p-1.5` for the same reason as the collapse toggle (0.39.0):
+                  the two are one control in two placements and must not differ
+                  in size — the rail is 60px wide, so a 36px button here and a
+                  32px one there would also sit on different centres.
+
+                  `layout-only-classname` flags a positive padding on a control
+                  as a shrink-to-fit hack, and normally it is right. Here the
+                  32px IS the specified geometry (developer decision,
+                  21.09.2026): the toggle has to land on the same vertical line
+                  as a 32px control in a `p-4` body, and no label can stop
+                  fitting — the button's only child is a fixed 20px icon and
+                  its accessible name is the `aria-label`. It stays a
+                  `className` rather than a new `size` variant because the same
+                  4px would then have to be right for every icon button in the
+                  library, which is not this card's decision to make.
+                  TODO: if a second call site wants 32px, promote this to a
+                  `size="icon-sm"` variant instead of repeating the override. */}
               <Button
                 variant="ghost"
                 size="icon"
+                /* eslint-disable-next-line design-system/layout-only-classname -- specified geometry, reasoned above */
+                className="p-1.5"
                 aria-label={expandLabel}
                 aria-expanded={false}
                 aria-controls={bodyId}
@@ -227,8 +260,22 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
             collapsed RAIL keeps its 60px width — that is
             `SIDE_PANEL_RAIL_WIDTH`, a different measurement; see the TODO in
             `side-panel-variants.ts`.)
+
+            **The row's inset is `px-4` (16px) since 0.39.0**, not the column
+            gutter — and it is the pane BODY's inset, not the chrome bar's.
+            A pane body is padded by its consumer (`AppShellLayout`'s nav uses
+            `p-4`), so a 32px control at the trailing edge of the body's first
+            row has its centre 16 + 16 = 32px from the pane edge. With
+            `px-gutter` (24px) and the `icon` variant's 36px button the toggle
+            sat at 24 + 18 = 42px, i.e. 10px off that line — visible on
+            JustRAG's KB screen, where the pane's first body row carries such a
+            control. `px-4` + the toggle's `p-1.5` put both centres on 32px.
+            `Sidebar`'s header row (`sidebar.tsx`) already used `px-4`, so the
+            two column headers now agree as well. Measured in Chromium by
+            `SidePanel` → `ToggleAlignsWithBodyControl`, whose expectation is
+            read off the body control's own rect.
           */}
-          <div className="flex h-16 items-center gap-stack-sm px-gutter">
+          <div className="flex h-16 items-center gap-stack-sm px-4">
             {/* The toggle sits on the edge that FACES THE CONTENT, in both
                 directions: a left pane's row reads [header … toggle], a right
                 pane's [toggle … header]. DOM order carries it — on a right

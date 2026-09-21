@@ -47,12 +47,15 @@ import { useIsDesktop } from "../lib/pane-layout";
  * the content of `headerActions` only when there was no label at all. The
  * row's height is `AppShell`'s: 64px in every state.
  *
- * **The bar takes the column gutter since 0.37.0** — `px-gutter` (24px), the
- * inset of a `SidePanel`'s own `h-16` header row, instead of the `Container`
- * page measure it used until 0.36.0 (24px below `md`, 40px from `md` up,
- * centred and capped). The bar is chrome between two columns, not page
- * content, so its first item now lines up with the column header's, and the
- * visible gap between the bar and the columns is gone.
+ * **The bar takes the column gutter since 0.37.0** — `px-gutter` (24px)
+ * instead of the `Container` page measure it used until 0.36.0 (24px below
+ * `md`, 40px from `md` up, centred and capped). The bar is chrome between two
+ * columns, not page content, so it takes the plain column gutter rather than a
+ * page measure, and the visible gap between the bar and the columns is gone.
+ * **It is not a mirror of the column header's inset**: since 0.39.0 a
+ * `SidePanel`'s `h-16` header row is `px-4` (16px), because its toggle is
+ * aligned on the pane BODY's first control and not on this bar. The bar is
+ * inset for its own content; the two numbers are independent by decision.
  */
 export interface AppShellLayoutProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -272,13 +275,20 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
        Until 0.36.0 both bars were a `Container` — `mx-auto w-full px-gutter
        md:px-margin-page` plus a `max-w-(--max-width-container-page)` cap, i.e.
        the measure of the PAGE's content column. But this row is not page
-       content: it is chrome between two `SidePanel`s, and a `SidePanel`'s own
-       header row is inset by `px-gutter` (`side-panel.tsx`, the `h-16` row).
-       With the page measure the bar's first content therefore started 40px
-       from the column edge while the column's logo started 24px — the gap the
-       developer saw on JustRAG's KB screen, measured in Chromium at 1280px.
-       No `md:` step, no cap and no `mx-auto`: the three-region flex below is
-       what centres `search`, so the row wants the full width of its column. */
+       content, it is chrome between two `SidePanel`s, and with the page
+       measure its first content started 40px from the column edge while the
+       column's logo started 24px — the gap the developer saw on JustRAG's KB
+       screen, measured in Chromium at 1280px. No `md:` step, no cap and no
+       `mx-auto`: the three-region flex below is what centres `search`, so the
+       row wants the full width of its column.
+
+       **This is the bar's own inset, not a copy of the column header's**
+       (0.39.0). It used to be justified as "the inset of a `SidePanel`'s
+       `h-16` header row"; that row is `px-4` (16px) now, because the pane's
+       toggle is aligned on the pane BODY's first control (`side-panel.tsx`).
+       The gutter stays here on its own merit — this row holds page-level
+       chrome, not a pane's body — so the two insets are deliberately
+       different and neither follows the other. */
     const wideBar = (
       <div className="flex w-full items-center gap-4 px-gutter">
         <div className="flex min-w-0 flex-1 items-center">{label}</div>

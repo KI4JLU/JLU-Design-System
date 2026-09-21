@@ -82,19 +82,24 @@ Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
 
 ### Die Einrückung der Zeile (seit 0.37.0)
 
-<Canvas of={AppShellLayoutStories.BarInsetMatchesColumns} />
+<Canvas of={AppShellLayoutStories.BarInsetIsTheColumnGutter} />
 
 - **Die Zeile nimmt den Spalten-Gutter: `px-gutter`, 24px.** Bis 0.36.0 steckten
   beide Leisten in einem `Container`, also im **Seitenmaß** (`px-gutter`,
   ab `md` `px-margin-page`, zentriert und auf `--max-width-container-max`
   gedeckelt). Die Zeile ist aber kein Seiteninhalt, sondern **Chrome zwischen
-  zwei `SidePanel`s**, deren `h-16`-Kopfzeile mit `px-gutter` eingerückt ist.
+  zwei `SidePanel`s**, und nimmt deshalb das schlichte Spaltenmaß.
 - **Gemessen in Chromium** (1280px-Fenster, JustRAGs `KbWorkspaceLayout`,
   21.09.2026): erster Inhalt der Leiste 40px von der Spaltenkante, Logo der
   Spalte 24px — die sichtbare Lücke zwischen Kopfzeile und Leisten.
-- **Das Orakel der Story ist die Spalte, keine Zahl**: `BarInsetMatchesColumns`
-  vergleicht `pageLabel.left − aside.right` mit
-  `Kopfzeilen-Erstkind.left − aside.left` im selben Browser-Layout.
+- **Seit 0.39.0 ist das ihr eigenes Maß, keine Spiegelung der Spalte.** Die
+  `h-16`-Kopfzeile eines `SidePanel` ist `px-4` (16px), weil ihr Umschalter auf
+  dem ersten Bedienelement des Leisten-Rumpfs steht. Die beiden Einrückungen
+  sind absichtlich verschieden.
+- **Das Orakel der Story ist der Token, keine Zahl**:
+  `BarInsetIsTheColumnGutter` misst `pageLabel.left − aside.right` gegen
+  `--spacing-gutter` aus dem CSSOM und hält zusätzlich fest, dass die
+  Kopfzeile der Spalte auf einem anderen Maß sitzt.
 - Die dreiteilige Flex-Zeile bleibt unverändert — `search` steht weiterhin auf
   der Mitte der Zeile, und die Zeile ist weiterhin 64px hoch.
 

@@ -50,6 +50,28 @@ Hauptspalten-Leiste und rechte Kopfzeile auf einer Linie liegen. Die Höhe häng
 an der Zeile, nicht am Knopf, also verschiebt ein höherer `header`-Knoten
 nichts.
 
+### Geometrie: der Umschalter steht auf dem ersten Bedienelement des Rumpfs
+
+Seit 0.39.0 ist die Zeile mit **`px-4` (16px)** eingerückt und der Umschalter
+ist **32px** breit (`p-1.5` statt der 8px des `icon`-Variants, plus das
+20px-Icon). Sein Mittelpunkt liegt damit 16 + 16 = **32px** von der Kante der
+Leiste — genau dort, wo ein 32px-Bedienelement am nachlaufenden Rand der ersten
+Zeile eines `p-4`-gepolsterten Rumpfs sitzt (16px Polsterung + 16px halbe
+Breite). Kopfzeile und Rumpf stehen so auf einer senkrechten Linie, statt sich
+um 10px zu verfehlen: bis 0.38.0 war die Zeile `px-gutter` (24px) und der Knopf
+36px breit, sein Mittelpunkt lag also bei 42px.
+
+Beide Knöpfe sind dasselbe Bedienelement in zwei Positionen und deshalb gleich
+groß — der Ausklapp-Knopf in der 60px-Schiene trägt dieselben 32px, sonst
+spränge er beim Einklappen. Die Einrückung ist bewusst **nicht** mehr die der
+Leiste von `AppShellLayout` (die bleibt bei `px-gutter`, 24px, für ihren
+eigenen Inhalt); `Sidebar`s Kopfzeile dagegen benutzte `px-4` schon vorher, die
+beiden Spaltenköpfe stimmen jetzt also überein. In Chromium gemessen von
+`SidePanel` → `ToggleAlignsWithBodyControl`, dessen Erwartung aus dem Rechteck
+des Rumpf-Bedienelements selbst kommt und nicht aus einer getippten Zahl.
+
+<Canvas of={SidePanelStories.ToggleAlignsWithBodyControl} />
+
 `header` sitzt in einem `min-w-0`-Wrapper: ein Titel mit `truncate` kürzt mit
 Ellipse, statt den Knopf aus der Zeile zu drängen. Ob gekürzt, umgebrochen oder
 gar nicht geschrumpft wird, entscheidet der Knoten des Konsumenten.

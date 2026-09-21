@@ -638,21 +638,27 @@ describe("AppShellLayout — the left column's width (0.36.0)", () => {
 /**
  * The bar's inset (0.37.0). Until 0.36.0 both bars were a `Container` — the
  * PAGE measure: `mx-auto w-full px-gutter md:px-margin-page` plus a
- * `max-w-(--max-width-container-max)` cap. The bar is chrome between two
- * `SidePanel`s, whose `h-16` header row is inset by `px-gutter`, so from `md`
- * up the bar's first item started 40px from the column edge while the
- * column's own logo started 24px.
+ * `max-w-(--max-width-container-max)` cap, so from `md` up the bar's first
+ * item started 40px from the column edge while the column's own logo started
+ * 24px. The bar is chrome between two `SidePanel`s, not page content, so it
+ * takes the plain column gutter instead.
+ *
+ * **Since 0.39.0 that is the bar's own measure and no longer a mirror of the
+ * column header's**: a `SidePanel`'s `h-16` header row is `px-4` (16px),
+ * aligned on the pane BODY's first control. The two insets are deliberately
+ * different, so the assertions below pin `px-gutter` on this row and say
+ * nothing about the column's.
  *
  * **These assertions read class names on purpose, and that is the exception
  * this suite otherwise avoids:** the utility IS the contract this card
  * changes. There is no accessibility-tree fact and no jsdom box that can
  * distinguish 24px from 40px — jsdom applies no stylesheet and every box is
  * 0×0 — so the choice is a class assertion here or no jsdom coverage at all.
- * The *measured* half lives in Chromium (`BarInsetMatchesColumns` in
- * `app-shell-layout.stories.tsx`), where the inset is compared against the
- * column header's, i.e. against another component's rendered geometry rather
- * than against a number. This block pins the four utilities that decide it;
- * the story pins the pixels.
+ * The *measured* half lives in Chromium (`BarInsetIsTheColumnGutter` in
+ * `app-shell-layout.stories.tsx`), where the rendered inset is compared
+ * against the `--spacing-gutter` token read back from the CSSOM rather than
+ * against a number typed into the test. This block pins the four utilities
+ * that decide it; the story pins the pixels.
  */
 describe("AppShellLayout — the bar takes the column gutter (0.37.0)", () => {
   /** The bar's own row: the single child of the `banner` landmark. */
@@ -666,7 +672,8 @@ describe("AppShellLayout — the bar takes the column gutter (0.37.0)", () => {
     renderLayout({ pageLabel: "Dashboard", nav: collapsibleNav, activeMobileTab: "page" });
 
     const classes = row().className.split(/\s+/);
-    // The column header row's inset (`side-panel.tsx`), spelled the same way.
+    // The column gutter — the bar's own measure since 0.39.0, no longer a
+    // restatement of `side-panel.tsx`'s header row (that one is `px-4`).
     expect(classes).toContain("px-gutter");
     // …and nothing of the page measure the `Container` brought: no responsive
     // step to 40px, no centring, no width cap.
