@@ -215,17 +215,17 @@ export const ToggleAlignsWithBodyControl: Story = {
     </Frame>
   ),
   play: async ({ canvas }) => {
-    const centreX = (el: Element) => {
-      const rect = el.getBoundingClientRect();
-      return rect.left + rect.width / 2;
-    };
-
     const toggle = await canvas.findByRole("button", { name: "Verlauf einklappen" });
     const bodyControl = await canvas.findByTestId("body-control");
+    const glyph = toggle.querySelector("svg") as SVGElement;
 
-    // Die eigentliche Zusicherung: beide Mittelpunkte auf einer senkrechten
-    // Linie, gemessen an den gerenderten Rechtecken.
-    await expect(Math.abs(centreX(toggle) - centreX(bodyControl))).toBeLessThan(1);
+    // Die eigentliche Zusicherung (0.40.0): die AUSSENKANTE des Symbols liegt
+    // auf der Außenkante des gefüllten Knopfs darunter — das ist, was das Auge
+    // bei einem Ghost-Knopf ohne sichtbaren Kasten als Bündigkeit liest. Beide
+    // Kanten stammen aus den gerenderten Rechtecken.
+    await expect(
+      Math.abs(glyph.getBoundingClientRect().right - bodyControl.getBoundingClientRect().right),
+    ).toBeLessThan(1);
 
     // Und die beiden Maße, aus denen sich das ergibt — ohne sie wären zwei
     // gemeinsam verschobene Werte (etwa `px-6` plus ein 48px-Knopf) genauso
