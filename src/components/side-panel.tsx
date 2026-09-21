@@ -41,9 +41,12 @@ import { SidebarCollapsedContext } from "./sidebar-context";
  * full-width labels inside a 60px rail.
  *
  * While collapsed the pane shrinks to a `SIDE_PANEL_RAIL_WIDTH` rail showing
- * the expand button and the optional `collapsedPreview`; `children` stay
- * mounted but hidden (attribute `hidden` + `display:none`), so scroll position
- * and half-typed input survive a collapse. All labels are props — a consumer
+ * the expand button, the optional `collapsedPreview` and — since 0.30.0 — the
+ * `footer`. **The rail is the expanded column's vertical mirror** (0.35.0): the
+ * same `h-16` chrome row for the toggle, then the slot, then the pinned footer
+ * — so nothing jumps to a different height when the pane collapses. `children`
+ * stay mounted but hidden (attribute `hidden` + `display:none`), so scroll
+ * position and half-typed input survive a collapse. All labels are props — a consumer
  * may be bilingual; this follows `navLabel` on `AppShellLayout` rather than
  * inventing a second pattern. The `<aside>` is a `complementary` landmark: with
  * more than one pane on screen, pass an `aria-label` so they can be told apart.
@@ -69,11 +72,12 @@ export interface SidePanelProps extends React.HTMLAttributes<HTMLElement> {
   collapseLabel: string;
   /**
    * Brand/title node rendered in the toggle row while expanded (a pane title,
-   * a logo, a small action pair). Hidden while collapsed — the rail holds only
-   * the expand button and `collapsedPreview`, exactly as `Sidebar.header` is
-   * dropped from the collapsed column. Pass a node that can shrink
-   * (`className="truncate"` on a title): the slot is `min-w-0`, so a long
-   * title clips instead of pushing the toggle off the row.
+   * a logo, a small action pair). Hidden while collapsed — of the chrome only
+   * the expand button survives there, beside `collapsedPreview` and the pinned
+   * `footer`, exactly as `Sidebar.header` is dropped from the collapsed
+   * column. Pass a node that can shrink (`className="truncate"` on a title):
+   * the slot is `min-w-0`, so a long title clips instead of pushing the toggle
+   * off the row.
    */
   header?: React.ReactNode;
   /** Optional icon strip shown in the collapsed rail below the expand button. */
@@ -152,13 +156,27 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
         {...props}
       >
         {!isOpen && (
-          // Two boxes, not one: the expand button and `collapsedPreview` scroll
-          // together while `footer` stays pinned to the bottom of the rail. On
-          // one scrolling box an `mt-auto` footer would ride off the end of a
-          // long preview strip — and the footer is the sign-out route, so it is
-          // the one thing in the rail that must always be reachable.
+          // THE RAIL IS THE EXPANDED COLUMN'S VERTICAL MIRROR: every slot keeps
+          // the height it had, so nothing jumps when the pane collapses. Until
+          // 0.35.0 the rail built a rhythm of its own — one padded scroll box
+          // holding the button AND the preview — and the whole icon strip sat
+          // 12px higher than the rows it replaces, with the toggle 2px off the
+          // header row's centre and the footer 16px too high (all three
+          // measured in Chromium by running
+          // `CollapsedRailKeepsVerticalPositions` against the pre-0.35.0 rail:
+          // toggle centre 34 vs 32, first nav row top 68 vs 80, footer bottom
+          // 32 vs 16, each relative to the column's own box).
+          //
+          // Three boxes, matching the expanded body's three: the `h-16` chrome
+          // row, the scrolling slot, the pinned footer. The footer is separate
+          // rather than an `mt-auto` child of the scroll box because it would
+          // otherwise ride off the end of a long preview strip — and it is the
+          // sign-out route, the one thing in the rail that must stay reachable.
           <div className="flex min-h-0 flex-1 flex-col items-center">
-            <div className="flex min-h-0 flex-1 flex-col items-center gap-stack-md overflow-y-auto py-stack-md">
+            {/* The same `h-16` row the expanded header uses, so the toggle is
+                one control that stays put rather than two that nearly line up.
+                The height is the ROW's, not the button's — exactly as below. */}
+            <div className="flex h-16 shrink-0 items-center justify-center">
               <Button
                 variant="ghost"
                 size="icon"
@@ -169,9 +187,20 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
               >
                 <ExpandIcon className="h-5 w-5" aria-hidden />
               </Button>
+            </div>
+            {/* `py-stack-md` is the rail's counterpart to the padding a pane
+                body brings with it (`p-4` on `AppShellLayout`'s nav), which is
+                what puts the first icon on the same line as the first row.
+                `gap-stack-md` spaces the preview's own children — a consumer
+                may pass a bare fragment of icons. */}
+            <div className="flex min-h-0 flex-1 flex-col items-center gap-stack-md overflow-y-auto py-stack-md">
               {collapsedPreview}
             </div>
-            {footer && <div className="shrink-0 pb-stack-md">{footer}</div>}
+            {/* No padding of the rail's own, for the same reason the expanded
+                footer wrapper has none: the consumer's node carries it, and a
+                second helping here would lift the collapsed footer above the
+                expanded one. */}
+            {footer && <div className="shrink-0">{footer}</div>}
           </div>
         )}
 
@@ -215,8 +244,9 @@ const SidePanel = React.forwardRef<HTMLElement, SidePanelProps>(
                 `children`, on purpose. `children` are kept mounted because a
                 pane body holds scroll position and half-typed input; a header
                 is chrome (a title, a logo), it has nothing to lose, and the
-                collapsed rail must contain *only* the expand button and
-                `collapsedPreview`. Same rule as `Sidebar.header`. */}
+                collapsed rail carries no title — only the expand button,
+                `collapsedPreview` and the pinned `footer`. Same rule as
+                `Sidebar.header`. */}
             {isOpen && header && (
               <span className="flex min-w-0 flex-1 items-center gap-stack-sm">
                 {header}
