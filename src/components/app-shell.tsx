@@ -165,7 +165,10 @@ export interface AppShellPanel {
  * area on screen below `lg`, there is no `main` landmark at all: the main
  * column is not in the tree, and wrapping a `complementary` in `main` would be
  * a worse lie than its absence. Same rule, same consequence as
- * `WorkspaceLayout`.
+ * `WorkspaceLayout` — which since 0.37.0 **is** this component: it renders an
+ * `AppShell` without a `topBar`, mapping its `WorkspacePane`s onto
+ * `AppShellPanel`s. `mainLabel` and `showRight` are the two props that made
+ * that mapping lossless; there is one frame in this library, not two.
  * TODO: that a narrow screen showing a side column has no `main` landmark is a
  * consequence, not a confirmed decision with the design-system owner.
  *
@@ -187,6 +190,25 @@ export interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Right column (sources, details, …). Omit it for a shell without one. */
   right?: AppShellPanel;
   /**
+   * Keeps the right column out of the **desktop** arrangement without touching
+   * its `isOpen` (default `true`). „Hidden is not collapsed" (0.37.0): an app
+   * state that needs the horizontal space must not travel through the user's
+   * collapse preference — hiding *by* collapsing leaves the column collapsed
+   * once that state passes, which is the bug `WorkspaceLayout` recorded when
+   * it owned this flag.
+   *
+   * **Ignored below `lg`**, deliberately: hiding buys horizontal space, and
+   * one area on screen has none to win — a tab whose column refused to appear
+   * would be a dead control. Omitting `right` is the other thing: then the
+   * column does not exist at all, in either arrangement.
+   *
+   * TODO: that the flag is ignored below `lg` (a consumer reading only the
+   * prop name could expect otherwise), and that there is no symmetric
+   * `showLeft`, are `WorkspaceLayout`'s reasoning moved here with the
+   * arrangement — not confirmed with the design-system owner.
+   */
+  showRight?: boolean;
+  /**
    * Content of the `h-16` chrome bar above `<main>`, in **both**
    * arrangements — the page-label/search/actions row on a wide screen, the
    * brand row on a narrow one. The frame owns the row's height (64px in every
@@ -194,6 +216,15 @@ export interface AppShellProps extends React.HTMLAttributes<HTMLDivElement> {
    * what is in it. Omitted entirely, no bar and no `banner` landmark render.
    */
   topBar?: React.ReactNode;
+  /**
+   * Accessible name of the shell's `<main>` landmark, in **both**
+   * arrangements (0.37.0). Optional: a shell whose page content already names
+   * itself needs no second name, and every call site written before this
+   * release renders the unchanged `<main>`. A shell that is the whole page —
+   * `WorkspaceLayout`, which is exactly this component without a bar — passes
+   * it, because nothing above it contributes the page's `main` landmark.
+   */
+  mainLabel?: string;
   /** Tabs of the narrow-screen bar, each declaring which area it shows. */
   mobileTabs: MobilePaneTab[];
   /**
@@ -214,7 +245,9 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
       className,
       left,
       right,
+      showRight = true,
       topBar,
+      mainLabel,
       mobileTabs,
       activeMobileTab,
       onMobileTabChange,
@@ -337,7 +370,7 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
               {panel.footer && <div className="shrink-0">{panel.footer}</div>}
             </aside>
           ) : (
-            <main className={PANE_FILL} style={MOBILE_PANE_STYLE}>
+            <main aria-label={mainLabel} className={PANE_FILL} style={MOBILE_PANE_STYLE}>
               {children}
             </main>
           )}
@@ -377,9 +410,12 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
         )}
         <div className="flex min-w-0 flex-1 flex-col">
           {bar}
-          <main className={PANE_FILL}>{children}</main>
+          <main aria-label={mainLabel} className={PANE_FILL}>
+            {children}
+          </main>
         </div>
-        {right && (
+        {/* `showRight` gates the DESKTOP arrangement only — see the prop. */}
+        {right && showRight && (
           <>
             {handle(right, "right", rightPaneId)}
             {column(right, "right", rightPaneId)}

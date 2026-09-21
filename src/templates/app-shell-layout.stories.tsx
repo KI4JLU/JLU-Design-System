@@ -174,11 +174,21 @@ export const WithDashboard: Story = {
  *
  * Die `play`-Funktion misst es in Chromium: Feldmitte = Zeilenmitte, obwohl
  * links ein Label und rechts ein Umschalter unterschiedlich breit sind.
- * Gemessen (Chromium, 1280px-Fenster): Zeile 256–1200 → Mitte **728**, Feld
- * 504–952 → Mitte **728** (448px breit, das ist `max-w-md`), Label 296–421,4
- * (125,4px breit), Umschalter 1058–1160 (102px breit). Die beiden Ränder sind
- * also um 23px verschieden breit, die Mitte stimmt trotzdem auf den Pixel —
- * mit dem `mx-auto`-Rezept von 0.29.0 stünde das Feld hier ~11,7px daneben.
+ *
+ * **Gemessen für 0.30.0** (Chromium, 1280px-Fenster) — die Zahlen stehen hier
+ * als Beleg jenes Releases, nicht als aktuelle Behauptung: Zeile 256–1200 →
+ * Mitte **728**, Feld 504–952 → Mitte **728** (448px breit, das ist
+ * `max-w-md`), Label 296–421,4 (125,4px breit), Umschalter 1058–1160 (102px
+ * breit). Die beiden Ränder sind also um 23px verschieden breit, die Mitte
+ * stimmt trotzdem auf den Pixel — mit dem `mx-auto`-Rezept von 0.29.0 stünde
+ * das Feld hier ~11,7px daneben.
+ *
+ * **Seit 0.37.0 ist die linke Zahl eine andere**: die Einrückung der Zeile ist
+ * `px-gutter` (24px) statt des Seitenmaßes (40px ab `md`), das Label beginnt
+ * also bei 256 + 24 = **280** statt bei 296. Die Mitte ändert sich nicht — sie
+ * hängt an den zwei gleich breiten Randregionen, nicht an der Einrückung, und
+ * genau das prüft die `play`-Funktion unten weiterhin. Die neue Einrückung
+ * misst `BarInsetMatchesColumns`.
  */
 export const WithCenteredSearch: Story = {
   args: {
@@ -232,9 +242,10 @@ export const WithCenteredSearch: Story = {
  * Dieselbe Mitte **ohne** Label — der Fall, für den `pageLabel` 0.29.0
  * optional wurde (die Seite bringt ihren Titel selbst mit). Das Feld steht an
  * genau derselben Stelle wie oben: die Zentrierung hängt nicht mehr davon ab,
- * ob links etwas steht. Gemessen (Chromium, 1280px-Fenster): Zeile 256–1200 →
- * Mitte **728**, Feld 504–952 → Mitte **728** — dieselben Zahlen wie mit
- * Label.
+ * ob links etwas steht. Gemessen für 0.30.0 (Chromium, 1280px-Fenster): Zeile
+ * 256–1200 → Mitte **728**, Feld 504–952 → Mitte **728** — dieselben Zahlen
+ * wie mit Label, und von der Einrückungsänderung in 0.37.0 unberührt (die
+ * Mitte hängt an den Randregionen, nicht am `px-*`).
  */
 export const WithCenteredSearchOnly: Story = {
   args: {
@@ -316,6 +327,65 @@ export const WithRightPanel: Story = {
     const right = await canvas.findByRole("complementary", { name: "Quellen" });
     await expect(main.getBoundingClientRect().right).toBeLessThanOrEqual(
       right.getBoundingClientRect().left + 1,
+    );
+  },
+};
+
+/**
+ * **Seit 0.37.0: die Zeile nimmt den Spalten-Gutter.** Bis 0.36.0 steckten
+ * beide Leisten in einem `Container` — dem **Seitenmaß** (`px-gutter
+ * md:px-margin-page`, zentriert, gedeckelt), also 40px ab `md`. Die Zeile ist
+ * aber keine Seiteninhalts-Spalte, sondern Chrome zwischen zwei `SidePanel`s,
+ * deren `h-16`-Kopfzeile mit `px-gutter` (24px) eingerückt ist. Gemessen in
+ * Chromium (1280px-Fenster, JustRAGs `KbWorkspaceLayout`, 2026-09-21): erster
+ * Inhalt der Leiste 40px von der Spaltenkante, Logo der Spalte 24px — genau
+ * die Lücke, die der Entwickler gesehen hat.
+ *
+ * **Das Orakel ist die Spalte, keine Zahl im Code.** Die `play`-Funktion misst
+ * beide Einrückungen im selben Browser-Layout und vergleicht sie miteinander:
+ * `pageLabel.left − aside.right` gegen `Kopfzeilen-Erstkind.left − aside.left`.
+ * Würde jemand `px-gutter` hier gegen ein anderes Maß tauschen, ohne
+ * `SidePanel` anzufassen, fällt der Vergleich — ein literales „24" wäre auch
+ * dann grün, wenn die Spalte umzöge.
+ */
+export const BarInsetMatchesColumns: Story = {
+  args: { pageLabel: "Dashboard", headerActions: <ThemeToggle /> },
+  render: (args) => (
+    <Shell {...args}>
+      <DashboardPage />
+    </Shell>
+  ),
+  play: async ({ canvas, canvasElement }) => {
+    const column = (
+      await canvas.findByRole("complementary", { name: "Hauptnavigation" })
+    ).getBoundingClientRect();
+
+    // Die Kopfzeile der Spalte über ihren Schalter gefunden — nicht über eine
+    // Klasse: der Schalter ist das einzige Element, das `SidePanel` dort
+    // garantiert rendert, und sein Elternknoten IST die Zeile.
+    const toggle = await canvas.findByRole("button", { name: "Navigation einklappen" });
+    const headerRow = toggle.parentElement as HTMLElement;
+    const columnFirst = headerRow.firstElementChild as HTMLElement;
+    // Links liest die Zeile [Marke … Schalter]; das Erstkind ist also die
+    // Marke und nicht der Schalter. Ohne diese Prüfung würde die Messung
+    // stillschweigend den Schalter vermessen.
+    await expect(columnFirst).not.toBe(toggle);
+
+    const label = (await canvas.findByText("Dashboard")).getBoundingClientRect();
+    const columnInset = columnFirst.getBoundingClientRect().left - column.left;
+    const barInset = label.left - column.right;
+
+    await expect(barInset).toBeCloseTo(columnInset, 0);
+
+    // Und die Zeile ist so breit wie die Hauptspalte: kein `max-w-*`-Deckel,
+    // kein `mx-auto`. (Bei 1280px bände der alte 1440px-Deckel noch nicht —
+    // diese Zusicherung gilt dem breiten Fenster, in dem er es täte.)
+    const barRow = (canvasElement.querySelector("header") as HTMLElement)
+      .firstElementChild as HTMLElement;
+    const main = canvasElement.querySelector("main") as HTMLElement;
+    await expect(barRow.getBoundingClientRect().width).toBeCloseTo(
+      main.getBoundingClientRect().width,
+      0,
     );
   },
 };

@@ -8,9 +8,11 @@ import * as WorkspaceLayoutStories from "./workspace-layout.stories";
 Der dreispaltige Arbeitsbereich: linke Leiste | Griff | Hauptbereich | Griff |
 rechte Leiste. Jede Leiste klappt auf eine 60px-Schiene zu und lässt sich
 ziehen; unter `lg` zeigt dasselbe Template genau **einen** Bereich plus die
-`BottomTabBar`. Komponiert `SidePanel` + `ResizeHandle` + `BottomTabBar` — Apps
-befüllen Slots und liefern den Leisten-Zustand, das Gerüst wird **nie** in der
-App nachgebaut.
+`BottomTabBar`. **Seit 0.37.0 ist das Template ein `AppShell` ohne
+`topBar`** — sein Rumpf ist eine Abbildung `WorkspacePane` → `AppShellPanel`,
+es komponiert selbst kein `SidePanel`, `ResizeHandle` oder `BottomTabBar` mehr.
+Apps befüllen Slots und liefern den Leisten-Zustand, das Gerüst wird **nie** in
+der App nachgebaut.
 
 **Das Template steht für sich und gehört *nicht* in `AppShellLayout`** — siehe
 „Eigenständig" unten. Es ist die ganze Seite, nicht ihr Inhalt.
@@ -19,7 +21,7 @@ App nachgebaut.
 
 ## Eigenständig — nie im `AppShellLayout`
 
-Dieses Template besetzt den **gesamten Viewport** und **ist** die Chrome seines
+Dieses Template besetzt die **ganze Seite** und **ist** die Chrome seines
 Bildschirms: die beiden Leisten sind die vertikalen Chrome-Spalten der App (in
 der Vorlage rahmt `SidebarShell` genau diese beiden Panels — das ist die Rolle,
 die hier `SidePanel` übernimmt). Hängt man es als `children` in
@@ -27,20 +29,36 @@ die hier `SidePanel` übernimmt). Hängt man es als `children` in
 Leiste: **zwei Chrome-Spalten auf einem Bildschirm**. Genau das war in der
 früheren Story `InAppShell` zu sehen, weshalb sie entfernt wurde.
 
-**Für 0.30.0 erneut geprüft — die Regel gilt weiter.** `AppShell` komponiert
-seit 0.30.0 dieselben `SidePanel`-Spalten und dieselbe schmale Anordnung, beide
-Templates sehen sich also deutlich ähnlicher als vorher. Das ändert nichts:
-verschachtelt stehen weiterhin zwei Chrome-Spalten nebeneinander und zwei
-`<main>` im Dokument. Offen — und **bewusst hier nicht entschieden, das braucht
-eine eigene Karte** — ist die andere Richtung: ob `WorkspaceLayout` ein dünner
-Spezialfall von `AppShell` werden sollte. Dafür fehlen der Shell die
-`ResizeHandle`s, `minWidth`/`maxWidth` pro Leiste und `showRight`.
+**Seit 0.37.0 IST es ein `AppShell` — ohne Leiste.** Die 0.30.0 offen
+gelassene Frage („dünner Spezialfall von `AppShell`? braucht eine eigene
+Karte") ist entschieden und umgesetzt: 0.36.0 gab `AppShell` den
+Resize-Vertrag (`AppShellPanel.resize`) — das letzte, was ihm fehlte —, 0.37.0
+die beiden verbliebenen Props `mainLabel` und `showRight`. Der Rumpf dieses
+Templates ist seitdem eine Abbildung:
+
+```
+WorkspacePane                                   AppShellPanel
+  content, label, isOpen, onOpenChange,  →        (unverändert)
+  width, expandLabel, collapseLabel,
+  collapsedPreview
+  minWidth, maxWidth, onWidthChange,     →        resize: { minWidth, maxWidth,
+  resizeLabel                                              onWidthChange, label }
+  (kein topBar)                          →        keine Chrome-Zeile, kein banner
+```
+
+**Die Eigenständigkeits-Regel wird dadurch nicht schwächer, sondern schärfer:**
+verschachtelt sind es jetzt buchstäblich **zwei `AppShell`s** — zwei Chrome-
+Spaltensätze und zwei `<main>`-Kandidaten auf einem Bildschirm. Export und
+`WorkspacePane` bleiben: sie benennen den **Fall** („Arbeitsbereich: zwei
+ziehbare Leisten, keine Chrome-Zeile"), und der ist einen Namen wert, auch wenn
+er ein Aufruf des Gerüsts darunter ist.
 
 Daraus folgt der Rest:
 
 - Der Hauptbereich ist ein **`<main>`** (nicht `<section>`): über dem Template
   liegt keine Shell, die das `main`-Landmark der Seite beisteuert — also muss
-  es das Template selbst tun, sonst hat die Seite **kein** `main`.
+  es das Template selbst tun, sonst hat die Seite **kein** `main`. Seit 0.37.0
+  über `AppShell.mainLabel`, an das `mainLabel` durchgereicht wird.
 - Die Höhe kommt vom Seitenrahmen der App (`h-dvh`), nicht von einer Shell.
 - Eine App-Navigation, die daneben soll, gehört in die **linke Leiste** (die
   Vorlage macht genau das: der Verlauf *ist* die Navigation) — nicht in eine
@@ -58,9 +76,9 @@ das Template die Chrome selbst mit (dann eigenständig) oder füllt es einen Slo
 | Slot / Prop | Typ | Pflicht | Inhalt |
 |---|---|---|---|
 | `children` | `ReactNode` | ✅ | Hauptbereich — die Mittelspalte auf dem Desktop, unter `lg` einer der Bereiche. Wie bei den anderen Templates ist der Hauptinhalt `children`, nicht eine Prop namens `main`. |
-| `mainLabel` | `string` | ✅ | Zugänglicher Name des `main`-Landmarks um den Hauptbereich. Das Template rendert das `<main>` der Seite selbst — es ist die Seite. |
+| `mainLabel` | `string` | ✅ | Zugänglicher Name des `main`-Landmarks um den Hauptbereich. Das Template rendert das `<main>` der Seite selbst — es ist die Seite. Seit 0.37.0 durchgereicht an `AppShell.mainLabel` (dort optional, hier Pflicht). |
 | `left` / `right` | `WorkspacePane` | — | Je eine Leiste (siehe Tabelle unten). Weglassen = die Leiste existiert nicht. |
-| `showRight` | `boolean` | — | Default `true`. `false` nimmt die rechte Leiste aus der **Desktop**-Anordnung, ohne ihren Einklapp-Zustand zu berühren — siehe „Ausgeblendet ist nicht zugeklappt". |
+| `showRight` | `boolean` | — | Default `true`. `false` nimmt die rechte Leiste aus der **Desktop**-Anordnung, ohne ihren Einklapp-Zustand zu berühren — siehe „Ausgeblendet ist nicht zugeklappt". Seit 0.37.0 von `AppShell.showRight` umgesetzt, unter demselben Namen; die Regel ist unverändert. |
 | `mobileTabs` | `WorkspaceMobileTab[]` | ✅ | Reiter der schmalen Ansicht: `BottomTabBarItem` (`id`, `icon`, `label`) **plus** `pane: 'left' \| 'main' \| 'right'` — welchen Bereich der Reiter zeigt. |
 | `activeMobileTab` | `string` | ✅ | Id des aktuellen Reiters. Der **einzige** Eingang, der entscheidet, welcher Bereich unter `lg` sichtbar ist. |
 | `onMobileTabChange` | `(id: string) => void` | ✅ | Ein Reiter wurde getippt. |
@@ -86,7 +104,10 @@ das Template die Chrome selbst mit (dann eigenständig) oder füllt es einen Slo
 
 Das Template **füllt die Höhe seines Elternelements** (`h-full flex-1
 min-h-0`, innen `overflow-hidden`) und scrollt in jedem Bereich einzeln — wie
-`ChatLayout` bringt es keine eigene Höhe mit. Weil es eigenständig ist, kommt
+`ChatLayout` bringt es keine eigene Höhe mit. Das gilt auch seit 0.37.0
+unverändert: `AppShell` nimmt für sich den Viewport (`h-dvh`), dieses Template
+überschreibt das über `cn` mit seinen eigenen Höhen-Utilities — der einzige
+Unterschied zwischen den beiden Wurzeln. Weil es eigenständig ist, kommt
 die Höhe vom Seitenrahmen der App: ein Element mit definierter Höhe darum
 (`h-dvh`, wie in den Stories), sonst fällt das Template auf Inhaltshöhe
 zusammen. Kein `h-dvh` **im** Template, damit eine App es auch unter einer
@@ -118,12 +139,13 @@ ignoriert den Einklapp-Zustand, und ihr Einklapp-Knopf muss **weg** sein — ein
 Knopf, der den einzigen sichtbaren Bereich zuklappt, hinterlässt einen leeren
 Schirm und zerstört dabei die Desktop-Vorliebe des Nutzers. Keine der drei
 Punkte ist als Klasse auf derselben Markup-Struktur ausdrückbar (`isOpen`
-steuert ein `hidden`-Attribut, kein Styling). Deshalb fragt das Template
-`matchMedia` **einmal** — `(min-width: 64rem)`, also genau Tailwinds
-`--breakpoint-lg` und dieselbe Grenze, an der `AppShell` seine Anordnung
-wechselt (seit 0.30.0 über denselben Hook `useIsDesktop` aus
-`lib/pane-layout.ts`) — und rendert die Anordnung, die gilt. Genau das tut auch die
-Vorlage (JustRAG `useIsMobile`, 1024px).
+steuert ein `hidden`-Attribut, kein Styling). Deshalb wird `matchMedia`
+**einmal** gefragt — `(min-width: 64rem)`, also genau Tailwinds
+`--breakpoint-lg` — und die Anordnung gerendert, die gilt. Genau das tut auch
+die Vorlage (JustRAG `useIsMobile`, 1024px). **Seit 0.37.0 fragt `AppShell`
+das**, nicht mehr dieses Template: es gibt eine `matchMedia`-Grenze in diesem
+Paket, nicht zwei (bis 0.36.0 waren es zwei Aufrufe desselben Hooks
+`useIsDesktop` aus `lib/pane-layout.ts`).
 
 Der Konsument schreibt trotzdem keine Breakpoint-Leiter: welchen Bereich ein
 Reiter zeigt, ist Daten (`mobileTabs[].pane`), und welcher Reiter aktiv ist,
@@ -195,8 +217,9 @@ ein totes Bedienelement. Die Vorlage macht es genauso (ihr Mobil-Zweig fragt
 - Die Reiterleiste ist ein `navigation`-Landmark mit genau einem
   `aria-current="page"`.
 - Griffe sind bedienbare Trennlinien (`role="separator"`, „Window Splitter":
-  ←/→ bzw. ↑/↓, Home/End) — Details in `ResizeHandle`. Das Template prägt pro
-  Leiste eine `id` (`useId`), setzt sie auf die **Wurzel** des `SidePanel`
+  ←/→ bzw. ↑/↓, Home/End) — Details in `ResizeHandle`. **Seit 0.37.0 prägt
+  `AppShell`** pro Leiste eine `id` (`useId`), setzt sie auf die **Wurzel** des
+  `SidePanel`
   (das `complementary`-Landmark, das die Breite trägt) und reicht sie dem
   Griff als `controls` — dessen `aria-controls` zeigt damit auf genau die
   Leiste, die er verändert. Damit ist das APG-Muster hier **vollständig**

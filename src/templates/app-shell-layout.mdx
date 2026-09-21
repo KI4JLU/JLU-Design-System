@@ -42,6 +42,8 @@ Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
 | `leftWidth` | `number` | — | **Neu in 0.36.0**: ausgeklappte Breite der linken Spalte in px. Weggelassen gilt `AppShell`s Default 256 — genau wie bisher. |
 | `leftResize` | `AppShellPanel["resize"]` | — | **Neu in 0.36.0**: macht die linke Spalte ziehbar (`minWidth`, `maxWidth`, `onWidthChange`, `label` — alles oder nichts). Weggelassen gibt es keinen Trenner, genau wie bisher. |
 | `rightPanel` | `AppShellPanel` | — | **Neu in 0.30.0**: zweite Spalte rechts, als Ganzes übergeben (dieselbe Form, die `AppShell.left`/`.right` nehmen). Weggelassen gibt es weder Landmark noch Schiene. Seit 0.36.0 trägt sie auch `resize`. |
+| `showRight` | `boolean` | — | **Neu in 0.37.0**: `false` nimmt `rightPanel` aus der **Desktop**-Anordnung, **ohne** dessen `isOpen` anzufassen — und wird unter `lg` bewusst ignoriert. Direkt an `AppShell` durchgereicht. Wer eine Spalte je nach Ansicht ausblendet, sagt das hiermit, statt `rightPanel` wegzulassen (das zerstört den Einklapp-Zustand). |
+| `mainLabel` | `string` | — | **Neu in 0.37.0**: zugänglicher Name des `<main>`-Landmarks, in beiden Anordnungen. Weggelassen bleibt `<main>` unbenannt — es wird kein Default erfunden. |
 | `mobileTabs` | `MobilePaneTab[]` | ✅ | **Neu in 0.30.0**: Reiter der schmalen Anordnung, jeder mit `pane: "left" \| "main" \| "right"`. |
 | `activeMobileTab` | `string` | ✅ | Id des aktuellen Reiters — die **einzige** Eingabe, die entscheidet, welcher Bereich unter `lg` zu sehen ist. |
 | `onMobileTabChange` | `(id: string) => void` | ✅ | Ein Reiter wurde getippt. |
@@ -58,9 +60,12 @@ Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
   `headerActions`. Die beiden Randregionen sind gleich breite Flex-Kinder
   (`flex-1 basis-0`) — genau das zentriert die Mitte auf der **Zeile** und
   nicht auf der Fläche, die das Label übrig lässt.
-- **Gemessen in Chromium** (1280px-Fenster, `play`-Funktion der Story): Zeile
-  256–1200 → Mitte 728, Feld 504–952 → Mitte 728, obwohl Label (125,4px) und
-  Umschalter (102px) links und rechts davon 23px unterschiedlich breit sind.
+- **Gemessen für 0.30.0 in Chromium** (1280px-Fenster, `play`-Funktion der
+  Story) — die Zahlen belegen jenes Release: Zeile 256–1200 → Mitte 728, Feld
+  504–952 → Mitte 728, obwohl Label (125,4px) und Umschalter (102px) links und
+  rechts davon 23px unterschiedlich breit sind. Seit 0.37.0 beginnt das Label
+  bei 280 statt 296 (siehe „Die Einrückung der Zeile"); die Mitte ist davon
+  unberührt.
 - **Das `mx-auto`-Rezept von 0.29.0 ist damit überholt.** Es zentrierte den
   Inhalt von `headerActions` in der Fläche *nach* dem Label — mit Label stand
   das Feld daneben, und es wanderte, sobald sich der Seitenname änderte. Wer
@@ -74,6 +79,24 @@ Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
   `top: 76px` (= 64 + 12) unter diese Kante. Eine Zeile, die beim Weglassen der
   letzten Prop zusammenfiele, wäre für eine unveränderte Aufrufstelle eine
   **brechende Geometrie-Änderung**.
+
+### Die Einrückung der Zeile (seit 0.37.0)
+
+<Canvas of={AppShellLayoutStories.BarInsetMatchesColumns} />
+
+- **Die Zeile nimmt den Spalten-Gutter: `px-gutter`, 24px.** Bis 0.36.0 steckten
+  beide Leisten in einem `Container`, also im **Seitenmaß** (`px-gutter`,
+  ab `md` `px-margin-page`, zentriert und auf `--max-width-container-max`
+  gedeckelt). Die Zeile ist aber kein Seiteninhalt, sondern **Chrome zwischen
+  zwei `SidePanel`s**, deren `h-16`-Kopfzeile mit `px-gutter` eingerückt ist.
+- **Gemessen in Chromium** (1280px-Fenster, JustRAGs `KbWorkspaceLayout`,
+  21.09.2026): erster Inhalt der Leiste 40px von der Spaltenkante, Logo der
+  Spalte 24px — die sichtbare Lücke zwischen Kopfzeile und Leisten.
+- **Das Orakel der Story ist die Spalte, keine Zahl**: `BarInsetMatchesColumns`
+  vergleicht `pageLabel.left − aside.right` mit
+  `Kopfzeilen-Erstkind.left − aside.left` im selben Browser-Layout.
+- Die dreiteilige Flex-Zeile bleibt unverändert — `search` steht weiterhin auf
+  der Mitte der Zeile, und die Zeile ist weiterhin 64px hoch.
 
 ### Zeile ohne Label (seit 0.29.0)
 
