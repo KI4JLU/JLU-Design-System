@@ -217,15 +217,20 @@ export const ToggleAlignsWithBodyControl: Story = {
   play: async ({ canvas }) => {
     const toggle = await canvas.findByRole("button", { name: "Verlauf einklappen" });
     const bodyControl = await canvas.findByTestId("body-control");
-    const glyph = toggle.querySelector("svg") as SVGElement;
+    const glyph = toggle.querySelector("svg") as SVGSVGElement;
 
-    // Die eigentliche Zusicherung (0.40.0): die AUSSENKANTE des Symbols liegt
-    // auf der Außenkante des gefüllten Knopfs darunter — das ist, was das Auge
-    // bei einem Ghost-Knopf ohne sichtbaren Kasten als Bündigkeit liest. Beide
-    // Kanten stammen aus den gerenderten Rechtecken.
-    await expect(
-      Math.abs(glyph.getBoundingClientRect().right - bodyControl.getBoundingClientRect().right),
-    ).toBeLessThan(1);
+    // Die eigentliche Zusicherung (0.41.0): die GEZEICHNETE Außenkante des
+    // Symbols liegt auf der Außenkante des gefüllten Knopfs darunter — das
+    // ist, was das Auge bei einem Ghost-Knopf ohne sichtbaren Kasten als
+    // Bündigkeit liest. Nicht die svg-Box: lucide zeichnet 3..21 von 24, also
+    // 2,5px innerhalb der 20px-Box, und genau dieser Rest war in 0.40.0 als
+    // Stufe sichtbar. Die gezeichnete Kante kommt aus `getBBox()` (Nutzer-
+    // einheiten), skaliert auf die gerenderte Box.
+    const box = glyph.getBoundingClientRect();
+    const bbox = glyph.getBBox();
+    const scale = box.width / glyph.viewBox.baseVal.width;
+    const drawnRight = box.left + (bbox.x + bbox.width) * scale;
+    await expect(Math.abs(drawnRight - bodyControl.getBoundingClientRect().right)).toBeLessThan(1);
 
     // Und die beiden Maße, aus denen sich das ergibt — ohne sie wären zwei
     // gemeinsam verschobene Werte (etwa `px-6` plus ein 48px-Knopf) genauso
