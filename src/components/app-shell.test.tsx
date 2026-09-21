@@ -3,7 +3,11 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { FolderOpen, Home, MessageSquare } from "lucide-react";
-import { AppShell, type AppShellPanel } from "./app-shell";
+import {
+  AppShell,
+  type AppShellPanel,
+  type AppShellPanelResize,
+} from "./app-shell";
 import { NavItem } from "./nav-item";
 import { SIDE_PANEL_RAIL_WIDTH } from "./side-panel-variants";
 import type { MobilePaneTab } from "../lib/pane-layout";
@@ -42,6 +46,15 @@ import type { MobilePaneTab } from "../lib/pane-layout";
  *    reach: both columns collapsible independently, no dialog in the tree,
  *    exactly one pane per active tab, no node mounted twice, and an omitted
  *    column leaving neither landmark nor rail.
+ * 7. **`ResizeHandle`'s published contract** (0.36.0 suite): the WAI-ARIA APG
+ *    „Window Splitter" — a focusable `separator` with
+ *    `aria-valuemin`/`-valuemax`/`-valuenow` and `aria-controls` — plus its
+ *    *mirrored* arrow keys, a left column growing on `→` and a right one
+ *    shrinking on it. That mirroring is asserted in `resize-handle.test.tsx`
+ *    against the component itself; here it is the oracle for the only thing
+ *    this shell decides, namely which `side` each column's handle is handed.
+ *    A wrong `side` is invisible to every other assertion and shows up only
+ *    as the sign of the reported width.
  *
  * jsdom implements no `matchMedia` (verified against jsdom 29), so the
  * viewport is stubbed per test — that stub *is* the test's viewport, and no
@@ -72,6 +85,41 @@ afterEach(() => {
 // Widths chosen so they can only have come from this file.
 const LEFT_WIDTH = 311;
 const RIGHT_WIDTH = 233;
+// Bounds likewise: this file's numbers, never the component's (it has none —
+// `AppShellPanelResize` bakes in no defaults, exactly as `WorkspacePane` does
+// not).
+const LEFT_MIN = 180;
+const LEFT_MAX = 540;
+const RIGHT_MIN = 160;
+const RIGHT_MAX = 480;
+// `ResizeHandle`'s documented default step. Not re-derived here: it is that
+// component's published contract (DESIGN_SYSTEM.md §4, asserted in
+// `resize-handle.test.tsx`), which is what makes it usable as an oracle.
+const STEP = 10;
+
+function leftResize(
+  overrides: Partial<AppShellPanelResize> = {},
+): AppShellPanelResize {
+  return {
+    minWidth: LEFT_MIN,
+    maxWidth: LEFT_MAX,
+    onWidthChange: vi.fn(),
+    label: "Breite der Navigation ändern",
+    ...overrides,
+  };
+}
+
+function rightResize(
+  overrides: Partial<AppShellPanelResize> = {},
+): AppShellPanelResize {
+  return {
+    minWidth: RIGHT_MIN,
+    maxWidth: RIGHT_MAX,
+    onWidthChange: vi.fn(),
+    label: "Breite der Quellen ändern",
+    ...overrides,
+  };
+}
 
 function leftPanel(overrides: Partial<AppShellPanel> = {}): AppShellPanel {
   return {
@@ -321,6 +369,159 @@ describe("AppShell — desktop arrangement", () => {
     expect(screen.getByRole("complementary")).toHaveAccessibleName("Quellen");
     for (const name of ["Navigation einklappen", "Navigation ausklappen"]) {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
+  });
+});
+
+/**
+ * Resizable columns (0.36.0). The shell composes `SidePanel` + `ResizeHandle`
+ * per column, the composition `WorkspaceLayout` has had since 0.23.1 — so what
+ * is under test here is the **wiring**, not the widget: which numbers reach
+ * the separator, which element its `aria-controls` names, which `side` it is
+ * handed, and in which states it exists at all. `ResizeHandle`'s own behaviour
+ * (clamping, the pointer drag, Home/End) is asserted in
+ * `resize-handle.test.tsx` and is deliberately not restated.
+ */
+describe("AppShell — resizable columns", () => {
+  it("gives each resizable column a separator with the consumer's own numbers", () => {
+    stubViewport(true);
+    renderShell({
+      left: leftPanel({ resize: leftResize() }),
+      right: rightPanel({ resize: rightResize() }),
+    });
+
+    // Found by role and accessible name, both computed from the markup by
+    // Testing Library — not by a class and not by a test id.
+    const left = screen.getByRole("separator", { name: "Breite der Navigation ändern" });
+    expect(left).toHaveAttribute("aria-valuemin", String(LEFT_MIN));
+    expect(left).toHaveAttribute("aria-valuemax", String(LEFT_MAX));
+    expect(left).toHaveAttribute("aria-valuenow", String(LEFT_WIDTH));
+
+    const right = screen.getByRole("separator", { name: "Breite der Quellen ändern" });
+    expect(right).toHaveAttribute("aria-valuemin", String(RIGHT_MIN));
+    expect(right).toHaveAttribute("aria-valuemax", String(RIGHT_MAX));
+    expect(right).toHaveAttribute("aria-valuenow", String(RIGHT_WIDTH));
+
+    // Exactly two — a shell with two resizable columns has two separators, and
+    // nothing else in the tree claims the role.
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
+  });
+
+  it("points each separator's aria-controls at its own column, resolved and distinct", () => {
+    stubViewport(true);
+    renderShell({
+      left: leftPanel({ resize: leftResize() }),
+      right: rightPanel({ resize: rightResize() }),
+    });
+
+    /* WAI-ARIA's id-reference contract plus the APG splitter's: the separator
+       names the element whose size `aria-valuenow` reports, and an id
+       reference has to RESOLVE — a dangling one is worse than none. So each
+       case resolves the attribute through the document and pins the resolved
+       element both to that column's `complementary` landmark and to the inline
+       width this file passed in. The wiring bug this pins is both handles
+       naming one column, and the one below it is the id landing on the inner
+       body region (the collapse toggle's target) instead of the column root:
+       that element carries no width at all. */
+    const cases = [
+      ["Breite der Navigation ändern", "Navigationsspalte", LEFT_WIDTH],
+      ["Breite der Quellen ändern", "Quellen", RIGHT_WIDTH],
+    ] as const;
+    const resolved: HTMLElement[] = [];
+    for (const [handleName, columnName, width] of cases) {
+      const handle = screen.getByRole("separator", { name: handleName });
+      const controls = handle.getAttribute("aria-controls");
+      expect(controls).toBeTruthy();
+      const column = document.getElementById(controls as string);
+      expect(column).not.toBeNull();
+      expect(column).toBe(screen.getByRole("complementary", { name: columnName }));
+      expect(column).toHaveAttribute("style", expect.stringContaining(`${width}px`));
+      resolved.push(column as HTMLElement);
+    }
+    expect(resolved[0]).not.toBe(resolved[1]);
+  });
+
+  it("hands each column's handle the side it sits on, so the keys mirror", async () => {
+    stubViewport(true);
+    const left = leftResize();
+    const right = rightResize();
+    renderShell({
+      left: leftPanel({ resize: left }),
+      right: rightPanel({ resize: right }),
+    });
+
+    /* `ResizeHandle`'s published mirroring is the oracle: the separator moves,
+       and `aria-valuenow` reports the COLUMN's size, so one and the same key
+       grows a left column and shrinks a right one. The shell's only decision
+       is `side` — and a `side` swapped here would still produce two separators
+       with correct bounds, correct names and correct `aria-controls`. Only the
+       sign of the reported width catches it. */
+    screen.getByRole("separator", { name: "Breite der Navigation ändern" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(left.onWidthChange).toHaveBeenCalledWith(LEFT_WIDTH + STEP);
+
+    screen.getByRole("separator", { name: "Breite der Quellen ändern" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(right.onWidthChange).toHaveBeenCalledWith(RIGHT_WIDTH - STEP);
+  });
+
+  it("reports the default width when a resizable column names none", () => {
+    stubViewport(true);
+    // The same published 256 default the non-resizable case falls back to:
+    // `aria-valuenow` and the column's inline width are one number, so a
+    // handle that read its own fallback would show up as two.
+    renderShell({
+      left: leftPanel({ width: undefined, resize: leftResize() }),
+      right: undefined,
+    });
+    expect(screen.getByRole("separator")).toHaveAttribute("aria-valuenow", "256");
+    expect(
+      screen.getByRole("complementary", { name: "Navigationsspalte" }),
+    ).toHaveAttribute("style", expect.stringContaining("256px"));
+  });
+
+  it("renders no separator for a column without a resize contract", () => {
+    stubViewport(true);
+    // Every call site written before 0.36.0: `resize` omitted on both columns.
+    renderShell();
+    expect(screen.queryAllByRole("separator")).toHaveLength(0);
+    // …and nothing else appears either: without a handle there is no reference
+    // to resolve, so the column root keeps the DOM it had before this release.
+    for (const name of ["Navigationsspalte", "Quellen"]) {
+      expect(screen.getByRole("complementary", { name })).not.toHaveAttribute("id");
+    }
+  });
+
+  it("renders no separator next to a collapsed column, per column", () => {
+    stubViewport(true);
+    renderShell({
+      left: leftPanel({ isOpen: false, resize: leftResize() }),
+      right: rightPanel({ resize: rightResize() }),
+    });
+
+    // The rail is a fixed 60px, so a separator there would report a value
+    // nothing responds to.
+    expect(
+      screen.queryByRole("separator", { name: "Breite der Navigation ändern" }),
+    ).not.toBeInTheDocument();
+    // The gate is per column, not global.
+    expect(
+      screen.getByRole("separator", { name: "Breite der Quellen ändern" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders no separator below lg, whichever area is on screen", () => {
+    stubViewport(false);
+    for (const activeMobileTab of ["nav", "page", "sources"] as const) {
+      const { unmount } = renderShell({
+        left: leftPanel({ resize: leftResize() }),
+        right: rightPanel({ resize: rightResize() }),
+        activeMobileTab,
+      });
+      // One area at a time: there is no neighbour to resize the column
+      // against, and the area fills the screen.
+      expect(screen.queryAllByRole("separator")).toHaveLength(0);
+      unmount();
     }
   });
 });

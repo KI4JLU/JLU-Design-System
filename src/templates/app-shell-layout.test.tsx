@@ -524,6 +524,117 @@ describe("AppShellLayout — the right column (0.30.0)", () => {
   });
 });
 
+/**
+ * The left column's width and its resize contract (0.36.0). Until this release
+ * the nav column was `AppShell`'s 256 default and nothing else — a consumer
+ * could hand the *right* column a whole `AppShellPanel` but had no way at all
+ * to widen the left one. Both props are optional, and the last test here is
+ * the one that matters most: omitting them has to leave today's DOM alone.
+ *
+ * Oracles: the numbers and labels this file passes in, plus `ResizeHandle`'s
+ * published APG-splitter contract (role, `aria-value*`, `aria-controls`, the
+ * side-mirrored arrow keys) — a *different* component's contract, asserted
+ * against itself in `resize-handle.test.tsx`.
+ */
+describe("AppShellLayout — the left column's width (0.36.0)", () => {
+  // This file's numbers, so a passing assertion cannot have come from the code.
+  const WIDTH = 344;
+  const MIN = 200;
+  const MAX = 560;
+  const LABEL = "Breite der Navigation ändern";
+
+  it("forwards leftWidth to the column's inline width", () => {
+    renderLayout({ nav: collapsibleNav, leftWidth: WIDTH });
+    expect(
+      screen.getByRole("complementary", { name: "Hauptnavigation" }),
+    ).toHaveAttribute("style", expect.stringContaining(`${WIDTH}px`));
+  });
+
+  it("keeps AppShell's 256 default when leftWidth is omitted", () => {
+    // The published default (16rem = `--width-sidebar` at a 16px root), i.e.
+    // what an untouched call site has always rendered.
+    renderLayout({ nav: collapsibleNav });
+    expect(
+      screen.getByRole("complementary", { name: "Hauptnavigation" }),
+    ).toHaveAttribute("style", expect.stringContaining("256px"));
+  });
+
+  it("yields exactly one separator, wired to the nav column", async () => {
+    const onWidthChange = vi.fn();
+    renderLayout({
+      nav: collapsibleNav,
+      leftWidth: WIDTH,
+      leftResize: { minWidth: MIN, maxWidth: MAX, onWidthChange, label: LABEL },
+    });
+
+    const handles = screen.getAllByRole("separator");
+    expect(handles).toHaveLength(1);
+    const handle = handles[0];
+    expect(handle).toHaveAccessibleName(LABEL);
+    expect(handle).toHaveAttribute("aria-valuemin", String(MIN));
+    expect(handle).toHaveAttribute("aria-valuemax", String(MAX));
+    expect(handle).toHaveAttribute("aria-valuenow", String(WIDTH));
+
+    // The reference resolves, and it resolves to the nav column itself — the
+    // element whose inline width the value reports.
+    const column = document.getElementById(handle.getAttribute("aria-controls") ?? "");
+    expect(column).toBe(screen.getByRole("complementary", { name: "Hauptnavigation" }));
+
+    // Left column, so `→` widens it — `ResizeHandle`'s mirrored contract, and
+    // the only evidence that the template handed `side="left"` in.
+    handle.focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(onWidthChange).toHaveBeenCalledWith(WIDTH + 10);
+  });
+
+  it("puts the separator between the column and the main area", () => {
+    renderLayout({
+      nav: collapsibleNav,
+      leftResize: { minWidth: MIN, maxWidth: MAX, onWidthChange: () => {}, label: LABEL },
+    });
+    const handle = screen.getByRole("separator");
+    expect(precedes(screen.getByRole("complementary", { name: "Hauptnavigation" }), handle)).toBe(
+      true,
+    );
+    expect(precedes(handle, screen.getByRole("main"))).toBe(true);
+  });
+
+  it("drops the separator while the column is collapsed", () => {
+    renderLayout({
+      nav: collapsibleNav,
+      leftOpen: false,
+      leftResize: { minWidth: MIN, maxWidth: MAX, onWidthChange: () => {}, label: LABEL },
+    });
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
+
+  it("drops the separator below lg", () => {
+    stubViewport(false);
+    renderLayout({
+      nav: collapsibleNav,
+      activeMobileTab: "nav",
+      leftResize: { minWidth: MIN, maxWidth: MAX, onWidthChange: () => {}, label: LABEL },
+    });
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
+
+  it("changes nothing at all when both props are omitted", () => {
+    /* The regression this release could most easily cause: two optional props
+       whose absence still moves an untouched call site. Oracle: the rendered
+       markup of the left column with the props absent, compared against the
+       markup of the same render on 0.35.0 — captured here as the *absence* of
+       everything 0.36.0 adds (no separator anywhere, no `id` on the column
+       root, the default width), because the two renders are byte-identical
+       only if none of the three appears. The collapse suite above is the other
+       half of this: it is unchanged and still passes. */
+    renderLayout({ nav: collapsibleNav });
+    const column = screen.getByRole("complementary", { name: "Hauptnavigation" });
+    expect(screen.queryAllByRole("separator")).toHaveLength(0);
+    expect(column).not.toHaveAttribute("id");
+    expect(column).toHaveAttribute("style", expect.stringContaining("256px"));
+  });
+});
+
 describe("AppShellLayout — below lg", () => {
   it("shows the brand in the bar, a tab bar, and no dialog anywhere", () => {
     stubViewport(false);

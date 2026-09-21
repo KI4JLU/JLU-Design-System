@@ -39,7 +39,9 @@ Aufrufstellen heißt, steht unter „Migration 0.29 → 0.30".
 | `onLeftOpenChange` | `(isOpen: boolean) => void` | ✅ | Der Schalter wurde gedrückt; bekommt den **gewünschten** Zustand. |
 | `collapseLabel` | `string` | — | Name des Schalters im ausgeklappten Zustand (Default „Navigation einklappen"). |
 | `expandLabel` | `string` | — | Name des Schalters im eingeklappten Zustand (Default „Navigation ausklappen"). |
-| `rightPanel` | `AppShellPanel` | — | **Neu in 0.30.0**: zweite Spalte rechts, als Ganzes übergeben (dieselbe Form, die `AppShell.left`/`.right` nehmen). Weggelassen gibt es weder Landmark noch Schiene. |
+| `leftWidth` | `number` | — | **Neu in 0.36.0**: ausgeklappte Breite der linken Spalte in px. Weggelassen gilt `AppShell`s Default 256 — genau wie bisher. |
+| `leftResize` | `AppShellPanel["resize"]` | — | **Neu in 0.36.0**: macht die linke Spalte ziehbar (`minWidth`, `maxWidth`, `onWidthChange`, `label` — alles oder nichts). Weggelassen gibt es keinen Trenner, genau wie bisher. |
+| `rightPanel` | `AppShellPanel` | — | **Neu in 0.30.0**: zweite Spalte rechts, als Ganzes übergeben (dieselbe Form, die `AppShell.left`/`.right` nehmen). Weggelassen gibt es weder Landmark noch Schiene. Seit 0.36.0 trägt sie auch `resize`. |
 | `mobileTabs` | `MobilePaneTab[]` | ✅ | **Neu in 0.30.0**: Reiter der schmalen Anordnung, jeder mit `pane: "left" \| "main" \| "right"`. |
 | `activeMobileTab` | `string` | ✅ | Id des aktuellen Reiters — die **einzige** Eingabe, die entscheidet, welcher Bereich unter `lg` zu sehen ist. |
 | `onMobileTabChange` | `(id: string) => void` | ✅ | Ein Reiter wurde getippt. |
@@ -144,7 +146,91 @@ const [leftOpen, setLeftOpen] = useState(true);   // oder URL, Context, localSto
 exakt die Form, die `AppShell` selbst nimmt, also kein zweites Vokabular für
 dieselbe Sache. `content`, `header`, `footer`, `label`, `isOpen`,
 `onOpenChange`, `width` (Default 256), `expandLabel`, `collapseLabel`,
-`collapsedPreview`.
+`collapsedPreview` — und seit 0.36.0 `resize`.
+
+## Ziehbare Spalten (seit 0.36.0)
+
+<Canvas of={AppShellLayoutStories.WithResizableColumns} />
+
+```tsx
+// Die Breiten gehören der App. `usePersistedWidth` ist der optionale Haken,
+// der sie pro Gerät überleben lässt — ein `useState` tut es genauso.
+const [leftWidth, setLeftWidth] = usePersistedWidth("myapp.kb.leftWidth", {
+  defaultWidth: 300, minWidth: 200, maxWidth: 560,
+});
+const [rightWidth, setRightWidth] = usePersistedWidth("myapp.kb.rightWidth", {
+  defaultWidth: 280, minWidth: 200, maxWidth: 520,
+});
+
+<AppShellLayout
+  logo={logo} nav={nav} leftOpen={leftOpen} onLeftOpenChange={setLeftOpen}
+  leftWidth={leftWidth}
+  leftResize={{
+    minWidth: 200, maxWidth: 560,
+    onWidthChange: setLeftWidth,
+    label: t("resizeNavigation"),
+  }}
+  rightPanel={{
+    ...sources,
+    width: rightWidth,
+    resize: {
+      minWidth: 200, maxWidth: 520,
+      onWidthChange: setRightWidth,
+      label: t("resizeSources"),
+    },
+  }}
+  mobileTabs={TABS} activeMobileTab={tab} onMobileTabChange={setTab}
+  mobileTabBarLabel={t("switchArea")}
+>
+  {page}
+</AppShellLayout>
+```
+
+- **Es ist derselbe `ResizeHandle`, den `WorkspaceLayout` komponiert** — kein
+  zweiter Mechanismus. Bis 0.35.0 hatte die Shell die Leisten, aber keine
+  Griffe: eine App auf `AppShellLayout` konnte ihre Navigationsspalte gar nicht
+  verbreitern (JustRAGs Wissensbasis-Ansicht, KI-94).
+- **`resize` ist ein Objekt, alles oder nichts.** Als vier lose Optionals wäre
+  „Griff ohne Grenzen" formulierbar — ein `separator` ohne `aria-valuemin`/
+  `-valuemax` ist kein APG-Splitter mehr. `width` bleibt daneben, weil es auch
+  ohne Ziehen existiert (und einen Default hat, den die Grenzen bewusst nicht
+  haben: die sind die Entscheidung der App).
+- **Die Pfeiltasten sind pro Seite gespiegelt**: `→` verbreitert die *linke*
+  Spalte, `←` die *rechte*. Die Taste bewegt den Trenner, `aria-valuenow`
+  meldet die Spalte. `Home`/`End` sind Minimum und Maximum und deshalb **nicht**
+  gespiegelt.
+- **Kein Griff an einer eingeklappten Spalte** (die Schiene ist fest 60px breit,
+  ein Trenner dort meldete einen Wert ohne sichtbare Wirkung) und **keiner unter
+  `lg`** (dort füllt ein Bereich den Bildschirm — es gibt nichts, wogegen man
+  die Spalte zöge).
+- **Weggelassen ändert sich nichts**: kein Trenner, keine `id` an der
+  `<aside>`, Default 256. Eine unveränderte Aufrufstelle rendert dasselbe DOM
+  wie vor 0.36.0.
+
+### Breite speichern: `usePersistedWidth`
+
+```tsx
+import { usePersistedWidth } from "@ki4jlu/design-system";
+```
+
+- **Der Konsument übergibt den ganzen Schlüssel.** Das Paket vergibt keinen
+  Namensraum: ein bibliothekseigenes Präfix kollidierte zwischen den Apps, die
+  sich Gerät und Origin teilen (JustRAG präfixt `justrag.`).
+- **Die Komponenten bleiben kontrolliert.** Der Haken ist das Stück, das in
+  `leftWidth` + `leftResize.onWidthChange` eingehängt wird — kein Default in
+  `AppShellPanel`. Wer die Breite anderswo hält (URL, Profil, eigener Store),
+  ruft ihn einfach nicht auf.
+- **Gelesen wird einmal pro Montierung**, geschrieben bei jedem Setzen.
+  **Geklemmt wird beim Lesen**, nicht beim Schreiben: ein gespeicherter Wert
+  kann älter als die heutigen Grenzen sein, und ungeklemmt zeigte die Spalte
+  eine Breite, die der Griff nie wieder in den Bereich zurückziehen kann.
+- **Jeder Speicherzugriff ist abgesichert.** Schon das *Lesen* von
+  `window.localStorage` wirft in Safaris privatem Modus und bei blockierten
+  Cookies. Eine verlorene Voreinstellung darf nie die Ansicht kosten — der
+  Haken fällt dann auf reinen State zurück.
+- **`storage` ist injizierbar** — dafür gibt es das Feld: die Tests prüfen
+  gegen ein `Storage` im Arbeitsspeicher, und die Story oben reicht ebenfalls
+  eines herein, damit der Testlauf nichts hinterlässt.
 
 ## Responsives Verhalten
 
@@ -240,6 +326,9 @@ dieselbe Sache. `content`, `header`, `footer`, `label`, `isOpen`,
   `className` umskinnen — fehlt etwas, wird das Template hier erweitert.
 - ❌ **Nicht** `AppShell` + `SidePanel` von Hand komponieren, nur um eine
   zweite Spalte oder einen Einklapp-Schalter zu bekommen.
+- ❌ **Keine eigene Zieh-Mechanik** neben `leftResize` / `rightPanel.resize`
+  bauen (ein `pointermove`-Listener in der App, ein Griff aus eigenem Markup):
+  `ResizeHandle` besitzt die Interaktion, die App besitzt die Zahl.
 - ❌ **Keinen eigenen Einklapp-Button** in `logo` oder `headerActions` hängen:
   die Spalte rendert ihren Schalter selbst, samt
   `aria-expanded`/`aria-controls`. Zwei Schalter wären zwei Wahrheiten.

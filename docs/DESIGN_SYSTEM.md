@@ -202,11 +202,16 @@ Layout values come **only** from tokens (spacing `stack-*`/`gutter`/
 | `Container` (+ `containerVariants`) | `container.tsx` / `container-variants.ts` | centered page column: `px-gutter md:px-margin-page`; `size` names the page's role — `page` (1440px, default), `content` (1000px), `reading` (672px), all three from `--max-width-container-*`. Never a `max-w-*` at the call site |
 | `PageHeader` | `page-header.tsx` | `<h1>` (headline tokens, mobile size below md) + description + right-aligned `actions`; `children` = toolbar row below |
 | `Sidebar` | `sidebar.tsx` / `sidebar-context.ts` | structural nav column: `header`/`footer` slots, scrollable `<nav aria-label>` for NavItems; positioning/drawer live in AppShell. **Collapsible, controlled only** — `collapsed`/`onCollapsedChange`, no `defaultCollapsed`. The toggle belongs to the column (it is the only way back out of the collapsed state) and renders as the trailing item of the header row, right-aligned inline with the brand; it appears only when `onCollapsedChange` is given. Both widths are tokens (`--width-sidebar` / `--width-sidebar-collapsed`); the expanded one is exactly what `w-64` resolved to before. Publishes the collapsed state on `SidebarCollapsedContext` to `NavItem`, `SidebarUserMenu` and (via the exported `useSidebarCollapsed`) a consumer's own header/footer node — **since 0.30.0 `SidePanel` publishes it too**, so the two frames are interchangeable to everything downstream. **Since 0.30.0 no shell renders it**: `AppShell`/`AppShellLayout` use `SidePanel` columns, so `Sidebar` is the standalone nav column only, unchanged and still exported; `SidebarSurfaceContext` is **deleted** (the drawer that produced the `"drawer"` value is gone, so nothing wrote it and only `Sidebar` read it). Open: the two frames now differ only in the collapsed width (80px icon column vs 60px rail), so `Sidebar` is a candidate for deletion in favour of `SidePanel` |
-| `AppShell` | `app-shell.tsx` | responsive frame, **rebuilt in 0.30.0**: an optional `SidePanel` column on each side (`left`/`right`, both `AppShellPanel` — `content`, `header`, `footer`, `label`, `isOpen`, `onOpenChange`, `width` default 256 = `--width-sidebar`, `expandLabel`/`collapseLabel`, `collapsedPreview`) around a main column of `topBar` (the `h-16` chrome row) plus the page's one scrolling `<main>`. Collapsed **is** the 60px rail — there is no icon-column mode. Below `lg` one area at a time plus a `BottomTabBar`: the consumer declares `mobileTabs` (each tab names the area it shows), `activeMobileTab`, `onMobileTabChange`, `mobileTabBarLabel`; the arrangement is chosen in JS (`useIsDesktop`, shared with `WorkspaceLayout` in `lib/pane-layout.ts`), never with a `lg:` ladder. **No drawer, no dialog, no focus trap** — the non-overlay arrangement needs none — and therefore **no node mounted twice** (the `sidebar`/`menuLabel`/`drawerLabel` props are gone and `SidebarSurfaceContext` with them). `AppShellPanel.footer` is forwarded to `SidePanel.footer`, so a collapsed column keeps its sign-out route in the rail and a `SidebarUserMenu` there renders as its avatar alone |
+| `AppShell` | `app-shell.tsx` | responsive frame, **rebuilt in 0.30.0**: an optional `SidePanel` column on each side (`left`/`right`, both `AppShellPanel` — `content`, `header`, `footer`, `label`, `isOpen`, `onOpenChange`, `width` default 256 = `--width-sidebar`, `expandLabel`/`collapseLabel`, `collapsedPreview`) around a main column of `topBar` (the `h-16` chrome row) plus the page's one scrolling `<main>`. Collapsed **is** the 60px rail — there is no icon-column mode. Below `lg` one area at a time plus a `BottomTabBar`: the consumer declares `mobileTabs` (each tab names the area it shows), `activeMobileTab`, `onMobileTabChange`, `mobileTabBarLabel`; the arrangement is chosen in JS (`useIsDesktop`, shared with `WorkspaceLayout` in `lib/pane-layout.ts`), never with a `lg:` ladder. **No drawer, no dialog, no focus trap** — the non-overlay arrangement needs none — and therefore **no node mounted twice** (the `sidebar`/`menuLabel`/`drawerLabel` props are gone and `SidebarSurfaceContext` with them). `AppShellPanel.footer` is forwarded to `SidePanel.footer`, so a collapsed column keeps its sign-out route in the rail and a `SidebarUserMenu` there renders as its avatar alone. **Both columns are drag-resizable since 0.36.0**, opt-in through `AppShellPanel.resize` (`AppShellPanelResize`: `minWidth`, `maxWidth`, `onWidthChange`, `label` — one all-or-nothing object, so „handle without bounds" cannot be expressed). Given, the shell composes `SidePanel` + `ResizeHandle` per column exactly as `WorkspaceLayout` does — same widget, no second mechanism — with `controls` pointing at the column root (`useId`, minted in `AppShell`, passed to `SidePanel` as `id`); the handle renders only while the column is **expanded** (the rail is a fixed 60px) and only from **`lg`** up (below it one area fills the screen). Omitted, there is no separator, no `id` on the `<aside>` and the 256 default — an untouched call site renders the DOM it rendered before. **The width itself stays the consumer's number** — the components are controlled and keep no width of their own; `usePersistedWidth` (below) is the opt-in piece that makes the user's size survive a reload |
 | `SidebarUserMenu` | `sidebar-user-menu.tsx` | sidebar-footer user menu: initials avatar, name over role, chevron; the whole row is the dropdown trigger. In a collapsed `Sidebar` it shrinks to the avatar alone (round, icon-sized, no chevron) — kept rather than hidden, because it is the only route to sign-out. Name and role stay as `sr-only`, so the trigger's accessible name is the same string in both states |
 | `SidePanel` | `side-panel.tsx` / `side-panel-variants.ts` | controlled collapsible pane frame: `side` left/right, `isOpen`, `width`, collapsed rail (`SIDE_PANEL_RAIL_WIDTH` = 60px) with an `collapsedPreview` slot. The collapse/expand control belongs to the frame — it is the only control that exists while collapsed. Children stay mounted but leave the accessibility tree, so scroll position and half-typed input survive a collapse. The toggle shares an `h-16` row with the optional `header` slot (title/brand, expanded-only, `min-w-0` so a `truncate`d title clips instead of pushing the toggle out — `header` is *unmounted* while collapsed, unlike `children`), and it sits on the **content-facing** edge in both directions: `[header … toggle]` on a left pane, `[toggle … header]` on a right one, carried by DOM order rather than an `order-*` utility so reading and tab order match the visual one. `h-16` is the same chrome unit as `AppShellLayout`'s bar, so both pane headers and the main column's bar align; the collapsed rail's 60px **width** is unchanged. **`footer` (0.30.0)** pins a node under the body and, unlike `header`, survives collapsing — it moves to the bottom of the rail, because it is typically the only route to sign-out; it *moves* rather than being rendered twice, so it loses component state across a collapse while `children` do not. **Publishes its collapsed state on `SidebarCollapsedContext` (0.30.0)**, so `NavItem` / `SidebarUserMenu` inside it shrink to their icon form in the rail — before that only `Sidebar` provided it, and a nav column moved onto this frame rendered full-width labels inside 60px. `collapsedPreview` is what a composing template moves a nav into (`AppShellLayout` does exactly that since 0.31.0). **The collapsed rail mirrors the expanded column's rows (0.35.0)** rather than building a rhythm of its own: an `h-16` chrome row holding the expand button alone (the same row the expanded `header`/toggle sit on), then the scrolling `collapsedPreview` slot with the `py-stack-md` a column body brings with it (`p-4` on `AppShellLayout`'s nav), then the pinned `footer` with **no** padding of the rail's own — the consumer's node carries it, exactly as the expanded footer wrapper does. So a control keeps its height on the page across a collapse; regression story `AppShellLayout` → `CollapsedRailKeepsVerticalPositions`. No viewport awareness: which pane is rendered is the template's job |
 | `ResizeHandle` | `resize-handle.tsx` / `resize-handle-variants.ts` | accessible pane resizer: focusable `role="separator"` (WAI-ARIA APG „Window Splitter") with `aria-valuemin/max/now`, clamped, and `aria-orientation="vertical"` for the bar itself (not the role's default). Arrow keys move by `step` (default 10) **mirrored per side** — a left pane grows on `→`/`↑`, a right pane on `←`/`↓`; Home/End are min/max values and are deliberately *not* mirrored. Owns its pointer-drag loop and reports through one `onValueChange`. See „Entschieden: `separator` statt `slider`" in the MDX — role **and** vertical mirroring were one decision and are both settled (owner, 08/2026). `controls` (→ `aria-controls`, the pane root whose width `aria-valuenow` reports) completes the pattern: every *required* APG piece is present; of the *optional* keys, Home/End are in, `Enter` (collapse — `SidePanel`'s visible button) and F6 are deliberately out. In `WorkspaceLayout` the id is minted by the template and always wired; see „Entschieden: `aria-controls` zeigt auf die Leisten-Wurzel" in the MDX |
 | `BottomTabBar` | `bottom-tab-bar.tsx` / `bottom-tab-bar-variants.ts` | fixed bottom `navigation` landmark for narrow-screen pane switching: `items` of icon + label, exactly one `aria-current="page"`. Deliberately **not** `SegmentedControl` — that is a `role="group"` of `aria-pressed` toggles, an inline control rather than a landmark whose active item is the displayed view |
+
+### Hooks (`src/lib/`)
+| Hook | File | Notes |
+|---|---|---|
+| `usePersistedWidth` | `persisted-width.ts` | **0.36.0.** `usePersistedWidth(key, { defaultWidth, minWidth, maxWidth, storage? }) → [width, setWidth]` — a pane width that survives a reload, per device. Opt-in and **outside** the components: `AppShellPanel` / `WorkspacePane` stay controlled and keep no width of their own, the hook is what a consumer plugs into `width` + `resize.onWidthChange`, and an app that persists the number elsewhere (URL, profile, its own store) simply does not call it. **The consumer passes the full key** — this package mints no namespace and prefixes nothing, because one library-chosen prefix would collide across the apps sharing a device and origin (JustRAG prefixes `justrag.`). Read **once per mount** (`useState` initialiser), write-through on set. **Clamped on read**, never on write: a stored value can outlive its bounds (a release that narrowed `maxWidth`, a hand-edited entry), and unclamped the column would render a width `ResizeHandle` can never drag back into range. `defaultWidth` is *not* clamped — it is the consumer's own literal, and silently changing it would hide the consumer's bug instead of the storage's. **Every storage access is wrapped**: reading `window.localStorage` at all throws in Safari's private mode and under blocked-cookie policies, and `setItem` throws on a full quota — a lost preference must never cost the view, so the hook degrades to plain state. `NaN`, an empty string and a partly numeric value (`"320px"`) all fall back to `defaultWidth` (`Number("")` is `0`, which would otherwise clamp to `minWidth` and look deliberate). SSR-safe: no `window`, no storage, `defaultWidth`. `storage` is injectable, which is what makes the suite's oracle an in-memory `Storage` rather than the runner's. Not in scope and likely next: a boolean sibling for the open state |
 
 ### Page templates (`src/templates/`)
 One template per page category of the migration order — real importable
@@ -326,6 +331,16 @@ components (`AppShellLayout`, `AuthLayout`, `DashboardLayout`, `FormLayout`,
   node, mounted once, as `content` while `leftOpen` and as `collapsedPreview`
   otherwise, so minimising shrinks the column to icons instead of emptying it.
   Below `lg` the shown column still ignores the collapse state entirely.
+  **Since 0.36.0 the same rule covers the column's width**: `leftWidth` and
+  `leftResize` are forwarded flat, in the spelling of the column's other props,
+  and `leftResize` is typed as `AppShellPanel["resize"]` rather than re-spelled,
+  so the template's surface cannot drift from the component's. Until then the
+  nav column was `AppShell`'s 256 default and nothing else — a consumer could
+  hand the *right* column a whole `AppShellPanel` (`rightPanel`, width and
+  resize included) but had no way at all to widen the left one, which is what
+  forced JustRAG's KB screen to shrink its right column to match (KI-94). Both
+  props are optional and default to the component's behaviour, which is the
+  condition the next sentence states.
   Forwarding is only additive as long as the props stay optional and keep the
   component's defaults — a forwarded prop with a new default at template level
   is a behaviour change in disguise.
@@ -455,6 +470,95 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.36.0** — **Both shell columns are drag-resizable, the left one's width is
+  finally reachable from `AppShellLayout`, and a width can be persisted with
+  `usePersistedWidth`.** Additive: every call site written before this release
+  renders the same DOM.
+
+  `AppShellPanel` gains an optional `resize` object (`AppShellPanelResize`:
+  `minWidth`, `maxWidth`, `onWidthChange`, `label`) — one object rather than
+  four loose optionals, so a handle without bounds cannot be expressed.
+  `AppShellLayout` gains `leftWidth?: number` and `leftResize?:
+  AppShellPanel["resize"]`; the right column already arrives whole as
+  `rightPanel`, so it needed nothing. New export: `AppShellPanelResize`.
+
+  ```tsx
+  // The app owns the numbers; `usePersistedWidth` (new, below) is the opt-in
+  // way to make them survive a reload. Plain `useState` works just as well.
+  const [leftWidth, setLeftWidth] = usePersistedWidth("myapp.kb.leftWidth", {
+    defaultWidth: 300, minWidth: 200, maxWidth: 560,
+  });
+  const [rightWidth, setRightWidth] = usePersistedWidth("myapp.kb.rightWidth", {
+    defaultWidth: 280, minWidth: 200, maxWidth: 520,
+  });
+
+  <AppShellLayout
+    logo={logo} nav={nav} leftOpen={leftOpen} onLeftOpenChange={setLeftOpen}
+    leftWidth={leftWidth}
+    leftResize={{ minWidth: 200, maxWidth: 560, onWidthChange: setLeftWidth,
+                  label: t("resizeNavigation") }}
+    rightPanel={{
+      ...sources,
+      width: rightWidth,
+      resize: { minWidth: 200, maxWidth: 520, onWidthChange: setRightWidth,
+                label: t("resizeSources") },
+    }}
+    mobileTabs={TABS} activeMobileTab={tab} onMobileTabChange={setTab}
+    mobileTabBarLabel={t("switchArea")}
+  >
+    {page}
+  </AppShellLayout>
+  ```
+
+  **Why now.** The two frames in this library disagreed: `WorkspaceLayout`
+  composed `SidePanel` + `ResizeHandle` per pane, `AppShell` composed the same
+  `SidePanel` and rendered no handle at all. JustRAG moved its knowledge-base
+  screen onto `AppShellLayout`, lost both handles, and then had to shrink its
+  right column to the left one's fixed 256px because widening the left was
+  impossible from outside (KI-94, and the TODO in its `KbWorkspaceLayout.tsx`).
+
+  **The same widget, not a second mechanism.** `AppShell` renders
+  `ResizeHandle` the way `WorkspaceLayout` always has: `side` = the column's
+  side (so the arrow keys mirror — a left column grows on `→`, a right one on
+  `←`), `value` = the column's width, and `controls` = the column root's id,
+  minted with `useId` in `AppShell` and passed to `SidePanel` as `id`, per the
+  „`aria-controls` points at the pane root" decision in `resize-handle.mdx`.
+  The handle exists only while the column is **expanded** (the collapsed rail
+  is a fixed 60px, so a separator there would report a value nothing responds
+  to) and only from **`lg`** up (below it the shell shows one area at a time —
+  nothing to resize against). `ResizeHandle`, `SidePanel` and `WorkspaceLayout`
+  are **unchanged**.
+
+  **Persistence ships with it, opt-in: `usePersistedWidth`** (new, exported
+  from `src/lib/persisted-width.ts`). The design system is the single source of
+  truth for it, rather than every consumer writing the same twenty lines:
+
+  ```tsx
+  const [leftWidth, setLeftWidth] = usePersistedWidth("myapp.kb.leftWidth", {
+    defaultWidth: 300, minWidth: 200, maxWidth: 560,
+  });
+  ```
+
+  The **components stay controlled** — no width lives inside `AppShellPanel`,
+  the hook is what a consumer plugs into `width` + `resize.onWidthChange`, and
+  an app persisting the number elsewhere just does not call it. The consumer
+  passes the **full key** (no library namespace: one shared prefix would
+  collide across the apps on a device). Read once per mount, write-through on
+  set, clamped on read but not on write, every storage access wrapped
+  (Safari private mode and blocked-cookie policies throw on the *read* of
+  `window.localStorage` itself), garbage and empty entries fall back to
+  `defaultWidth`, SSR-safe. `storage` is injectable — the suite's oracle is an
+  in-memory `Storage` it inspects directly, and the story passes one so a test
+  run leaves nothing behind. A boolean sibling for the open state is **not** in
+  this release; it is the obvious next card.
+
+  Verified in Chromium by the new story `AppShellLayout` →
+  `WithResizableColumns`: focus the left separator, `→` three times, and the
+  **measured** `<aside>` box grew by 30px from its measured start and equals
+  the separator's `aria-valuenow` (measured 300 → 330); mirrored for the right
+  column with `←`. The oracle is the browser's layout against the story's own
+  state, never a literal read out of the component.
+
 - **0.35.0** — `SidePanel`'s collapsed rail is the expanded column's vertical
   mirror. It renders the same three boxes the expanded pane does — the `h-16`
   chrome row (in the rail it holds the expand button alone), the scrolling
