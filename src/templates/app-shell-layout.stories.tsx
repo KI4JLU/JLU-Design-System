@@ -21,6 +21,7 @@ import { SidebarUserMenu } from "../components/sidebar-user-menu";
 import { SIDE_PANEL_RAIL_WIDTH } from "../components/side-panel-variants";
 import { ThemeToggle } from "../components/theme-toggle";
 import type { MobilePaneTab } from "../lib/pane-layout";
+import { usePersistedWidth } from "../lib/persisted-width";
 import * as dashboardStories from "./dashboard-layout.stories";
 import * as sectionedGridStories from "./sectioned-grid-layout.stories";
 
@@ -474,6 +475,166 @@ export const CollapsedRailKeepsVerticalPositions: Story = {
        die Unterkante darf es nicht. */
     await expect(offsetBottom(await canvas.findByRole("button", { name: /Jamie Lee/ }))).toBe(
       openFootBottom,
+    );
+  },
+};
+
+/**
+ * Der Story-Speicher: ein `Storage` im Arbeitsspeicher, damit der
+ * Storybook-Vitest-Lauf nicht in die echte `localStorage` des Runners
+ * schreibt. Eine App lässt `storage` weg — dann ist es `window.localStorage`,
+ * und genau das ist der Unterschied zwischen dieser Story und dem Ernstfall.
+ */
+function memoryStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    key: (index: number) => [...map.keys()][index] ?? null,
+    getItem: (key: string) => map.get(key) ?? null,
+    setItem: (key: string, value: string) => void map.set(key, String(value)),
+    removeItem: (key: string) => void map.delete(key),
+    clear: () => map.clear(),
+  } satisfies Storage;
+}
+
+const storyStorage = memoryStorage();
+
+/**
+ * Beide Breiten über `usePersistedWidth` — **genau die Verdrahtung, die eine
+ * App schreibt**, bis auf das injizierte `storage`. Der Konsument übergibt den
+ * **ganzen** Schlüssel (das Paket vergibt keinen Namensraum), und die
+ * Komponenten bleiben kontrolliert: der Haken ist das Stück, das in `width`
+ * und `resize.onWidthChange` eingehängt wird, kein Default in der Komponente.
+ */
+function ResizableShell(
+  props: Omit<
+    AppShellLayoutProps,
+    "leftOpen" | "onLeftOpenChange" | "leftWidth" | "leftResize" | "rightPanel"
+  >,
+) {
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState("page");
+  const [leftWidth, setLeftWidth] = usePersistedWidth("storybook.appShell.leftWidth", {
+    defaultWidth: 300,
+    minWidth: 200,
+    maxWidth: 560,
+    storage: storyStorage,
+  });
+  const [rightWidth, setRightWidth] = usePersistedWidth("storybook.appShell.rightWidth", {
+    defaultWidth: 280,
+    minWidth: 200,
+    maxWidth: 520,
+    storage: storyStorage,
+  });
+  return (
+    <AppShellLayout
+      {...props}
+      leftOpen={leftOpen}
+      onLeftOpenChange={setLeftOpen}
+      activeMobileTab={activeTab}
+      onMobileTabChange={setActiveTab}
+      leftWidth={leftWidth}
+      leftResize={{
+        minWidth: 200,
+        maxWidth: 560,
+        onWidthChange: setLeftWidth,
+        label: "Breite der Navigation ändern",
+      }}
+      rightPanel={{
+        content: (
+          <div className="flex flex-col gap-stack-md p-gutter">
+            <Card className="p-4">Quelle 1</Card>
+            <Card className="p-4">Quelle 2</Card>
+          </div>
+        ),
+        header: <span className="truncate font-title-md">Quellen</span>,
+        label: "Quellen",
+        isOpen: true,
+        onOpenChange: () => {},
+        width: rightWidth,
+        expandLabel: "Quellen ausklappen",
+        collapseLabel: "Quellen einklappen",
+        resize: {
+          minWidth: 200,
+          maxWidth: 520,
+          onWidthChange: setRightWidth,
+          label: "Breite der Quellen ändern",
+        },
+      }}
+    >
+      <DashboardPage />
+    </AppShellLayout>
+  );
+}
+
+/**
+ * **Seit 0.36.0: beide Spalten sind ziehbar.** Die Shell komponiert dafür
+ * `SidePanel` + `ResizeHandle` — genau die Komposition, die `WorkspaceLayout`
+ * seit 0.23.1 hat; es gibt keinen zweiten Mechanismus und keine Speicherung im
+ * Paket. Die Breiten sind **Zustand der App** (`useState` hier,
+ * `localStorage`/Context in einer echten App): `onWidthChange` liefert jeden
+ * geklemmten Wert, die App reicht ihn über `leftWidth` bzw. `rightPanel.width`
+ * zurück.
+ *
+ * Die `play`-Funktion misst in Chromium, was jsdom nicht kann: sie fokussiert
+ * den linken Trenner, drückt dreimal `→` und prüft, dass die **gemessene**
+ * Box der Spalte um 3 × `step` (30px) gewachsen ist und exakt dem
+ * `aria-valuenow` des Trenners entspricht. Für die rechte Spalte dasselbe mit
+ * `←` — die Pfeiltasten sind pro Seite gespiegelt, weil die Taste den
+ * *Trenner* bewegt und `aria-valuenow` die *Spalte* meldet.
+ *
+ * Orakel: das Layout des Browsers gegen den Zustand der Story — keine im
+ * Komponentencode abgelesene Zahl. Startbreiten werden gemessen, nicht
+ * behauptet.
+ *
+ * **Die Breiten hält `usePersistedWidth`** (0.36.0) — der Haken, der die
+ * gezogene Breite pro Gerät überlebt, mit dem **ganzen** Schlüssel vom
+ * Konsumenten. Diese Story reicht ein `Storage` im Arbeitsspeicher herein,
+ * damit der Testlauf nichts in der echten `localStorage` hinterlässt; eine App
+ * lässt `storage` weg.
+ */
+export const WithResizableColumns: Story = {
+  args: { pageLabel: "Wissensbasis", headerActions: <ThemeToggle /> },
+  render: (args) => <ResizableShell {...args} />,
+  play: async ({ canvas, userEvent }) => {
+    const step = 10;
+
+    // Linke Spalte: `→` verbreitert sie.
+    const leftColumn = await canvas.findByRole("complementary", {
+      name: "Hauptnavigation",
+    });
+    const leftHandle = await canvas.findByRole("separator", {
+      name: "Breite der Navigation ändern",
+    });
+    const leftBefore = leftColumn.getBoundingClientRect().width;
+    leftHandle.focus();
+    await userEvent.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
+    const leftAfter = leftColumn.getBoundingClientRect().width;
+    await expect(leftAfter).toBe(leftBefore + 3 * step);
+    // Gemessene Box und gemeldeter Wert sind EINE Zahl, nicht zwei.
+    await expect(leftHandle.getAttribute("aria-valuenow")).toBe(String(leftAfter));
+
+    // Rechte Spalte: gespiegelt, also `←`.
+    const rightColumn = await canvas.findByRole("complementary", { name: "Quellen" });
+    const rightHandle = await canvas.findByRole("separator", {
+      name: "Breite der Quellen ändern",
+    });
+    const rightBefore = rightColumn.getBoundingClientRect().width;
+    rightHandle.focus();
+    await userEvent.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}");
+    const rightAfter = rightColumn.getBoundingClientRect().width;
+    await expect(rightAfter).toBe(rightBefore + 3 * step);
+    await expect(rightHandle.getAttribute("aria-valuenow")).toBe(String(rightAfter));
+
+    // Und die Trenner liegen auf den inhaltsseitigen Kanten: links rechts von
+    // der Spalte, rechts links davon.
+    await expect(leftHandle.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      leftColumn.getBoundingClientRect().right - 1,
+    );
+    await expect(rightHandle.getBoundingClientRect().right).toBeLessThanOrEqual(
+      rightColumn.getBoundingClientRect().left + 1,
     );
   },
 };

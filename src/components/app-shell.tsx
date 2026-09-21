@@ -7,6 +7,7 @@ import {
   type MobilePaneTab,
 } from "../lib/pane-layout";
 import { BottomTabBar } from "./bottom-tab-bar";
+import { ResizeHandle } from "./resize-handle";
 import { SidePanel } from "./side-panel";
 
 /**
@@ -24,6 +25,33 @@ import { SidePanel } from "./side-panel";
  * the shell only; not confirmed with the design-system owner.
  */
 const DEFAULT_PANEL_WIDTH = 256;
+
+/**
+ * Makes a shell column drag-resizable (0.36.0). Present on an `AppShellPanel`,
+ * `AppShell` renders a `ResizeHandle` on that column's content-facing edge —
+ * the same composition `WorkspaceLayout` has had since 0.23.1, not a second
+ * mechanism.
+ *
+ * **One object, all-or-nothing, and that is the point.** As four loose
+ * optionals („handle without bounds" — a separator whose `aria-valuemin` /
+ * `-valuemax` are missing, i.e. an APG splitter that is not one) would be
+ * expressible; here it cannot be. `width` stays separate because it exists
+ * without resizing too (it has a default, these have none: bounds are the
+ * app's decision, and `WorkspacePane` bakes none in either).
+ *
+ * **No persistence here.** The consumer stores the number — see the note on
+ * `AppShellPanel` — so this carries a callback and no storage key.
+ */
+export interface AppShellPanelResize {
+  /** Smallest width the handle allows, in px (`aria-valuemin`, Home). */
+  minWidth: number;
+  /** Largest width the handle allows, in px (`aria-valuemax`, End). */
+  maxWidth: number;
+  /** Receives every clamped width — from the arrow keys and from the drag. */
+  onWidthChange: (width: number) => void;
+  /** Accessible name of the separator, e.g. „Breite der Navigation ändern". */
+  label: string;
+}
 
 /**
  * One shell column: its content plus the controlled state it shares with the
@@ -62,6 +90,18 @@ export interface AppShellPanel {
   onOpenChange: (isOpen: boolean) => void;
   /** Expanded width in px. Default 256 (= the `--width-sidebar` token). */
   width?: number;
+  /**
+   * Given, the column is drag-resizable: `AppShell` renders a `ResizeHandle`
+   * on its content-facing edge (0.36.0). Omitted, there is no separator at
+   * all — every call site written before this release is unchanged.
+   *
+   * The handle appears **only while the column is expanded** (the collapsed
+   * rail is a fixed 60px, so a separator there would report a value with no
+   * visible effect — `WorkspaceLayout`'s rule, unchanged) and **only from
+   * `lg` up** (below it the shell shows one area at a time; there is nothing
+   * to resize a column against).
+   */
+  resize?: AppShellPanelResize;
   /** Accessible name of the expand button (collapsed state). */
   expandLabel: string;
   /** Accessible name of the collapse button (expanded state). */
@@ -87,6 +127,14 @@ export interface AppShellPanel {
  * one baseline. The collapsed form **is** the 60px rail; a shell that wants
  * icons in it passes `collapsedPreview`. `Sidebar` is no longer what this
  * frame renders — it stays exported for a standalone nav column.
+ *
+ * **Both columns are drag-resizable since 0.36.0** — opt-in, through
+ * `AppShellPanel.resize`. Given, the shell composes `SidePanel` +
+ * `ResizeHandle` per column, which is what `WorkspaceLayout` has always done;
+ * the shell had the panes but not the handles, so an app on `AppShellLayout`
+ * could not widen its nav column at all (JustRAG's KB screen, KI-94). Omitted,
+ * nothing changes: no separator, no id on the `<aside>`, the 256px default.
+ * The width itself stays the consumer's number — this package stores nothing.
  *
  * **Below `lg`: one area at a time plus a `BottomTabBar`**, the arrangement
  * `WorkspaceLayout` already implements, chosen in JS (`useIsDesktop`) for the
@@ -179,6 +227,24 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
     const isDesktop = useIsDesktop();
 
     /*
+      Ids for the two columns, so a handle's `aria-controls` can name the
+      column it resizes (APG splitter). Minted HERE and not inside `SidePanel`,
+      for `WorkspaceLayout`'s reason: this component is the one place that
+      composes column and handle, so it is the one place that knows both ends
+      of the reference. The id lands on the pane ROOT (`SidePanel`'s `<aside>`,
+      through its pass-through `id`) — the element carrying the inline width
+      that `aria-valuenow` reports — not on the inner body region the collapse
+      toggle points at: that reference is about visibility, this one about
+      size.
+
+      `useId` is called unconditionally (hooks rule) but the attribute is only
+      *rendered* on a resizable column, so a shell without `resize` produces
+      exactly the DOM it produced before 0.36.0.
+    */
+    const leftPaneId = React.useId();
+    const rightPaneId = React.useId();
+
+    /*
       The chrome bar. `h-16` is on the row itself and not derived from its
       contents, so the bar is 64px tall whatever is hung into it — the same
       chrome unit as a `SidePanel` header row, and a published geometry
@@ -197,8 +263,10 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
       disappearing with the hidden body. `content` stays mounted while
       collapsed, so scroll position and half-typed input survive.
     */
-    const column = (panel: AppShellPanel, side: "left" | "right") => (
+    const column = (panel: AppShellPanel, side: "left" | "right", paneId: string) => (
       <SidePanel
+        // Only on a resizable column — see the id comment above.
+        id={panel.resize ? paneId : undefined}
         side={side}
         isOpen={panel.isOpen}
         width={panel.width ?? DEFAULT_PANEL_WIDTH}
@@ -214,6 +282,30 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
         <div className="min-h-0 flex-1 overflow-y-auto">{panel.content}</div>
       </SidePanel>
     );
+
+    /*
+      The column's separator, or nothing. Two gates, both `WorkspaceLayout`'s:
+      no `resize` contract → the column is not resizable at all, and a
+      collapsed column is the fixed-width rail, where a separator would report
+      a value nothing responds to. The third gate — „not below `lg`" — is the
+      arrangement itself: the narrow branch below returns before this is
+      called.
+
+      `value` reads the same `panel.width ?? DEFAULT_PANEL_WIDTH` the column
+      does, so `aria-valuenow` and the inline width are one number and not two.
+    */
+    const handle = (panel: AppShellPanel, side: "left" | "right", paneId: string) =>
+      panel.resize && panel.isOpen ? (
+        <ResizeHandle
+          side={side}
+          value={panel.width ?? DEFAULT_PANEL_WIDTH}
+          min={panel.resize.minWidth}
+          max={panel.resize.maxWidth}
+          label={panel.resize.label}
+          controls={paneId}
+          onValueChange={panel.resize.onWidthChange}
+        />
+      ) : null;
 
     if (!isDesktop) {
       // One lookup in the consumer's own table — not a derivation: the app
@@ -273,12 +365,26 @@ const AppShell = React.forwardRef<HTMLDivElement, AppShellProps>(
         )}
         {...props}
       >
-        {left && column(left, "left")}
+        {/* Column, then its separator: the handle sits on the edge that faces
+            the content, which is the right edge of a left column and the left
+            edge of a right one — carried by DOM order, exactly as
+            `WorkspaceLayout` does it, so tab order matches the visual one. */}
+        {left && (
+          <>
+            {column(left, "left", leftPaneId)}
+            {handle(left, "left", leftPaneId)}
+          </>
+        )}
         <div className="flex min-w-0 flex-1 flex-col">
           {bar}
           <main className={PANE_FILL}>{children}</main>
         </div>
-        {right && column(right, "right")}
+        {right && (
+          <>
+            {handle(right, "right", rightPaneId)}
+            {column(right, "right", rightPaneId)}
+          </>
+        )}
       </div>
     );
   },

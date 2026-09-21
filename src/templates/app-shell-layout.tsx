@@ -32,6 +32,14 @@ import { useIsDesktop } from "../lib/pane-layout";
  * that contract and could not reach that id. What the slot pattern protects is
  * still true: the labels are props, so the control is localizable.
  *
+ * **The left column's width is forwarded since 0.36.0** — `leftWidth` and
+ * `leftResize`, both optional. Until then the nav column was the 256px default
+ * and nothing else: a consumer could pass a whole `AppShellPanel` for the
+ * right column (`rightPanel`, width and all) but had no way at all to widen
+ * the left one, which is what forced JustRAG's KB screen to shrink its right
+ * column to match (KI-94). The two props close that asymmetry without
+ * changing a single existing call site.
+ *
  * **The bar has three regions** (0.30.0): `pageLabel` on the left, `search`
  * clamped to the **bar's** centre, `headerActions` on the right. The two side
  * regions are equal-width flex children (`flex-1 basis-0`), which is what
@@ -128,6 +136,33 @@ export interface AppShellLayoutProps
   /** Accessible name of the toggle while collapsed. Default "Navigation ausklappen". */
   expandLabel?: string;
   /**
+   * Expanded width of the left column in px (0.36.0). Omitted, `AppShell`'s
+   * 256 default applies — exactly the width every call site written before
+   * this release gets.
+   *
+   * **Flat, and spelled like the column's other props** (`leftOpen`,
+   * `collapseLabel`): the left column is not handed over as an object here, it
+   * is assembled from `logo` / `nav` / `sidebarFooter` / `navLabel` /
+   * `leftOpen`, so its width joins that list rather than introducing a
+   * half-panel object beside it. The *right* column already arrives whole as
+   * `rightPanel`, so nothing new is needed there — its `width` and `resize`
+   * sit on that object.
+   */
+  leftWidth?: number;
+  /**
+   * Makes the left column drag-resizable (0.36.0) — the same all-or-nothing
+   * contract `AppShellPanel.resize` carries, forwarded verbatim rather than
+   * re-spelled, so the two cannot drift. Omitted, there is no separator,
+   * exactly as before this release.
+   *
+   * The width stays the app's state: `onWidthChange` reports every clamped
+   * value and the app hands it back in through `leftWidth`. This package
+   * stores nothing — a remembered width here would be a second truth next to
+   * the one the app persists (the same reasoning as `leftOpen`'s missing
+   * `defaultOpen`).
+   */
+  leftResize?: AppShellPanel["resize"];
+  /**
    * An optional second column on the right (details, sources, help), passed
    * whole — `AppShell`'s own `AppShellPanel`, not re-spelled as six props. The
    * shell renders no right column when it is omitted: no rail, no landmark.
@@ -149,6 +184,8 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
       onLeftOpenChange,
       collapseLabel = "Navigation einklappen",
       expandLabel = "Navigation ausklappen",
+      leftWidth,
+      leftResize,
       rightPanel,
       mobileTabs,
       activeMobileTab,
@@ -293,6 +330,12 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
           onOpenChange: onLeftOpenChange,
           collapseLabel,
           expandLabel,
+          /* Both `undefined` unless the app asked: `width: undefined` is what
+             makes `AppShell` fall back to its 256 default, and `resize:
+             undefined` is what leaves the column without a separator — so an
+             unchanged call site renders the unchanged DOM. */
+          width: leftWidth,
+          resize: leftResize,
         }}
         right={rightPanel}
         mobileTabs={mobileTabs}

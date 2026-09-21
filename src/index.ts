@@ -11,6 +11,7 @@ export {
   AppShell,
   type AppShellProps,
   type AppShellPanel,
+  type AppShellPanelResize,
 } from "./components/app-shell";
 export { Avatar, type AvatarProps } from "./components/avatar";
 export { Badge, type BadgeProps } from "./components/badge";
@@ -219,3 +220,13 @@ export { type PaneId, type MobilePaneTab } from "./lib/pane-layout";
  * the union.
  */
 export { type HeadingLevel } from "./lib/heading-level";
+/**
+ * Opt-in persistence for a column width (0.36.0): the piece a consumer plugs
+ * into `AppShellLayout.leftWidth` + `leftResize.onWidthChange` (or any
+ * `AppShellPanel` / `WorkspacePane`) so the user's size survives a reload, per
+ * device. The components stay controlled — this is not a default inside them.
+ */
+export {
+  usePersistedWidth,
+  type PersistedWidthOptions,
+} from "./lib/persisted-width";
