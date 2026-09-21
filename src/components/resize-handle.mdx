@@ -131,15 +131,35 @@ angekündigt.
 
 ## Aussehen
 
-Randlos und im Ruhezustand unsichtbar; `hover` tönt mit `bg-outline-variant`,
-während des Ziehens füllt `bg-primary`. Die Randlinie zwischen Bereich und
-Inhalt zeichnet das `SidePanel` (`side`), nicht der Griff — deshalb entstehen
-keine zwei benachbarten 1px-Linien und es braucht keine negativen Margins.
+**Seit 0.38.0 belegt der Griff keine Layout-Breite.** Der Wirt ist `w-0`, die
+Trefferfläche ein `::after`-Overlay: `absolute inset-y-0 -left-1 w-2`, also 8px
+**über** der Randlinie, je 4px in beide Nachbarn hinein, per `relative z-10`
+über beide gelegt. Randlos und im Ruhezustand unsichtbar bleibt er wie zuvor;
+`hover` tönt das Overlay mit `bg-outline-variant`, während des Ziehens füllt
+`bg-primary`, und auch der Fokusring sitzt auf dem Overlay — der Wirt hat keine
+Box, auf der ein Ring läge. Die Randlinie zwischen Bereich und Inhalt zeichnet
+weiterhin das `SidePanel` (`side`), nicht der Griff — deshalb entstehen keine
+zwei benachbarten 1px-Linien und es braucht keine negativen Margins.
 
-Die Trefferfläche ist 6px breit: bewusst eine Zeiger- und Tastatur-Affordanz für
-breite Viewports. Auf schmalen Bildschirmen werden keine Breiten gezogen, dort
-wechselt die `BottomTabBar` die Ansicht — deshalb ist hier kein 44px-Touch-Ziel
-vorgesehen.
+Das ist die übliche Splitter-Form: **null Breite in der Reihe, breite
+Trefferfläche darüber.** Der Grund ist ein Bericht aus JustRAGs
+Wissensbasis-Ansicht (09/2026): als 6px breites, transparentes Flex-Element
+schob der Griff die Nachbarn auseinander, und durch die Lücke schien der
+`bg-surface`-Hintergrund der Shell — zwischen zwei
+`bg-surface-container-lowest`-Flächen ein sichtbarer getönter Streifen. Eine
+einzelne Spurfarbe kann nicht beide Nachbarn auf jeder Höhe treffen; null
+Breite braucht gar keine.
+
+Die Trefferfläche ist damit 8px statt 6px breit: bewusst eine Zeiger- und
+Tastatur-Affordanz für breite Viewports. Auf schmalen Bildschirmen werden keine
+Breiten gezogen, dort wechselt die `BottomTabBar` die Ansicht — deshalb ist hier
+kein 44px-Touch-Ziel vorgesehen.
+
+Geometrie und Hit-Testing sind in Chromium festgenagelt, nicht in jsdom:
+`AppShellLayout` → `HandleHasNoLayoutWidth` misst, dass die Box 0px breit ist,
+dass die rechte Kante der linken Spalte **die** linke Kante der Hauptspalte ist,
+dass `elementFromPoint` auf dieser Linie ±3px den Griff liefert (±5px nicht mehr)
+und dass ein an einem so gefundenen Punkt begonnener Zug weiterhin verändert.
 
 Screenreader kündigen `aria-valuenow` als nackte Zahl an. Wer „320 Pixel" hören
 möchte, gibt zusätzlich ein übersetztes `aria-valuetext` mit — die Prop wird
