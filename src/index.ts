@@ -230,3 +230,41 @@ export {
   usePersistedWidth,
   type PersistedWidthOptions,
 } from "./lib/persisted-width";
+/**
+ * Composer (PromptInput): the chat input frame — textarea, tools row, submit,
+ * attachments, action menu, model select. Vendored from Vercel AI Elements
+ * (`registry.ai-sdk.dev/prompt-input`) and re-pointed to JLU tokens; speaks
+ * the AI SDK vocabulary (`ChatStatus`, `FileUIPart`) so it plugs into
+ * `useChat` unchanged. `InputGroup`, `Command`, `HoverCard` are its building
+ * blocks and exported alongside.
+ */
+export * from "./components/prompt-input";
+export {
+  promptInputFrameVariants,
+  promptInputControlShape,
+  type PromptInputShape,
+} from "./components/prompt-input-variants";
+export {
+  PromptInputAdaptiveTextarea,
+  type PromptInputAdaptiveTextareaProps,
+} from "./components/prompt-input-adaptive-textarea";
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "./components/input-group";
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "./components/command";
+export { HoverCard, HoverCardTrigger, HoverCardContent } from "./components/hover-card";
