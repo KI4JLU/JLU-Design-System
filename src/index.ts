@@ -268,3 +268,4 @@ export {
   CommandSeparator,
 } from "./components/command";
 export { HoverCard, HoverCardTrigger, HoverCardContent } from "./components/hover-card";
+export { PdfThumbnail, type PdfThumbnailProps } from "./components/pdf-thumbnail";
