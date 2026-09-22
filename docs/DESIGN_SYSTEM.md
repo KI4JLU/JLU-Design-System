@@ -168,7 +168,7 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Badge` (+ `badgeVariants`) | `badge.tsx` / `badge-variants.ts` | status chip: `tone` = neutral/primary/secondary/success/warning/error/info; `appearance` = filled pill or inline text |
 | `Button` (+ `buttonVariants`) | `button.tsx` / `button-variants.ts` | variants: default/secondary/outline/ghost/destructive/destructive-outline/link; sizes: default/sm/lg/icon; `asChild` via Radix Slot |
 | `Card` (+ Header/Title/Description/Content/Footer) | `card.tsx` | surface + border + `shadow-card` |
-| `PromptInput` (+ `PromptInputTextarea`, `PromptInputAdaptiveTextarea`, `PromptInputButton`, `PromptInputSubmit`, `PromptInputActionMenu*`, `PromptInputAttachments`/`PromptInputAttachment`, `promptInputFrameVariants`, `promptInputControlShape`) | `prompt-input.tsx` / `prompt-input-adaptive-textarea.tsx` / `prompt-input-variants.ts` | **0.42.0.** The chat composer: form + `InputGroup` frame, controls the consumer places (absolute, bottom corners), attachments (dialog, paste, drop) with hover preview. `shape` = `rounded` \| `pill` decides frame **and** control radius in one place. `PromptInputSubmit`: `status` (AI SDK `ChatStatus`) swaps the glyph, opt-in `voice` + `idle` for speech input. Vendored file — re-vendor rather than hand-fix upstream patterns |
+| `PromptInput` (+ `PromptInputTextarea`, `PromptInputAdaptiveTextarea`, `PromptInputButton`, `PromptInputSubmit`, `PromptInputActionMenu*`, `PromptInputAttachments`/`PromptInputAttachment`, `promptInputFrameVariants`, `promptInputControlShape`) | `prompt-input.tsx` / `prompt-input-adaptive-textarea.tsx` / `prompt-input-variants.ts` | **0.42.0.** The chat composer: form + `InputGroup` frame, controls the consumer places (absolute, bottom corners), attachments (dialog, paste, drop) with hover preview. `shape` = `rounded` \| `pill` decides frame **and** control radius in one place (pill expanded → `rounded-2xl`). `PromptInputSubmit`: `status` (AI SDK `ChatStatus`) swaps the glyph, opt-in `voice` + `idle` for speech input. Vendored file — re-vendor rather than hand-fix upstream patterns |
 | `InputGroup` (+ Addon/Button/Text/Input/Textarea) | `input-group.tsx` | **0.42.0.** shadcn input-group on JLU tokens; `InputGroupButton` follows the enclosing `PromptInput`'s `shape` |
 | `Command` (+ Dialog/Input/List/Empty/Group/Item/Shortcut/Separator) | `command.tsx` | **0.42.0.** cmdk palette on JLU tokens; used by `PromptInputCommand*` |
 | `HoverCard` (+ Trigger/Content) | `hover-card.tsx` | **0.42.0.** Radix hover card, `surface-container-lowest` + `shadow-overlay` like Popover |
@@ -489,9 +489,10 @@ Until then the git path carries us; keep the README's git section first.
   `FileUIPart`) so it plugs into `useChat` unchanged; brings `InputGroup`,
   `Command` (cmdk) and `HoverCard` as building blocks. **`shape`** is the one
   decision for the frame and every control inside: `rounded` (default) or
-  `pill` — a capsule while the composer is one line, back to `rounded-xl` once
-  the text has moved above the control bar or files are attached; controls
-  read it through `promptInputControlShape`. **`PromptInputAdaptiveTextarea`**:
+  `pill` — a capsule while the composer is one line, `rounded-2xl` (new
+  `--radius-2xl`, 1.5rem: half a control row, so the corners keep following the
+  circular controls) once the text has moved above the control bar or files
+  are attached; controls read it through `promptInputControlShape`. **`PromptInputAdaptiveTextarea`**:
   one line between the controls, full width above a control bar as soon as the
   text wraps — measured, not guessed, and transition-free (a `transition-all`
   padding slide made the probe flip mode per keystroke). Attachment hover card

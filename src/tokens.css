@@ -216,6 +216,11 @@
   --radius-DEFAULT: 0.25rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+  /* 2xl (0.42.0): the corner a pill-shaped frame keeps once it is taller than
+   * a single row — half the height of one 48px control row, so the frame's
+   * corners follow the circular controls inside it instead of snapping to
+   * the 12px card radius. Overrides Tailwind's default 1rem. */
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
   /* Interaktions-Radien — EIN Regler pro Kontrollart. `rounded-action` steuert
