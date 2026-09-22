@@ -168,6 +168,11 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `Badge` (+ `badgeVariants`) | `badge.tsx` / `badge-variants.ts` | status chip: `tone` = neutral/primary/secondary/success/warning/error/info; `appearance` = filled pill or inline text |
 | `Button` (+ `buttonVariants`) | `button.tsx` / `button-variants.ts` | variants: default/secondary/outline/ghost/destructive/destructive-outline/link; sizes: default/sm/lg/icon; `asChild` via Radix Slot |
 | `Card` (+ Header/Title/Description/Content/Footer) | `card.tsx` | surface + border + `shadow-card` |
+| `PromptInput` (+ `PromptInputTextarea`, `PromptInputAdaptiveTextarea`, `PromptInputButton`, `PromptInputSubmit`, `PromptInputActionMenu*`, `PromptInputAttachments`/`PromptInputAttachment`, `promptInputFrameVariants`, `promptInputControlShape`) | `prompt-input.tsx` / `prompt-input-adaptive-textarea.tsx` / `prompt-input-variants.ts` | **0.42.0.** The chat composer: form + `InputGroup` frame, controls the consumer places (absolute, bottom corners), attachments (dialog, paste, drop) with hover preview. `shape` = `rounded` \| `pill` decides frame **and** control radius in one place. `PromptInputSubmit`: `status` (AI SDK `ChatStatus`) swaps the glyph, opt-in `voice` + `idle` for speech input. Vendored file — re-vendor rather than hand-fix upstream patterns |
+| `InputGroup` (+ Addon/Button/Text/Input/Textarea) | `input-group.tsx` | **0.42.0.** shadcn input-group on JLU tokens; `InputGroupButton` follows the enclosing `PromptInput`'s `shape` |
+| `Command` (+ Dialog/Input/List/Empty/Group/Item/Shortcut/Separator) | `command.tsx` | **0.42.0.** cmdk palette on JLU tokens; used by `PromptInputCommand*` |
+| `HoverCard` (+ Trigger/Content) | `hover-card.tsx` | **0.42.0.** Radix hover card, `surface-container-lowest` + `shadow-overlay` like Popover |
+| `PdfThumbnail` | `pdf-thumbnail.tsx` | **0.42.0.** First page of a PDF on a canvas via pdf.js (lazy import, worker as `?url` asset); the attachment preview uses it instead of the browser viewer, which paints its own dark canvas and scrollbars |
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
@@ -476,6 +481,26 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.42.0** — **`PromptInput`: the chat composer, vendored from Vercel AI
+  Elements (`registry.ai-sdk.dev/prompt-input`) and re-pointed to JLU tokens.**
+  Compound API (`PromptInput`, `PromptInputTextarea`, `PromptInputButton`,
+  `PromptInputSubmit`, `PromptInputActionMenu*`, `PromptInputAttachments` /
+  `PromptInputAttachment`, …) speaking the AI SDK vocabulary (`ChatStatus`,
+  `FileUIPart`) so it plugs into `useChat` unchanged; brings `InputGroup`,
+  `Command` (cmdk) and `HoverCard` as building blocks. **`shape`** is the one
+  decision for the frame and every control inside: `rounded` (default) or
+  `pill` — a capsule while the composer is one line, back to `rounded-xl` once
+  the text has moved above the control bar or files are attached; controls
+  read it through `promptInputControlShape`. **`PromptInputAdaptiveTextarea`**:
+  one line between the controls, full width above a control bar as soon as the
+  text wraps — measured, not guessed, and transition-free (a `transition-all`
+  padding slide made the probe flip mode per keystroke). Attachment hover card
+  is a fixed 160×192 preview (image, first PDF page via pdf.js
+  `PdfThumbnail`, or a file glyph) with a filetype `Badge`; remove badge on
+  hover. `PromptInputSubmit` gets an opt-in `voice` idle state (audio-lines
+  glyph while the draft is empty) for consumers with a speech-to-text provider.
+  New deps: `ai` (types only), `nanoid`, `cmdk`, `@radix-ui/react-hover-card`,
+  `pdfjs-dist` (lazy, first PDF hover).
 - **0.41.0** — **`SidePanel`'s collapse toggle moves out 8px, not 6px:
   the chevron's *drawn* edge is now on the inset line.** 0.40.0 aligned the
   svg box, but lucide draws 3..21 of a 24-unit viewBox, so the strokes sat
