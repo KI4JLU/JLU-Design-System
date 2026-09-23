@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "../lib/utils";
+import { loadPdfjs } from "../lib/pdf-render";
 
 /**
  * First-page thumbnail of a PDF, rendered with pdf.js into a <canvas>.
@@ -9,9 +10,8 @@ import { cn } from "../lib/utils";
  * could neither match the design system's surface nor stay still. Rendering
  * the page ourselves gives a plain bitmap that letterboxes like an <img>.
  *
- * pdf.js is loaded lazily on first use, so consumers that never preview a PDF
- * do not pay for it. The worker is referenced by URL (`?url`), which Vite
- * resolves in dev and emits as an asset in the library build.
+ * pdf.js loading lives in `lib/pdf-render.ts`, together with
+ * `renderPdfFirstPage` for consumers that want the bitmap ahead of time.
  */
 export interface PdfThumbnailProps
   extends Omit<React.HTMLAttributes<HTMLCanvasElement>, "children"> {
@@ -23,20 +23,6 @@ export interface PdfThumbnailProps
   /** Called once the page is on the canvas, or on failure. */
   onLoad?: () => void;
   onError?: (err: unknown) => void;
-}
-
-let workerConfigured = false;
-
-async function loadPdfjs() {
-  const pdfjs = await import("pdfjs-dist");
-  if (!workerConfigured) {
-    const { default: workerUrl } = await import(
-      "pdfjs-dist/build/pdf.worker.min.mjs?url"
-    );
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-    workerConfigured = true;
-  }
-  return pdfjs;
 }
 
 const PdfThumbnail = React.forwardRef<HTMLCanvasElement, PdfThumbnailProps>(
