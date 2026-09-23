@@ -172,7 +172,9 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `InputGroup` (+ Addon/Button/Text/Input/Textarea) | `input-group.tsx` | **0.42.0.** shadcn input-group on JLU tokens; `InputGroupButton` follows the enclosing `PromptInput`'s `shape` |
 | `Command` (+ Dialog/Input/List/Empty/Group/Item/Shortcut/Separator) | `command.tsx` | **0.42.0.** cmdk palette on JLU tokens; used by `PromptInputCommand*` |
 | `HoverCard` (+ Trigger/Content) | `hover-card.tsx` | **0.42.0.** Radix hover card, `surface-container-lowest` + `shadow-overlay` like Popover |
-| `PdfThumbnail` | `pdf-thumbnail.tsx` | **0.42.0.** First page of a PDF on a canvas via pdf.js (lazy import, worker as `?url` asset); the attachment preview uses it instead of the browser viewer, which paints its own dark canvas and scrollbars |
+| `PdfThumbnail` | `pdf-thumbnail.tsx` | **0.42.0.** First page of a PDF on a canvas via pdf.js (lazy import, worker as `?url` asset); the attachment preview uses it instead of the browser viewer, which paints its own dark canvas and scrollbars. `lib/pdf-render.ts` exports `renderPdfFirstPage` (same fit, off-screen, returns a data URL) and `preloadPdfjs` so a list can pre-render thumbnails before a preview opens |
+| `FilePreview` | `file-preview.tsx` | **0.42.0.** Fixed 160×192 file preview (image / first PDF page via `PdfThumbnail` / file glyph) with a filetype `Badge`; the composer's attachment hover card and JustRAG's sources list share it |
+| `PdfViewer` | `pdf-viewer.tsx` | **0.42.0.** Multi-page PDF viewer on DS surfaces (pdf.js bitmaps, lazy per page, fit-width default, page/zoom toolbar, `toolbarEnd` slot) — replaces `<iframe>` embeds, whose browser viewer ignores the app theme |
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
@@ -496,9 +498,12 @@ Until then the git path carries us; keep the README's git section first.
   one line between the controls, full width above a control bar as soon as the
   text wraps — measured, not guessed, and transition-free (a `transition-all`
   padding slide made the probe flip mode per keystroke). Attachment hover card
-  is a fixed 160×192 preview (image, first PDF page via pdf.js
-  `PdfThumbnail`, or a file glyph) with a filetype `Badge`; remove badge on
-  hover. `PromptInputSubmit` gets an opt-in `voice` idle state (audio-lines
+  is **`FilePreview`** — a fixed 160×192 preview (image, first PDF page via
+  pdf.js `PdfThumbnail`, or a file glyph) with a filetype `Badge`, exported on
+  its own so a consumer's file list can show the same card. A PDF attachment's
+  first page is pre-rendered when the chip mounts (`usePdfPreviewImage`), so
+  the hover card opens with its bitmap instead of decoding on open; remove
+  badge on hover. `PromptInputSubmit` gets an opt-in `voice` idle state (audio-lines
   glyph while the draft is empty) for consumers with a speech-to-text provider.
   New deps: `ai` (types only), `nanoid`, `cmdk`, `@radix-ui/react-hover-card`,
   `pdfjs-dist` (lazy, first PDF hover).
