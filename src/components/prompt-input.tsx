@@ -3,7 +3,6 @@
    the file stays diffable against the registry; re-vendor rather than hand-fix. */
 /* eslint-disable react-refresh/only-export-components, react-hooks/refs, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 
-import { Badge } from "./badge";
 import { Button } from "./button";
 import {
   Command,
@@ -27,7 +26,8 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "./input-group";
-import { PdfThumbnail } from "./pdf-thumbnail";
+import { FilePreview } from "./file-preview";
+import { usePdfPreviewImage } from "../lib/use-pdf-preview";
 import {
   promptInputControlShape,
   promptInputFrameVariants,
@@ -45,7 +45,6 @@ import type { ChatStatus, FileUIPart } from "ai";
 import {
   AudioLinesIcon,
   CornerDownLeftIcon,
-  FileIcon,
   ImageIcon,
   Loader2Icon,
   MicIcon,
@@ -308,16 +307,10 @@ export function PromptInputAttachment({
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
-  // PDFs render natively in an <iframe>; the blob/data URL the attachment
-  // carries is enough, no viewer library needed.
-  const isPdf = data.mediaType === "application/pdf" && Boolean(data.url);
-  // Filetype badge: the extension when the name has one, else the MIME subtype.
-  const extension = filename.includes(".") ? filename.split(".").pop() : undefined;
-  const typeLabel = (extension || data.mediaType?.split("/").pop() || "file")
-    .replace(/^x-/, "")
-    .toUpperCase();
-
   const attachmentLabel = filename || (isImage ? "Image" : "Attachment");
+  // A PDF's first page is rendered when the chip mounts, so the hover card
+  // shows a ready bitmap instead of decoding the PDF while it opens.
+  const pdfImage = usePdfPreviewImage(data.url, data.mediaType);
 
   return (
     <PromptInputHoverCard>
@@ -366,35 +359,14 @@ export function PromptInputAttachment({
         </div>
       </HoverCardTrigger>
       <PromptInputHoverCardContent className="w-auto p-2">
-        {/* Fixed-size card regardless of filename: the preview (picture, first
-            PDF page, or a file glyph) with a filetype badge — nothing else, so a
-            long name never resizes it. The name is the chip's own text. */}
-        <div className="relative flex h-48 w-40 items-center justify-center overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest">
-          {isImage ? (
-            <img
-              alt=""
-              className="max-h-full max-w-full object-contain"
-              height={192}
-              src={data.url}
-              width={160}
-            />
-          ) : isPdf ? (
-            <PdfThumbnail height={192} src={data.url} width={160} />
-          ) : (
-            <FileIcon
-              aria-hidden="true"
-              className="size-12 text-on-surface-variant"
-              strokeWidth={1.25}
-            />
-          )}
-          <Badge
-            appearance="filled"
-            tone="neutral"
-            className="absolute bottom-2 left-2 shadow-card"
-          >
-            {typeLabel}
-          </Badge>
-        </div>
+        {/* Fixed-size card regardless of filename (FilePreview): the picture,
+            first PDF page, or a file glyph with a filetype badge — nothing
+            else, so a long name never resizes it. The name is the chip's text. */}
+        {pdfImage !== undefined ? (
+          <FilePreview filename={filename} loading={pdfImage === null} mediaType={pdfImage ? "image/png" : undefined} url={pdfImage ?? undefined} />
+        ) : (
+          <FilePreview filename={filename} mediaType={data.mediaType} url={data.url} />
+        )}
       </PromptInputHoverCardContent>
     </PromptInputHoverCard>
   );
