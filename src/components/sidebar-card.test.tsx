@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SidebarCard, SidebarSelectionBar } from "./sidebar-card";
 import { SidebarRailItem } from "./sidebar-rail";
+import { SidebarAction } from "./sidebar-action";
 import { UiShapeProvider } from "./ui-shape-provider";
 import { UiShapeToggle } from "./ui-shape-toggle";
 
@@ -204,5 +205,18 @@ describe("SidebarPanel nav slot", () => {
     const nav = screen.getByRole("button", { name: "Übersicht" }).closest('[data-slot="sidebar-panel-nav"]');
     expect(nav?.closest('[data-slot="sidebar-panel-head"]')).not.toBeNull();
     expect(screen.getByText("Karte").closest('[data-slot="sidebar-scroll-area"]')).not.toBeNull();
+  });
+});
+
+// Oracle: the shared row inset (sidebarRowInsetX) — the action row must carry
+// the same side padding as a card of the same shape, so both icons share an axis.
+describe("SidebarAction", () => {
+  it("left-aligns its label and uses the card rows' side inset per shape", () => {
+    const { rerender } = render(<SidebarAction icon={<svg />} shape="pill">Neuer Chat</SidebarAction>);
+    const button = screen.getByRole("button", { name: "Neuer Chat" });
+    expect(button).toHaveClass("justify-start", "px-[7px]", "border");
+    rerender(<SidebarAction icon={<svg />} shape="rounded">Neuer Chat</SidebarAction>);
+    expect(button).toHaveClass("px-3");
+    expect(button).not.toHaveClass("justify-center");
   });
 });

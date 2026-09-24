@@ -182,7 +182,8 @@ export {
   type SidebarCardAction,
   type SidebarSelectionBarProps,
 } from "./components/sidebar-card";
-export { sidebarCardVariants, sidebarIconTileVariants, sidebarRowInset } from "./components/sidebar-card-variants";
+export { sidebarCardVariants, sidebarIconTileVariants, sidebarRowInset, sidebarRowInsetX } from "./components/sidebar-card-variants";
+export { SidebarAction, type SidebarActionProps } from "./components/sidebar-action";
 export { SidebarRail, SidebarRailItem, type SidebarRailItemProps } from "./components/sidebar-rail";
 export { SidebarScrollArea, type SidebarScrollAreaProps } from "./components/sidebar-scroll-area";
 /** One frame for both side columns: fixed head + the list that scrolls. */
