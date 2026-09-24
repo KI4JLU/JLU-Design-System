@@ -50,7 +50,7 @@ const CodeBlock = React.forwardRef<HTMLDivElement, CodeBlockProps>(
             measured in Chromium), and a consuming app that reverts element
             margins in `@layer base` would otherwise push this block away from
             its copy button's positioning context. */}
-        <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-code-surface p-4 pr-24 font-label-sm text-xs text-on-code-surface">
+        <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-code-surface p-4 pr-24 font-mono text-xs text-on-code-surface">
           {code}
         </pre>
         <Button

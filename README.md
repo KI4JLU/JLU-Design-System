@@ -73,7 +73,7 @@ App-Wurzel + `index.html`:
 
 - `<ThemeProvider>` um die App mounten.
 - No-Flash-Skript in den `<head>` übernehmen (siehe Storybook „Theming“).
-- Fonts lädt die App selbst: **Inter, Manrope, JetBrains Mono**.
+- Fonts lädt die App selbst: **Inter, Manrope**. Monospace (`font-mono`) nur für Code, über die System-Schriften — kein Webfont.
 
 ```tsx
 import { ThemeProvider, Button, Card } from "@ki4jlu/design-system";
