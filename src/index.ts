@@ -152,6 +152,24 @@ export {
 } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
+/** App-wide Style (rounded squares / pills) — see ui-shape-context.ts. */
+export { UiShapeProvider, type UiShapeProviderProps } from "./components/ui-shape-provider";
+export { useUiShape, type UiShape, type UiShapeContextValue } from "./components/ui-shape-context";
+export { UiShapeToggle, type UiShapeToggleProps } from "./components/ui-shape-toggle";
+/** Side-panel building blocks: row card, selection bar, collapsed rail. */
+export {
+  SidebarCard,
+  SidebarCardList,
+  SidebarSelectionBar,
+  type SidebarCardProps,
+  type SidebarCardListProps,
+  type SidebarCardAction,
+  type SidebarSelectionBarProps,
+} from "./components/sidebar-card";
+export { sidebarCardVariants, sidebarIconTileVariants } from "./components/sidebar-card-variants";
+export { SidebarRail, SidebarRailItem, type SidebarRailItemProps } from "./components/sidebar-rail";
+/** A panel that replaces a content area, and its titled sections. */
+export { ContentPanel, PanelSection, type ContentPanelProps, type PanelSectionProps } from "./components/content-panel";
 export {
   Toast,
   ToastAction,
@@ -230,3 +248,46 @@ export {
   usePersistedWidth,
   type PersistedWidthOptions,
 } from "./lib/persisted-width";
+/**
+ * Composer (PromptInput): the chat input frame — textarea, tools row, submit,
+ * attachments, action menu, model select. Vendored from Vercel AI Elements
+ * (`registry.ai-sdk.dev/prompt-input`) and re-pointed to JLU tokens; speaks
+ * the AI SDK vocabulary (`ChatStatus`, `FileUIPart`) so it plugs into
+ * `useChat` unchanged. `InputGroup`, `Command`, `HoverCard` are its building
+ * blocks and exported alongside.
+ */
+export * from "./components/prompt-input";
+export {
+  promptInputFrameVariants,
+  promptInputControlShape,
+  type PromptInputShape,
+} from "./components/prompt-input-variants";
+export {
+  PromptInputAdaptiveTextarea,
+  type PromptInputAdaptiveTextareaProps,
+} from "./components/prompt-input-adaptive-textarea";
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "./components/input-group";
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from "./components/command";
+export { HoverCard, HoverCardTrigger, HoverCardContent } from "./components/hover-card";
+export { PdfThumbnail, type PdfThumbnailProps } from "./components/pdf-thumbnail";
+export { preloadPdfjs, renderPdfFirstPage, type RenderPdfFirstPageOptions } from "./lib/pdf-render";
+export { usePdfPreviewImage } from "./lib/use-pdf-preview";
+export { FilePreview, type FilePreviewProps } from "./components/file-preview";
+export { PdfViewer, type PdfViewerProps, type PdfViewerLabels } from "./components/pdf-viewer";
