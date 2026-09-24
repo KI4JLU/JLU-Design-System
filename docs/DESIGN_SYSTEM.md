@@ -176,8 +176,12 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `FilePreview` | `file-preview.tsx` | **0.42.0.** Fixed 160×192 file preview (image / first PDF page via `PdfThumbnail` / file glyph) with a filetype `Badge`; the composer's attachment hover card and JustRAG's sources list share it |
 | `PdfViewer` | `pdf-viewer.tsx` | **0.42.0.** Multi-page PDF viewer on DS surfaces (pdf.js bitmaps, lazy per page, fit-width default, page/zoom toolbar, `toolbarEnd` slot) — replaces `<iframe>` embeds, whose browser viewer ignores the app theme |
 | `UiShapeProvider` / `useUiShape` / `UiShapeToggle` | `ui-shape-*.ts(x)` | **0.42.0.** App-wide Style: rounded squares or pills, remembered per browser, mirrored to `<html data-ui-shape>`. Every shape-aware component defaults to it (`PromptInput`, `Sidebar*`); `--ui-radius-card/box/control/tile` in tokens.css carry it into consumer CSS |
+| `AppearanceProvider` / `useContrast` / `useAccent` / `AccentSwatch` | `ui-shape-provider.tsx` / `appearance-context.ts` / `accent-swatch.tsx` | **0.43.0.** One provider for all appearance preferences: Style, **contrast** (`system` follows `prefers-contrast: more` / forced colours; `more` strengthens rules and muted text and forces a visible focus ring everywhere) and **accent colour** (`standard` JLU blue, teal, violet, green, rose, amber — the whole primary family, light and dark). Each is remembered per browser and mirrored to `<html data-ui-shape data-contrast data-accent>`. `UiShapeProvider` is the same component under its first name |
 | `SidebarCard` (+ `SidebarCardList`, `SidebarSelectionBar`) | `sidebar-card.tsx` | **0.42.0.** Side-panel row card: icon tile (glyph, emoji or type label), one-line title, meta lines, extra controls, checkbox, actions menu; whole-card click; selection mode for batch actions. Pill shape tightens padding and falls back to `rounded-2xl` with meta lines |
 | `SidebarRail` / `SidebarRailItem` | `sidebar-rail.tsx` | **0.42.0.** The collapsed 60px rail's entries: tinted tile, primary on hover/active, `muted`, `iconText`, `variant="action"` for the leading button; wrap in Tooltip/HoverCard for the full title |
+| `SidebarScrollArea` / `useScrollbarGutter` / `useScrollFade` | `sidebar-scroll-area.tsx` / `lib/use-scrollbar-gutter.ts` / `lib/use-scroll-fade.ts` | **0.43.0.** A side panel's scrolling list: content fades out (24px mask) at an edge with more to scroll instead of a hard crop; the scrollbar is moved into the right gutter (padding = gutter − measured bar width, 0 for overlay bars), so cards keep the width of the controls above whether a bar shows or not. The hook works on any scroller (e.g. a `SidebarCardList` that scrolls itself) |
+| `SidebarPanel` | `sidebar-panel.tsx` | **0.43.0.** One frame for both side columns: fixed head (title row + `head`) and the list that alone scrolls (`SidebarScrollArea`). `AppShellLayout` drops its nav padding around it, so left and right columns share insets and heading baseline by construction |
+| `SettingsDialog` / `SettingsRow` | `settings-dialog.tsx` | **0.43.0.** The settings window: left column (search, one `NavItem` per section), close top-right like every Dialog, the section on the right under its title; search filters by label and `keywords`. `SettingsRow` = label + description left, control right, rule below. Radius follows the app-wide Style |
 | `ContentPanel` / `PanelSection` | `content-panel.tsx` | **0.42.0.** A panel that replaces a content area (header + close, scrolling body capped at 880px, pinned footer) and its titled, rule-divided sections |
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
@@ -487,6 +491,33 @@ consumer. Not done yet because it needs an account action nobody has taken:
 Until then the git path carries us; keep the README's git section first.
 
 ### Changelog
+- **0.43.0** — **Side-panel scrollbars no longer narrow the cards.**
+  `useScrollbarGutter(ref, gutter)` measures a scroller's scrollbar and takes
+  its width out of the right padding, so the bar sits in the gutter instead of
+  in the content; `SidebarScrollArea` is the `min-h-0 flex-1 overflow-y-auto`
+  list area built on it, which also fades its content at scrollable edges
+  (`useScrollFade`, a CSS mask — no overlay, no colour to match).
+  **`SidebarPanel`**: one frame for the left and the right column (fixed head
+  + scrolling list); `AppShellLayout`'s nav drops its padding around it.
+  **Style everywhere:** `NavItem` rows, `Input` and `SelectTrigger` follow the
+  app-wide Style too (`--ui-radius-control`; Textarea keeps the field radius);
+  `SettingsDialog`'s section column is a `SidebarPanel`; `SidebarUserMenu`'s
+  trigger and every `DropdownMenu` (popup + rows) follow it as well.
+  `SidebarPanel` takes an optional `nav` slot: fixed `NavItem` rows between
+  the head and the scrolling list, so one column can hold both.
+  **Contrast and accent**: `AppearanceProvider` (the widened `UiShapeProvider`)
+  also holds contrast (`system`/`normal`/`more`; `more` forces focus rings and
+  stronger rules — the accessible default where the OS asks for it) and the
+  accent colour (six families, light + dark); `AccentSwatch` for pickers.
+  **Fix:** `HoverCardContent` is portaled (like `DropdownMenuContent`), so a
+  hover preview is no longer clipped by its trigger's scroll container.
+  **`SettingsDialog`** + **`SettingsRow`**: the settings
+  window (section nav with search, rows of label + control). **Fonts:**
+  JetBrains Mono is gone — `--font-label-sm` (buttons, labels, tabs, chips,
+  segmented controls) is Inter now, and the new `--font-mono` (system
+  monospace stack) is used for code-box content only (`CodeBlock`'s `<pre>`),
+  never for buttons — the copy button included. Consumers can drop
+  the JetBrains Mono webfont.
 - **0.42.0** — **`PromptInput`: the chat composer, vendored from Vercel AI
   Elements (`registry.ai-sdk.dev/prompt-input`) and re-pointed to JLU tokens.**
   Compound API (`PromptInput`, `PromptInputTextarea`, `PromptInputButton`,

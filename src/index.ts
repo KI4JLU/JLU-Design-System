@@ -152,8 +152,24 @@ export {
 } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
-/** App-wide Style (rounded squares / pills) — see ui-shape-context.ts. */
-export { UiShapeProvider, type UiShapeProviderProps } from "./components/ui-shape-provider";
+/** App-wide appearance: Style (rounded / pill), contrast, accent colour. */
+export {
+  AppearanceProvider,
+  UiShapeProvider,
+  type AppearanceProviderProps,
+  type UiShapeProviderProps,
+} from "./components/ui-shape-provider";
+export {
+  useContrast,
+  useAccent,
+  ACCENT_COLORS,
+  type AccentColor,
+  type ContrastChoice,
+  type ResolvedContrast,
+  type ContrastContextValue,
+  type AccentContextValue,
+} from "./components/appearance-context";
+export { AccentSwatch, type AccentSwatchProps } from "./components/accent-swatch";
 export { useUiShape, type UiShape, type UiShapeContextValue } from "./components/ui-shape-context";
 export { UiShapeToggle, type UiShapeToggleProps } from "./components/ui-shape-toggle";
 /** Side-panel building blocks: row card, selection bar, collapsed rail. */
@@ -166,10 +182,19 @@ export {
   type SidebarCardAction,
   type SidebarSelectionBarProps,
 } from "./components/sidebar-card";
-export { sidebarCardVariants, sidebarIconTileVariants } from "./components/sidebar-card-variants";
+export { sidebarCardVariants, sidebarIconTileVariants, sidebarRowInset } from "./components/sidebar-card-variants";
 export { SidebarRail, SidebarRailItem, type SidebarRailItemProps } from "./components/sidebar-rail";
+export { SidebarScrollArea, type SidebarScrollAreaProps } from "./components/sidebar-scroll-area";
+/** One frame for both side columns: fixed head + the list that scrolls. */
+export { SidebarPanel, type SidebarPanelProps } from "./components/sidebar-panel";
+/** Keep a scroller's content at full width: the scrollbar goes into the right gutter. */
+export { useScrollbarGutter } from "./lib/use-scrollbar-gutter";
+/** Fade a scroller's content out at the edges that have more to scroll. */
+export { useScrollFade } from "./lib/use-scroll-fade";
 /** A panel that replaces a content area, and its titled sections. */
 export { ContentPanel, PanelSection, type ContentPanelProps, type PanelSectionProps } from "./components/content-panel";
+/** The settings window (section nav + search + rows). */
+export { SettingsDialog, SettingsRow, type SettingsDialogProps, type SettingsSection, type SettingsRowProps } from "./components/settings-dialog";
 export {
   Toast,
   ToastAction,
