@@ -287,6 +287,10 @@ export {
   promptInputControlShape,
   type PromptInputShape,
 } from "./components/prompt-input-variants";
+/** The column of a full-page chat: content, composer, pinned footer; centred while empty. */
+export { ChatStage, type ChatStageProps } from "./components/chat-stage";
+/** Starter prompts beneath the composer of an empty chat. */
+export { PromptSuggestions, type PromptSuggestionsProps } from "./components/prompt-suggestions";
 export {
   PromptInputAdaptiveTextarea,
   type PromptInputAdaptiveTextareaProps,

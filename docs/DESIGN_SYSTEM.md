@@ -181,6 +181,8 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `SidebarRail` / `SidebarRailItem` | `sidebar-rail.tsx` | **0.42.0.** The collapsed 60px rail's entries: tinted tile, primary on hover/active, `muted`, `iconText`, `variant="action"` for the leading button; wrap in Tooltip/HoverCard for the full title |
 | `SidebarScrollArea` / `useScrollbarGutter` / `useScrollFade` | `sidebar-scroll-area.tsx` / `lib/use-scrollbar-gutter.ts` / `lib/use-scroll-fade.ts` | **0.43.0.** A side panel's scrolling list: content fades out (24px mask) at an edge with more to scroll instead of a hard crop; the scrollbar is moved into the right gutter (padding = gutter − measured bar width, 0 for overlay bars), so cards keep the width of the controls above whether a bar shows or not. The hook works on any scroller (e.g. a `SidebarCardList` that scrolls itself) |
 | `SidebarPanel` | `sidebar-panel.tsx` | **0.43.0.** One frame for both side columns: fixed head (title row + `head`) and the list that alone scrolls (`SidebarScrollArea`). `AppShellLayout` drops its nav padding around it, so left and right columns share insets and heading baseline by construction |
+| `ChatStage` | `chat-stage.tsx` | **0.43.0.** The column of a full-page chat: content (messages or empty state), `composer`, and a `footer` (disclaimer, `footerId`) pinned to the bottom. `empty` centres content + composer together (auto margins, a tall empty state scrolls instead of clipping); with messages the content fills and the composer docks. Deliberately no layout animation. The card-framed widget stays `ChatLayout` |
+| `PromptSuggestions` | `prompt-suggestions.tsx` | **0.43.0.** Starter prompts beneath the composer of an empty chat: a header (icon, headline, previous/next stepping one suggestion while the row overflows, optional close that fades it out with its space kept, then calls `onDismiss`) over every suggestion in one row, scrolling sideways and faded at the edges (`useScrollFade({ axis: "x" })`); `onSelect` gets the trimmed text; `revealDelay` fades the whole component in after a pause, its space kept meanwhile; radius follows the Style (`--ui-radius-control`) |
 | `SettingsDialog` / `SettingsRow` | `settings-dialog.tsx` | **0.43.0.** The settings window: left column (search, one `NavItem` per section), close top-right like every Dialog, the section on the right under its title; search filters by label and `keywords`. `SettingsRow` = label + description left, control right, rule below. Radius follows the app-wide Style |
 | `ContentPanel` / `PanelSection` | `content-panel.tsx` | **0.42.0.** A panel that replaces a content area (header + close, scrolling body capped at 880px, pinned footer) and its titled, rule-divided sections |
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
@@ -503,6 +505,9 @@ Until then the git path carries us; keep the README's git section first.
   app-wide Style too (`--ui-radius-control`; Textarea keeps the field radius);
   `SettingsDialog`'s section column is a `SidebarPanel`; `SidebarUserMenu`'s
   trigger and every `DropdownMenu` (popup + rows) follow it as well.
+  **`ChatStage`**: the full-page chat column (centred while empty, docked
+  composer, pinned footer). **`PromptSuggestions`**: starter prompts beneath an
+  empty chat's composer.
   `SidebarPanel` takes an optional `nav` slot: fixed `NavItem` rows between
   the head and the scrolling list, so one column can hold both.
   **Contrast and accent**: `AppearanceProvider` (the widened `UiShapeProvider`)

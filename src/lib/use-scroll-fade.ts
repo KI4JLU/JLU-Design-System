@@ -7,28 +7,35 @@ import * as React from "react";
  * itself (the mask is fixed to the box, content scrolls beneath it), so no
  * overlay element and no colour to match the background.
  *
+ * `axis: "x"` fades the left/right edges of a horizontal scroller instead
+ * (data-scroll-fade then reads "left", "right" or "left right").
+ *
  * Re-evaluated on scroll, on resize of the element or its children, and when
  * rows are added or removed.
  */
 export function useScrollFade<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
-  { size = 24, enabled = true }: { size?: number; enabled?: boolean } = {},
+  { size = 24, enabled = true, axis = "y" }: { size?: number; enabled?: boolean; axis?: "x" | "y" } = {},
 ): void {
   React.useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return;
     const apply = () => {
-      const top = el.scrollTop > 1 ? size : 0;
-      const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1 ? size : 0;
+      const x = axis === "x";
+      const pos = x ? el.scrollLeft : el.scrollTop;
+      const view = x ? el.clientWidth : el.clientHeight;
+      const full = x ? el.scrollWidth : el.scrollHeight;
+      const top = pos > 1 ? size : 0;
+      const bottom = pos + view < full - 1 ? size : 0;
       const mask =
         top || bottom
-          ? `linear-gradient(to bottom, transparent 0, #000 ${top}px, #000 calc(100% - ${bottom}px), transparent 100%)`
+          ? `linear-gradient(to ${x ? "right" : "bottom"}, transparent 0, #000 ${top}px, #000 calc(100% - ${bottom}px), transparent 100%)`
           : "";
       el.style.maskImage = mask;
       el.style.setProperty("-webkit-mask-image", mask);
       // The state as data too — for styling hooks and for tests (jsdom drops
       // `mask-image` from the style object).
-      const edges = [top && "top", bottom && "bottom"].filter(Boolean).join(" ");
+      const edges = [top && (x ? "left" : "top"), bottom && (x ? "right" : "bottom")].filter(Boolean).join(" ");
       if (edges) el.dataset.scrollFade = edges;
       else delete el.dataset.scrollFade;
     };
@@ -53,5 +60,5 @@ export function useScrollFade<T extends HTMLElement>(
       el.style.removeProperty("-webkit-mask-image");
       delete el.dataset.scrollFade;
     };
-  }, [ref, size, enabled]);
+  }, [ref, size, enabled, axis]);
 }
