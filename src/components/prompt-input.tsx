@@ -27,6 +27,7 @@ import {
   InputGroupTextarea,
 } from "./input-group";
 import { FilePreview } from "./file-preview";
+import { useUiShape } from "./ui-shape-context";
 import { usePdfPreviewImage } from "../lib/use-pdf-preview";
 import {
   promptInputControlShape,
@@ -454,13 +455,14 @@ export type PromptInputProps = Omit<
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>,
   ) => void | Promise<void>;
-  /** Frame + control radius — see prompt-input-variants.ts. Default "rounded". */
+  /** Frame + control radius — see prompt-input-variants.ts. Default: the
+   *  app-wide Style (`useUiShape`), else "rounded". */
   shape?: PromptInputShape;
 };
 
 export const PromptInput = ({
   className,
-  shape = "rounded",
+  shape: shapeProp,
   accept,
   multiple,
   globalDrop,
@@ -472,6 +474,8 @@ export const PromptInput = ({
   children,
   ...props
 }: PromptInputProps) => {
+  const uiShape = useUiShape().shape;
+  const shape = shapeProp ?? uiShape;
   // Try to use a provider controller if present
   const controller = useOptionalPromptInputController();
   const usingProvider = !!controller;

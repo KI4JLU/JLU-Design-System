@@ -506,3 +506,27 @@ body {
   font-family: "Inter", sans-serif;
   background-color: var(--color-surface);
 }
+
+/* ==========================================================================
+ * Style (UiShapeProvider → <html data-ui-shape>): radii for consumer CSS that
+ * should follow the global rounded / pill switch. DS components read the
+ * shape themselves; these exist for surfaces an app builds on its own.
+ *   card    — a one-line row (sidebar card)
+ *   box     — a multi-line surface (pill → 24px, not a capsule)
+ *   control — a button
+ *   tile    — an icon tile
+ * ========================================================================== */
+:root,
+[data-ui-shape="rounded"] {
+  --ui-radius-card: var(--radius-xl);
+  --ui-radius-box: var(--radius-xl);
+  --ui-radius-control: var(--radius-action);
+  --ui-radius-tile: 6px;
+}
+
+[data-ui-shape="pill"] {
+  --ui-radius-card: 9999px;
+  --ui-radius-box: var(--radius-2xl);
+  --ui-radius-control: 9999px;
+  --ui-radius-tile: 9999px;
+}
