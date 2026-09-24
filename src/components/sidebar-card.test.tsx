@@ -104,3 +104,105 @@ describe("SidebarRailItem / SidebarSelectionBar", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("SidebarScrollArea", () => {
+  // Oracle: stubbed geometry — a classic scrollbar is offsetWidth − clientWidth
+  // (here 300 − 285 = 15px), an overlay one is 0 (jsdom's default).
+  it("takes the scrollbar's width out of the right gutter", async () => {
+    const { SidebarScrollArea } = await import("./sidebar-scroll-area");
+    const offset = vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(300);
+    const client = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(285);
+    render(<SidebarScrollArea data-testid="area" gutter={16}><p>x</p></SidebarScrollArea>);
+    expect(screen.getByTestId("area").style.paddingRight).toBe("1px");
+    offset.mockRestore();
+    client.mockRestore();
+  });
+
+  it("keeps the full gutter when there is no scrollbar", async () => {
+    const { SidebarScrollArea } = await import("./sidebar-scroll-area");
+    render(<SidebarScrollArea data-testid="area" gutter={16}><p>x</p></SidebarScrollArea>);
+    expect(screen.getByTestId("area").style.paddingRight).toBe("16px");
+  });
+});
+
+describe("useScrollFade (via SidebarScrollArea)", () => {
+  // Oracle: stubbed scroll geometry — 100px visible of 300px content.
+  const geometry = (top: number) => {
+    const spies = [
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(300),
+      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(100),
+      vi.spyOn(HTMLElement.prototype, "scrollTop", "get").mockReturnValue(top),
+    ];
+    return () => spies.forEach((s) => s.mockRestore());
+  };
+
+  it("fades only the bottom at the top, both edges mid-way, none without overflow", async () => {
+    const { SidebarScrollArea } = await import("./sidebar-scroll-area");
+    let restore = geometry(0);
+    const { unmount } = render(<SidebarScrollArea data-testid="area"><p>x</p></SidebarScrollArea>);
+    expect(screen.getByTestId("area")).toHaveAttribute("data-scroll-fade", "bottom");
+    restore();
+    unmount();
+
+    restore = geometry(50);
+    const second = render(<SidebarScrollArea data-testid="area"><p>x</p></SidebarScrollArea>);
+    expect(screen.getByTestId("area")).toHaveAttribute("data-scroll-fade", "top bottom");
+    restore();
+    second.unmount();
+
+    // jsdom default geometry: nothing to scroll → no mask.
+    render(<SidebarScrollArea data-testid="area"><p>x</p></SidebarScrollArea>);
+    expect(screen.getByTestId("area")).not.toHaveAttribute("data-scroll-fade");
+  });
+});
+
+describe("SidebarPanel", () => {
+  // Oracle: the props handed in; WAI-ARIA heading role.
+  it("puts title and head in the fixed part, children in the scroll area", async () => {
+    const { SidebarPanel } = await import("./sidebar-panel");
+    render(
+      <SidebarPanel title="Verlauf" head={<button type="button">Neuer Chat</button>}>
+        <p>Liste</p>
+      </SidebarPanel>,
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Verlauf" });
+    const head = heading.closest('[data-slot="sidebar-panel-head"]');
+    expect(head).toContainElement(screen.getByRole("button", { name: "Neuer Chat" }));
+    const scroller = screen.getByText("Liste").closest('[data-slot="sidebar-scroll-area"]');
+    expect(scroller).not.toBeNull();
+    expect(head).not.toContainElement(screen.getByText("Liste"));
+  });
+});
+
+describe("HoverCardContent", () => {
+  // Oracle: DOM containment — a portaled card is not a descendant of the
+  // scroll container that holds its trigger.
+  it("renders outside its trigger's scroll container", async () => {
+    const { HoverCard, HoverCardContent, HoverCardTrigger } = await import("./hover-card");
+    render(
+      <div data-testid="scroller" style={{ overflow: "auto" }}>
+        <HoverCard open>
+          <HoverCardTrigger>row</HoverCardTrigger>
+          <HoverCardContent>preview</HoverCardContent>
+        </HoverCard>
+      </div>,
+    );
+    expect(screen.getByText("preview")).toBeInTheDocument();
+    expect(screen.getByTestId("scroller")).not.toContainElement(screen.getByText("preview"));
+  });
+});
+
+describe("SidebarPanel nav slot", () => {
+  // Oracle: the props handed in and DOM containment.
+  it("keeps nav rows fixed in the head and the list in the scroll area", async () => {
+    const { SidebarPanel } = await import("./sidebar-panel");
+    render(
+      <SidebarPanel title="Arbeitsbereich" nav={<button type="button">Übersicht</button>}>
+        <p>Karte</p>
+      </SidebarPanel>,
+    );
+    const nav = screen.getByRole("button", { name: "Übersicht" }).closest('[data-slot="sidebar-panel-nav"]');
+    expect(nav?.closest('[data-slot="sidebar-panel-head"]')).not.toBeNull();
+    expect(screen.getByText("Karte").closest('[data-slot="sidebar-scroll-area"]')).not.toBeNull();
+  });
+});
