@@ -175,6 +175,10 @@ consuming repo** — new exceptions get the same scrutiny there.
 | `PdfThumbnail` | `pdf-thumbnail.tsx` | **0.42.0.** First page of a PDF on a canvas via pdf.js (lazy import, worker as `?url` asset); the attachment preview uses it instead of the browser viewer, which paints its own dark canvas and scrollbars. `lib/pdf-render.ts` exports `renderPdfFirstPage` (same fit, off-screen, returns a data URL) and `preloadPdfjs` so a list can pre-render thumbnails before a preview opens |
 | `FilePreview` | `file-preview.tsx` | **0.42.0.** Fixed 160×192 file preview (image / first PDF page via `PdfThumbnail` / file glyph) with a filetype `Badge`; the composer's attachment hover card and JustRAG's sources list share it |
 | `PdfViewer` | `pdf-viewer.tsx` | **0.42.0.** Multi-page PDF viewer on DS surfaces (pdf.js bitmaps, lazy per page, fit-width default, page/zoom toolbar, `toolbarEnd` slot) — replaces `<iframe>` embeds, whose browser viewer ignores the app theme |
+| `UiShapeProvider` / `useUiShape` / `UiShapeToggle` | `ui-shape-*.ts(x)` | **0.42.0.** App-wide Style: rounded squares or pills, remembered per browser, mirrored to `<html data-ui-shape>`. Every shape-aware component defaults to it (`PromptInput`, `Sidebar*`); `--ui-radius-card/box/control/tile` in tokens.css carry it into consumer CSS |
+| `SidebarCard` (+ `SidebarCardList`, `SidebarSelectionBar`) | `sidebar-card.tsx` | **0.42.0.** Side-panel row card: icon tile (glyph, emoji or type label), one-line title, meta lines, extra controls, checkbox, actions menu; whole-card click; selection mode for batch actions. Pill shape tightens padding and falls back to `rounded-2xl` with meta lines |
+| `SidebarRail` / `SidebarRailItem` | `sidebar-rail.tsx` | **0.42.0.** The collapsed 60px rail's entries: tinted tile, primary on hover/active, `muted`, `iconText`, `variant="action"` for the leading button; wrap in Tooltip/HoverCard for the full title |
+| `ContentPanel` / `PanelSection` | `content-panel.tsx` | **0.42.0.** A panel that replaces a content area (header + close, scrolling body capped at 880px, pinned footer) and its titled, rule-divided sections |
 | `CodeBlock` | `code-block.tsx` | fixed-dark code viewer (identical in both themes, `code-surface` tokens) with built-in copy button (clipboard write + Copy→Check confirmation for ~2 s) |
 | `Input` (+ shared `fieldVariants`) | `input.tsx` / `field-variants.ts` | honors `aria-invalid` styling; `variant`: default (framed) / inline (borderless in-flow field for in-row editing) |
 | `Label` | `label.tsx` | Radix Label |
@@ -506,7 +510,13 @@ Until then the git path carries us; keep the README's git section first.
   badge on hover. `PromptInputSubmit` gets an opt-in `voice` idle state (audio-lines
   glyph while the draft is empty) for consumers with a speech-to-text provider.
   New deps: `ai` (types only), `nanoid`, `cmdk`, `@radix-ui/react-hover-card`,
-  `pdfjs-dist` (lazy, first PDF hover).
+  `pdfjs-dist` (lazy, first PDF hover). **App-wide Style**: `UiShapeProvider` /
+  `useUiShape` / `UiShapeToggle` switch rounded squares ↔ pills for every
+  shape-aware component (`PromptInput` defaults to it), `--ui-radius-*`
+  tokens carry it into consumer CSS. **Side panels**: `SidebarCard`
+  (+ `SidebarCardList`, `SidebarSelectionBar`), `SidebarRail` /
+  `SidebarRailItem`; `ContentPanel` + `PanelSection`; `PdfViewer`,
+  `FilePreview`. All pdf.js work shares one worker (`getPdfDocument`).
 - **0.41.0** — **`SidePanel`'s collapse toggle moves out 8px, not 6px:
   the chevron's *drawn* edge is now on the inset line.** 0.40.0 aligned the
   svg box, but lucide draws 3..21 of a 24-unit viewBox, so the strokes sat

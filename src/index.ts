@@ -152,6 +152,24 @@ export {
 } from "./components/tabs";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { ThemeToggle, type ThemeToggleProps } from "./components/theme-toggle";
+/** App-wide Style (rounded squares / pills) — see ui-shape-context.ts. */
+export { UiShapeProvider, type UiShapeProviderProps } from "./components/ui-shape-provider";
+export { useUiShape, type UiShape, type UiShapeContextValue } from "./components/ui-shape-context";
+export { UiShapeToggle, type UiShapeToggleProps } from "./components/ui-shape-toggle";
+/** Side-panel building blocks: row card, selection bar, collapsed rail. */
+export {
+  SidebarCard,
+  SidebarCardList,
+  SidebarSelectionBar,
+  type SidebarCardProps,
+  type SidebarCardListProps,
+  type SidebarCardAction,
+  type SidebarSelectionBarProps,
+} from "./components/sidebar-card";
+export { sidebarCardVariants, sidebarIconTileVariants } from "./components/sidebar-card-variants";
+export { SidebarRail, SidebarRailItem, type SidebarRailItemProps } from "./components/sidebar-rail";
+/** A panel that replaces a content area, and its titled sections. */
+export { ContentPanel, PanelSection, type ContentPanelProps, type PanelSectionProps } from "./components/content-panel";
 export {
   Toast,
   ToastAction,
