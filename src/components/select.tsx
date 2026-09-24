@@ -25,6 +25,8 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       fieldVariants(),
+      // Follows the app-wide Style like a button (one line, like Input).
+      "rounded-[var(--ui-radius-control,var(--radius-field))]",
       "flex items-center justify-between gap-2 text-left",
       "data-[placeholder]:text-on-surface-variant [&>span]:line-clamp-1",
       className,

@@ -2,7 +2,8 @@ import { cva } from "class-variance-authority";
 
 /**
  * NavItem style variants (cva). Formalizes the sidebar-row pattern:
- * pill-shaped rows, `level` picks top-level vs. nested sizing, `active`
+ * rows whose corners follow the app-wide Style (`--ui-radius-control`:
+ * rounded squares or pills, UiShapeProvider), `level` picks top-level vs. nested sizing, `active`
  * carries the current-page state (bg-primary top / secondary-container sub).
  * Note: the active top-level row deliberately switches to the label font
  * (font-label-sm) — that is the app's established look, kept 1:1.
@@ -21,7 +22,7 @@ import { cva } from "class-variance-authority";
  *    prop.
  */
 export const navItemVariants = cva(
-  "flex w-full items-center rounded-action transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
+  "flex w-full items-center rounded-[var(--ui-radius-control,var(--radius-action))] transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:shrink-0",
   {
     variants: {
       level: {

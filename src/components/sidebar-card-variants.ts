@@ -6,6 +6,16 @@ import { cva } from "class-variance-authority";
  * padding — and back to `rounded-2xl` once the card grows a meta line, as the
  * composer does when its text wraps.
  */
+/**
+ * The row geometry of every side-panel row — cards, and the user-menu trigger
+ * under them — per shape, so their leading icons line up on one axis: 1px
+ * border (transparent where a row draws none), this inset, then a 28px tile.
+ */
+export const sidebarRowInset = {
+  rounded: "gap-3 px-3 py-2.5",
+  pill: "gap-2.5 py-[7px] pr-2.5 pl-2",
+} as const;
+
 export const sidebarCardVariants = cva(
   [
     "group/sidebar-card flex w-full min-w-0 cursor-pointer items-center border text-left text-on-surface shadow-card transition-colors",
@@ -14,8 +24,8 @@ export const sidebarCardVariants = cva(
   {
     variants: {
       shape: {
-        rounded: "gap-3 rounded-xl px-3 py-2.5",
-        pill: "gap-2.5 rounded-full py-[7px] pr-2.5 pl-2 has-[[data-slot=sidebar-card-meta]>*]:rounded-2xl",
+        rounded: `rounded-xl ${sidebarRowInset.rounded}`,
+        pill: `rounded-full has-[[data-slot=sidebar-card-meta]>*]:rounded-2xl ${sidebarRowInset.pill}`,
       },
       state: {
         idle: "border-outline-variant bg-surface-container-lowest hover:bg-surface-container-high",
