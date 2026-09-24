@@ -20,6 +20,24 @@ export async function loadPdfjs() {
   return pdfjs;
 }
 
+type PdfjsModule = Awaited<ReturnType<typeof loadPdfjs>>;
+let sharedWorker: InstanceType<PdfjsModule["PDFWorker"]> | null = null;
+
+/**
+ * ONE pdf.js worker for every document this package opens. Without it,
+ * `getDocument` spawns a fresh worker per call and `destroy()` terminates it —
+ * a sources list pre-rendering 40 previews started 40 worker threads (in dev
+ * each also loads Vite's HMR client: 40× "[vite] connected"). With a shared
+ * worker passed in, destroying a document leaves the worker running.
+ */
+export async function getPdfDocument(src: string) {
+  const pdfjs = await loadPdfjs();
+  if (!sharedWorker || sharedWorker.destroyed) {
+    sharedWorker = new pdfjs.PDFWorker();
+  }
+  return pdfjs.getDocument({ url: src, worker: sharedWorker });
+}
+
 /** Kick off the pdf.js import (and worker fetch) ahead of first use. */
 export function preloadPdfjs(): void {
   void loadPdfjs().catch(() => undefined);
@@ -44,8 +62,7 @@ export async function renderPdfFirstPage(
   height: number,
   { dpr = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1, type = "image/png" }: RenderPdfFirstPageOptions = {},
 ): Promise<string> {
-  const pdfjs = await loadPdfjs();
-  const task = pdfjs.getDocument({ url: src });
+  const task = await getPdfDocument(src);
   try {
     const loaded = await task.promise;
     const page = await loaded.getPage(1);

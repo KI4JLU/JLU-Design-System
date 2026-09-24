@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "../lib/utils";
-import { loadPdfjs } from "../lib/pdf-render";
+import { getPdfDocument } from "../lib/pdf-render";
 
 /**
  * First-page thumbnail of a PDF, rendered with pdf.js into a <canvas>.
@@ -39,8 +39,7 @@ const PdfThumbnail = React.forwardRef<HTMLCanvasElement, PdfThumbnailProps>(
 
       (async () => {
         try {
-          const pdfjs = await loadPdfjs();
-          const task = pdfjs.getDocument({ url: src });
+          const task = await getPdfDocument(src);
           loadingTask = task;
           const loaded = await task.promise;
           if (cancelled) return;

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChevronDown, ChevronUp, Loader2, Maximize2, Minimize2, Minus, Plus } from "lucide-react";
 import { cn } from "../lib/utils";
-import { loadPdfjs } from "../lib/pdf-render";
+import { getPdfDocument, loadPdfjs } from "../lib/pdf-render";
 import { Button } from "./button";
 
 /**
@@ -110,8 +110,7 @@ const PdfViewer = React.forwardRef<HTMLDivElement, PdfViewerProps>(
       scrolledToInitial.current = false;
       (async () => {
         try {
-          const pdfjs = await loadPdfjs();
-          const loading = pdfjs.getDocument({ url: src });
+          const loading = await getPdfDocument(src);
           task = loading;
           const loaded = await loading.promise;
           if (cancelled) return;
