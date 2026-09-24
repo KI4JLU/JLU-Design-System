@@ -184,6 +184,9 @@ export {
 } from "./components/sidebar-card";
 export { sidebarCardVariants, sidebarIconTileVariants, sidebarRowInset, sidebarRowInsetX } from "./components/sidebar-card-variants";
 export { SidebarAction, type SidebarActionProps } from "./components/sidebar-action";
+/** File drop target, and the window-wide "files are being dragged" signal that reveals it. */
+export { FileDropzone, type FileDropzoneProps } from "./components/file-dropzone";
+export { useWindowFileDrag } from "./lib/use-window-file-drag";
 export { SidebarRail, SidebarRailItem, type SidebarRailItemProps } from "./components/sidebar-rail";
 export { SidebarScrollArea, type SidebarScrollAreaProps } from "./components/sidebar-scroll-area";
 /** One frame for both side columns: fixed head + the list that scrolls. */
