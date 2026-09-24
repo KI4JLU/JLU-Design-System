@@ -12,6 +12,11 @@ const HoverCardContent = React.forwardRef<
   React.ElementRef<typeof HoverCardPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  // Portaled like DropdownMenu/Popover: rendered inline, the card sat inside
+  // its trigger's scroll container and was clipped by it (overflow, and the
+  // SidebarScrollArea fade mask) — a sidebar card's preview was cut off at the
+  // list's edge.
+  <HoverCardPrimitive.Portal>
   <HoverCardPrimitive.Content
     ref={ref}
     align={align}
@@ -22,6 +27,7 @@ const HoverCardContent = React.forwardRef<
     )}
     {...props}
   />
+  </HoverCardPrimitive.Portal>
 ))
 HoverCardContent.displayName = HoverCardPrimitive.Content.displayName
 
