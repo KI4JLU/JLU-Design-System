@@ -27,7 +27,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-40 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest p-1 text-on-surface shadow-overlay",
+        "z-50 min-w-40 overflow-hidden rounded-[var(--ui-radius-box,var(--radius-xl))] border border-outline-variant bg-surface-container-lowest p-1 text-on-surface shadow-overlay",
         className,
       )}
       {...props}
@@ -48,7 +48,8 @@ const DropdownMenuItem = React.forwardRef<
     ref={ref}
     className={cn(
       menuItemVariants({ variant, selected }),
-      "cursor-default rounded-lg select-none",
+      // Popup and rows follow the app-wide Style (box / control radius).
+      "cursor-default rounded-[var(--ui-radius-control,var(--radius-lg))] select-none",
       "data-[highlighted]:bg-surface-container-high data-[highlighted]:outline-none",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-60",
       className,

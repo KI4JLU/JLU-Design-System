@@ -33,9 +33,12 @@ let sharedWorker: InstanceType<PdfjsModule["PDFWorker"]> | null = null;
 export async function getPdfDocument(src: string) {
   const pdfjs = await loadPdfjs();
   if (!sharedWorker || sharedWorker.destroyed) {
-    sharedWorker = new pdfjs.PDFWorker();
+    // Errors only: malformed embedded fonts make the worker log a "TT: undefined
+    // function" warning per glyph program it repairs — noise, not failures. The
+    // worker takes its log level when it is created, not per document.
+    sharedWorker = new pdfjs.PDFWorker({ verbosity: pdfjs.VerbosityLevel.ERRORS });
   }
-  return pdfjs.getDocument({ url: src, worker: sharedWorker });
+  return pdfjs.getDocument({ url: src, worker: sharedWorker, verbosity: pdfjs.VerbosityLevel.ERRORS });
 }
 
 /** Kick off the pdf.js import (and worker fetch) ahead of first use. */

@@ -1,26 +1,12 @@
 import * as React from "react";
-import { MoreVertical } from "lucide-react";
 import { cn } from "../lib/utils";
+import { ActionMenu, type ActionMenuItem } from "./action-menu";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./dropdown-menu";
 import { sidebarCardVariants, sidebarControlShape, sidebarIconTileVariants } from "./sidebar-card-variants";
 import { useUiShape, type UiShape } from "./ui-shape-context";
 
-export interface SidebarCardAction {
-  label: string;
-  icon?: React.ReactNode;
-  onSelect: (e: Event) => void;
-  destructive?: boolean;
-  /** Draw a separator above this item. */
-  separatorBefore?: boolean;
-}
+export type SidebarCardAction = ActionMenuItem;
 
 export interface SidebarCardProps extends Omit<React.LiHTMLAttributes<HTMLLIElement>, "title"> {
   /** Leading glyph (an svg, or an emoji string), shown in the tinted tile. */
@@ -128,29 +114,11 @@ const SidebarCard = React.forwardRef<HTMLLIElement, SidebarCardProps>(
           />
         )}
         {!selectionMode && actions && actions.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={control}
-                aria-label={actionsLabel ? `${actionsLabel} ${title}` : title}
-              >
-                <MoreVertical aria-hidden="true" className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {actions.map((a, i) => (
-                <React.Fragment key={a.label}>
-                  {a.separatorBefore && i > 0 && <DropdownMenuSeparator />}
-                  <DropdownMenuItem variant={a.destructive ? "destructive" : undefined} onSelect={a.onSelect}>
-                    {a.icon}
-                    {a.label}
-                  </DropdownMenuItem>
-                </React.Fragment>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ActionMenu
+            actions={actions}
+            label={actionsLabel ? `${actionsLabel} ${title}` : title}
+            triggerClassName={control}
+          />
         )}
       </li>
     );

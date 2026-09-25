@@ -12,12 +12,15 @@ import { cn } from "../lib/utils";
  * online"); without a label, `online` renders an sr-only "online" instead.
  */
 const avatarSizes = {
+  /** 28px — the side-panel icon tile's size (SidebarUserMenu). */
+  xs: "h-7 w-7 text-[11px]",
   sm: "h-8 w-8 text-xs",
   default: "h-10 w-10 text-sm",
   lg: "h-12 w-12 text-base",
 } as const;
 
 const dotSizes = {
+  xs: "h-2 w-2",
   sm: "h-2 w-2",
   default: "h-2.5 w-2.5",
   lg: "h-3 w-3",

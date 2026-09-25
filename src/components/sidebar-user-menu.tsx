@@ -4,6 +4,8 @@ import { cn } from "../lib/utils";
 import { Avatar } from "./avatar";
 import { Button } from "./button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "./dropdown-menu";
+import { sidebarRowInset } from "./sidebar-card-variants";
+import { useUiShape } from "./ui-shape-context";
 import { useSidebarCollapsed } from "./sidebar-context";
 
 /**
@@ -36,15 +38,26 @@ export interface SidebarUserMenuProps {
 
 function SidebarUserMenu({ initials, name, role, children }: SidebarUserMenuProps) {
   const collapsed = useSidebarCollapsed();
+  const { shape } = useUiShape();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "sm"}
-          className={cn("min-w-0", !collapsed && "w-full justify-start")}
+          // No press animation: the trigger simply opens the menu (Button's
+          // `active:scale-95` + `transition-all` made the row shrink and grow).
+          className={cn(
+            "min-w-0 transition-colors active:scale-100",
+            // Corners follow the app-wide Style, like the rows around it.
+            "rounded-[var(--ui-radius-control,var(--radius-action))]",
+            // Expanded: the same geometry as the SidebarCards above it (1px
+            // transparent border + sidebarRowInset + 28px avatar), so the
+            // avatar sits on the cards' icon axis.
+            !collapsed && cn("h-auto w-full justify-start border border-transparent", sidebarRowInset[shape]),
+          )}
         >
-          <Avatar initials={initials} size="sm" />
+          <Avatar initials={initials} size={collapsed ? "sm" : "xs"} />
           <span
             className={cn(
               "flex min-w-0 flex-col items-start",

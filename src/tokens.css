@@ -5,7 +5,9 @@
  *   @import "tailwindcss";
  *   @import "@ki4jlu/design-system/tokens.css";
  *   @source "../node_modules/@ki4jlu/design-system";
- * Fonts (Inter, Manrope, JetBrains Mono) lädt die App selbst — siehe README.
+ * Fonts (Inter, Manrope) lädt die App selbst — siehe README. Monospace nur für
+ * den Inhalt von Code-Boxen (`font-mono`, System-Schriften, kein Webfont) —
+ * nie für Buttons.
  * ========================================================================== */
 
 
@@ -287,9 +289,15 @@
   --font-display-lg: "Manrope", sans-serif;
   --font-headline-md: "Manrope", sans-serif;
   --font-headline-md-mobile: "Manrope", sans-serif;
-  --font-label-sm: "JetBrains Mono", monospace;
+  /* Labels, buttons, tabs, chips: Inter like the body. Was JetBrains Mono,
+     which put a monospace face on every control; mono is for code only. */
+  --font-label-sm: "Inter", sans-serif;
   --font-stat-lg: "Inter", sans-serif;
   --font-body-base: "Inter", sans-serif;
+  /* Code-box CONTENT only (`font-mono` on CodeBlock's <pre>) — never on
+     buttons, including the code box's own copy button. The system's own
+     monospace faces; no webfont to ship for one use. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   /* Font sizes (size / line-height / weight) */
   --text-display-lg: 32px;
@@ -529,4 +537,150 @@ body {
   --ui-radius-box: var(--radius-2xl);
   --ui-radius-control: 9999px;
   --ui-radius-tile: 9999px;
+}
+
+/* ==========================================================================
+ * Accent colour (AppearanceProvider → <html data-accent>). `standard` is the
+ * JLU blue defined above; each other accent replaces the whole primary family,
+ * light and dark, so everything drawn in `primary` follows it. Light values
+ * keep ≥ 6:1 against white; dark values are the light-on-dark M3 inversion
+ * with the accent's darkest shade as `on-primary`.
+ * The swatches are what pickers show (AccentSwatch).
+ * ========================================================================== */
+:root {
+  --accent-swatch-standard: var(--p-blue-700);
+  --accent-swatch-teal: #00696b;
+  --accent-swatch-violet: #5b3fbf;
+  --accent-swatch-green: #2e6b30;
+  --accent-swatch-rose: #a8325a;
+  --accent-swatch-amber: #8a5100;
+}
+
+[data-accent="teal"] {
+  --color-primary: #00696b;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #00696b;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #b2efee;
+  --color-on-primary-fixed: #002021;
+  --color-primary-fixed-dim: #80d5d4;
+  --color-on-primary-fixed-variant: #003738;
+  --color-inverse-primary: #80d5d4;
+  --color-primary-hover: #003738;
+  --color-primary-active: #002021;
+  --color-focus-ring: #00696b;
+}
+[data-theme="dark"][data-accent="teal"] {
+  --color-primary: #80d5d4;
+  --color-on-primary: #003738;
+  --color-primary-hover: #b2efee;
+  --color-primary-active: #dcfaf9;
+  --color-focus-ring: #80d5d4;
+}
+
+[data-accent="violet"] {
+  --color-primary: #5b3fbf;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #5b3fbf;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #e6deff;
+  --color-on-primary-fixed: #1a0848;
+  --color-primary-fixed-dim: #cabeff;
+  --color-on-primary-fixed-variant: #2a1070;
+  --color-inverse-primary: #cabeff;
+  --color-primary-hover: #2a1070;
+  --color-primary-active: #1a0848;
+  --color-focus-ring: #5b3fbf;
+}
+[data-theme="dark"][data-accent="violet"] {
+  --color-primary: #cabeff;
+  --color-on-primary: #2a1070;
+  --color-primary-hover: #e6deff;
+  --color-primary-active: #f4f0ff;
+  --color-focus-ring: #cabeff;
+}
+
+[data-accent="green"] {
+  --color-primary: #2e6b30;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #2e6b30;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #c3efc0;
+  --color-on-primary-fixed: #07260a;
+  --color-primary-fixed-dim: #a7d5a4;
+  --color-on-primary-fixed-variant: #0f3a12;
+  --color-inverse-primary: #a7d5a4;
+  --color-primary-hover: #0f3a12;
+  --color-primary-active: #07260a;
+  --color-focus-ring: #2e6b30;
+}
+[data-theme="dark"][data-accent="green"] {
+  --color-primary: #a7d5a4;
+  --color-on-primary: #0f3a12;
+  --color-primary-hover: #c3efc0;
+  --color-primary-active: #e6f7e4;
+  --color-focus-ring: #a7d5a4;
+}
+
+[data-accent="rose"] {
+  --color-primary: #a8325a;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #a8325a;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #ffd9e2;
+  --color-on-primary-fixed: #3f071d;
+  --color-primary-fixed-dim: #ffb1c5;
+  --color-on-primary-fixed-variant: #5c0f2c;
+  --color-inverse-primary: #ffb1c5;
+  --color-primary-hover: #5c0f2c;
+  --color-primary-active: #3f071d;
+  --color-focus-ring: #a8325a;
+}
+[data-theme="dark"][data-accent="rose"] {
+  --color-primary: #ffb1c5;
+  --color-on-primary: #5c0f2c;
+  --color-primary-hover: #ffd9e2;
+  --color-primary-active: #fff0f3;
+  --color-focus-ring: #ffb1c5;
+}
+
+[data-accent="amber"] {
+  --color-primary: #8a5100;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #8a5100;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #ffdcbc;
+  --color-on-primary-fixed: #2e1800;
+  --color-primary-fixed-dim: #ffb86e;
+  --color-on-primary-fixed-variant: #4a2800;
+  --color-inverse-primary: #ffb86e;
+  --color-primary-hover: #4a2800;
+  --color-primary-active: #2e1800;
+  --color-focus-ring: #8a5100;
+}
+[data-theme="dark"][data-accent="amber"] {
+  --color-primary: #ffb86e;
+  --color-on-primary: #4a2800;
+  --color-primary-hover: #ffdcbc;
+  --color-primary-active: #fff1e4;
+  --color-focus-ring: #ffb86e;
+}
+
+/* ==========================================================================
+ * Contrast (AppearanceProvider → <html data-contrast>). `normal` is the design
+ * as drawn: focus shown by highlight backgrounds, subtle rules. `more` — the
+ * user's choice, or the OS asking for it (prefers-contrast: more, forced
+ * colours) — strengthens rules and muted text, and forces a visible focus
+ * ring on EVERY focusable element: `!important` because components switch
+ * the outline off (`focus-visible:outline-none`) in favour of their own
+ * subtler treatment, which is exactly what this mode overrides.
+ * ========================================================================== */
+[data-contrast="more"] {
+  --color-outline-variant: var(--color-outline);
+  --color-on-surface-variant: var(--color-on-surface);
+}
+
+[data-contrast="more"] :focus-visible {
+  outline: 3px solid var(--color-focus-ring) !important;
+  outline-offset: 2px !important;
 }

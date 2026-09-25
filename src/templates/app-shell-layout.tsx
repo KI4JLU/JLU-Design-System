@@ -350,7 +350,12 @@ const AppShellLayout = React.forwardRef<HTMLDivElement, AppShellLayoutProps>(
              `complementary` landmark `SidePanel` renders, named by the same
              string so a screen-reader user meets one name for one column. */
           content: railNav ? null : (
-            <nav aria-label={navLabel} className="flex flex-col gap-2 p-4">
+            // A `SidebarPanel` brings its own insets (same frame as the right
+            // column's), so the nav adds none around it and lets it fill.
+            <nav
+              aria-label={navLabel}
+              className="flex flex-col gap-2 p-4 has-[>[data-slot=sidebar-panel]]:h-full has-[>[data-slot=sidebar-panel]]:gap-0 has-[>[data-slot=sidebar-panel]]:p-0"
+            >
               {nav}
             </nav>
           ),

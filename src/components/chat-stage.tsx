@@ -1,0 +1,67 @@
+import * as React from "react";
+import { cn } from "../lib/utils";
+
+export interface ChatStageProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * No messages yet: the content (an empty state) and the composer sit
+   * together in the vertical centre. With messages, the content fills the
+   * column (it is the scroller) and the composer docks at the bottom.
+   */
+  empty?: boolean;
+  /** The composer (PromptInput), with anything under it (PromptSuggestions). */
+  composer?: React.ReactNode;
+  /**
+   * Pinned to the bottom of the column in both states (an answer disclaimer) —
+   * not to the composer, which is centred in an empty chat.
+   */
+  footer?: React.ReactNode;
+  /** `id` of the footer element. */
+  footerId?: string;
+}
+
+/**
+ * The column of a full-page chat: messages (or an empty state), composer and
+ * footer. `empty` switches between the centred start and the docked
+ * conversation without moving anything else — deliberately no layout
+ * animation, which slid the composer on every position change (chat switch,
+ * late-arriving empty state), not only on the first message.
+ *
+ * Centring uses auto margins, not `justify-content`, so a tall empty state
+ * scrolls from its top instead of being clipped. The card-framed widget is
+ * `ChatLayout`.
+ */
+const ChatStage = React.forwardRef<HTMLDivElement, ChatStageProps>(
+  ({ empty = false, composer, footer, footerId, className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      data-slot="chat-stage"
+      data-empty={empty || undefined}
+      className={cn("flex min-h-0 min-w-0 flex-1 flex-col", empty && "overflow-y-auto", className)}
+      {...props}
+    >
+      <div
+        data-slot="chat-stage-content"
+        className={cn("flex min-w-0 flex-col", empty ? "mt-auto flex-none" : "min-h-0 flex-1")}
+      >
+        {children}
+      </div>
+      {composer != null && (
+        <div data-slot="chat-stage-composer" className={cn("w-full shrink-0", empty && "mb-auto")}>
+          {composer}
+        </div>
+      )}
+      {footer != null && (
+        <p
+          id={footerId}
+          data-slot="chat-stage-footer"
+          className="m-0 shrink-0 px-6 pb-4 text-center text-xs text-on-surface-variant"
+        >
+          {footer}
+        </p>
+      )}
+    </div>
+  ),
+);
+ChatStage.displayName = "ChatStage";
+
+export { ChatStage };
