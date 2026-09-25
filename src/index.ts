@@ -184,6 +184,7 @@ export {
 } from "./components/sidebar-card";
 export { sidebarCardVariants, sidebarIconTileVariants, sidebarRowInset, sidebarRowInsetX } from "./components/sidebar-card-variants";
 export { SidebarAction, type SidebarActionProps } from "./components/sidebar-action";
+export { ActionMenu, type ActionMenuItem, type ActionMenuProps } from "./components/action-menu";
 /** File drop target, and the window-wide "files are being dragged" signal that reveals it. */
 export { FileDropzone, type FileDropzoneProps } from "./components/file-dropzone";
 export { useWindowFileDrag } from "./lib/use-window-file-drag";
